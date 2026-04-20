@@ -1,0 +1,25 @@
+name: desilife
+description: DesiLife - Indian Life Simulator. A minimalist BitLife-style game set in India.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
+  google_fonts: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.6
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
