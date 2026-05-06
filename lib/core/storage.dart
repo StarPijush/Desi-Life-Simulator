@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/character.dart';
 import '../models/relationship.dart';
+import '../models/loan_model.dart';
 
 class StorageService {
   static const String _characterBoxName = 'desilife_character';
@@ -32,6 +33,9 @@ class StorageService {
     }
     if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(RelationshipAdapter());
+    }
+    if (!Hive.isAdapterRegistered(4)) {
+      Hive.registerAdapter(LoanModelAdapter());
     }
     // Note: LegacyStoreAdapter will need to be generated
     // For now we can use dynamic or register when ready
@@ -131,24 +135,26 @@ class StorageService {
       if (main != null) main.repair();
       if (backup != null) backup.repair();
 
-      // Priority Analysis: Newer timestamp wins
+      // Select the most viable candidate
+      Character? winner;
       if (main != null && backup != null) {
         if (!main.isUnusable() && !backup.isUnusable()) {
-          return main.lastSavedAt >= backup.lastSavedAt 
-              ? _handleVersionMigration(main) 
-              : _handleVersionMigration(backup);
+          winner = main.lastSavedAt >= backup.lastSavedAt ? main : backup;
         }
       }
+      winner ??= (main != null && !main.isUnusable()) ? main : ((backup != null && !backup.isUnusable()) ? backup : null);
 
-      // Fallback to whichever is usable
-      if (main != null && !main.isUnusable()) return _handleVersionMigration(main);
-      if (backup != null && !backup.isUnusable()) return _handleVersionMigration(backup);
+      if (winner != null) {
+        final processed = _handleVersionMigration(winner);
+        // ZERO-TRUST CLONE: Break Hive's proxy/lazy collection references immediately
+        return Character.fromJson(processed.toJson());
+      }
 
     } catch (e) {
       print("🛡️ Loading critical failure: $e");
     }
 
-    // Zero-Crash Rule: Never return null
+    // Zero-Crash Rule: Never return null, always fresh allocation
     print("🛡️ All saves unusable or missing. Returning default safe character.");
     return Character.defaultCharacter();
   }
@@ -181,8 +187,8 @@ class StorageService {
   /// Load event log
   static List<dynamic> loadEvents() {
     final raw = _eventsBox?.get(_eventsKey);
-    if (raw == null) return List<dynamic>.from([]);
-    return List<dynamic>.from(raw as List);
+    if (raw == null) return List<dynamic>.from([], growable: true);
+    return List<dynamic>.from(raw as List, growable: true);
   }
 
   /// Legacy logic

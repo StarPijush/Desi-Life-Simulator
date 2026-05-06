@@ -17,6 +17,7 @@ class RelationshipAdapter extends TypeAdapter<Relationship> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Relationship(
+      id: fields[9] as String,
       name: fields[0] as String,
       type: fields[1] as String,
       bond: fields[2] as int,
@@ -32,7 +33,7 @@ class RelationshipAdapter extends TypeAdapter<Relationship> {
   @override
   void write(BinaryWriter writer, Relationship obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class RelationshipAdapter extends TypeAdapter<Relationship> {
       ..writeByte(7)
       ..write(obj.rivalCareer)
       ..writeByte(8)
-      ..write(obj.rivalIntensity);
+      ..write(obj.rivalIntensity)
+      ..writeByte(9)
+      ..write(obj.id);
   }
 
   @override

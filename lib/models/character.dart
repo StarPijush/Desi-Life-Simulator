@@ -1,6 +1,7 @@
 // lib/models/character.dart
 import 'package:hive/hive.dart';
 import 'relationship.dart';
+import 'loan_model.dart';
 
 part 'character.g.dart';
 
@@ -46,10 +47,12 @@ class Character extends HiveObject {
   String personality; // 'Smart', 'Kind', 'Lazy', 'Aggressive', 'Lucky'
 
   @HiveField(12)
-  String educationLevel; // 'None', 'Primary', 'Secondary', 'Graduate', 'Postgraduate'
+  String
+      educationLevel; // 'None', 'Primary', 'Secondary', 'Graduate', 'Postgraduate'
 
   @HiveField(13)
-  String degree; // 'Engineering', 'Medicine', 'Commerce', 'Arts', 'Science', 'Law', 'None'
+  String
+      degree; // 'Engineering', 'Medicine', 'Commerce', 'Arts', 'Science', 'Law', 'None'
 
   @HiveField(14)
   double totalEarned; // lifetime career earnings
@@ -67,7 +70,8 @@ class Character extends HiveObject {
   double annualExpenses; // current yearly spend
 
   @HiveField(19)
-  String careerGroup; // 'Tech', 'Government', 'Corporate', 'Medical', 'Business', 'Arts', 'None'
+  String
+      careerGroup; // 'Tech', 'Government', 'Corporate', 'Medical', 'Business', 'Arts', 'None'
 
   @HiveField(20)
   int careerStep; // index in career ladder (0 = entry level)
@@ -157,7 +161,8 @@ class Character extends HiveObject {
   Map<String, double> hiddenModifiers; // Secret buffs/debuffs
 
   @HiveField(49)
-  List<Map<String, dynamic>> majorDecisions; // e.g. [{age: 18, choice: "Quit School", regretPotential: 80}]
+  List<Map<String, dynamic>>
+      majorDecisions; // e.g. [{age: 18, choice: "Quit School", regretPotential: 80}]
 
   @HiveField(50)
   int legacyPoints; // Permanent points from past lives
@@ -176,6 +181,75 @@ class Character extends HiveObject {
 
   @HiveField(55)
   int stateVersion; // Internal version to track state mutations for simulation validation
+
+  @HiveField(56)
+  String parentWealth; // 'Low', 'Mid', 'High'
+
+  @HiveField(57)
+  String parentEdu; // 'Basic', 'Professional', 'Academic'
+
+  @HiveField(58)
+  int stressLevel; // 0-100 (Low, Optimal, High zones)
+
+  @HiveField(59)
+  int prepLevel; // 0-100 (Study preparation for exams)
+
+  @HiveField(60)
+  String schoolType; // 'Government', 'Private', 'Elite', 'None'
+
+  @HiveField(61)
+  String specialization; // 'PCM', 'PCB', 'Commerce', 'Arts', 'None'
+
+  @HiveField(62)
+  int studyConsistency; // 0-100 (Effort over time)
+
+  @HiveField(63)
+  int discipline; // 0-100 (Rule adherence)
+
+  @HiveField(64)
+  int dropYearsCount; // max 2 attempts
+
+  @HiveField(65)
+  int lastDemotionAge; // for 1-year cooldown
+
+  @HiveField(66)
+  bool hasCareerWarning; // Warning before demotion
+
+  @HiveField(67)
+  int freelanceEffort; // 0-100 (Consistency proxy for freelancers)
+
+  @HiveField(68)
+  List<String> unlockedActivityIds;
+
+  @HiveField(69)
+  List<String> unlockedCareerModuleIds;
+
+  @HiveField(70)
+  List<LoanModel> loans;
+
+  @HiveField(71)
+  double jobPerformance; // 0-100
+
+  @HiveField(72)
+  int yearsInJob; // years spent at current job level
+
+  @HiveField(73)
+  int jobLevel; // current level within the job ladder
+
+  @HiveField(74)
+  int reputation; // 0-100: Influences job security & society
+
+  @HiveField(75)
+  int fame; // 0-100: Influences rare opportunities & social comparison
+
+  @HiveField(76)
+  int ambition; // 0-100: Influences promotion speed & stress
+
+  @HiveField(77)
+  int financialIntelligence; // 0-100: Influences investment risks & rewards
+
+  @HiveField(78)
+  int looks; // 0-100: Physical appearance stat
 
   String get dominantTrait {
     if (personalityScores.isEmpty) return personality;
@@ -196,72 +270,112 @@ class Character extends HiveObject {
   }
 
   String get identityTitle {
-    final topTraits = personalityScores.entries.where((e) => e.value > 70).toList();
+    final topTraits =
+        personalityScores.entries.where((e) => e.value > 70).toList();
     topTraits.sort((a, b) => b.value.compareTo(a.value));
-    
+
     if (topTraits.isEmpty) return "Common Soul";
-    
+
     final t1 = topTraits[0].key;
     if (topTraits.length < 2) {
       switch (t1) {
-        case 'Disciplined': return "The Sentinel";
-        case 'Lazy': return "Carefree Spirit";
-        case 'Aggressive': return "The Firebrand";
-        case 'Kind': return "Kindred Soul";
-        case 'Emotional': return "Vivid Spirit";
-        case 'Logical': return "The Analyst";
-        case 'Risk-taker': return "Daredevil";
-        default: return "Nuanced Persona";
+        case 'Disciplined':
+          return "The Sentinel";
+        case 'Lazy':
+          return "Carefree Spirit";
+        case 'Aggressive':
+          return "The Firebrand";
+        case 'Kind':
+          return "Kindred Soul";
+        case 'Emotional':
+          return "Vivid Spirit";
+        case 'Logical':
+          return "The Analyst";
+        case 'Risk-taker':
+          return "Daredevil";
+        default:
+          return "Nuanced Persona";
       }
     }
 
     final t2 = topTraits[1].key;
     final pair = {t1, t2};
-    
-    if (pair.contains('Disciplined') && pair.contains('Logical')) return "The Architect";
-    if (pair.contains('Kind') && pair.contains('Emotional')) return "Radiant Heart";
-    if (pair.contains('Aggressive') && pair.contains('Risk-taker')) return "Chaos Agent";
-    if (pair.contains('Lazy') && pair.contains('Logical')) return "Observationist";
-    if (pair.contains('Kind') && pair.contains('Disciplined')) return "Modern Saint";
-    if (pair.contains('Aggressive') && pair.contains('Emotional')) return "The Storm";
-    if (pair.contains('Logical') && pair.contains('Risk-taker')) return "The Speculator";
-    
+
+    if (pair.contains('Disciplined') && pair.contains('Logical')) {
+      return "The Architect";
+    }
+    if (pair.contains('Kind') && pair.contains('Emotional')) {
+      return "Radiant Heart";
+    }
+    if (pair.contains('Aggressive') && pair.contains('Risk-taker')) {
+      return "Chaos Agent";
+    }
+    if (pair.contains('Lazy') && pair.contains('Logical')) {
+      return "Observationist";
+    }
+    if (pair.contains('Kind') && pair.contains('Disciplined')) {
+      return "Modern Saint";
+    }
+    if (pair.contains('Aggressive') && pair.contains('Emotional')) {
+      return "The Storm";
+    }
+    if (pair.contains('Logical') && pair.contains('Risk-taker')) {
+      return "The Speculator";
+    }
+
     return "$t1 $t2 Blend";
   }
 
-  String get suggestedGoal {
-    if (age < 6) return "Goal: LEARN TO WALK 👶";
-    if (age < 13) return "Goal: SCORE HIGH IN SCHOOL 🎒";
-    if (age < 18) return "Goal: ACE YOUR BOARD EXAMS 📚";
+  String get financialIdentity {
+    if (loanAmount > annualIncome * 5) return "Debt Heavy";
+    if (bankBalance > 1000000 && (hiddenModifiers['savings_growth'] ?? 0) > 0) {
+      return "Wealth Builder";
+    }
+    if (cibilScore > 800) return "Credit Expert";
+    if (creditUsed > creditLimit * 0.7) return "Risk Taker";
+    if (loanAmount > 0) return "Strategic Borrower";
+    if (bankBalance > 500000) return "Savvy Saver";
+    return "Financial Starter";
+  }
 
-    // Persona-Driven Goals
+  String get suggestedGoal {
+    if (age < 6) return "Goal: LEARN TO WALK";
+    if (age < 13) return "Goal: SCORE HIGH IN SCHOOL";
+    if (age < 18) return "Goal: ACE YOUR BOARD EXAMS";
+
     switch (activeDominantTrait) {
       case 'Disciplined':
-        if (careerGroup == 'None') return "Goal: ESTABLISH A CAREER 💼";
-        if (bankBalance < 100000) return "Goal: GROW YOUR SAVINGS 💰";
-        return "Goal: REACH PEAK PERFORMANCE 🏆";
+        if (careerGroup == 'None') return "Goal: ESTABLISH A CAREER";
+        if (bankBalance < 100000) return "Goal: GROW YOUR SAVINGS";
+        return "Goal: REACH PEAK PERFORMANCE";
       case 'Risk-taker':
-        if (stockPortfolio.isEmpty && cryptoPortfolio.isEmpty) return "Goal: START INVESTING 📈";
-        return "Goal: CHASE THE BIG WIN 💎";
+        if (stockPortfolio.isEmpty && cryptoPortfolio.isEmpty) {
+          return "Goal: START INVESTING";
+        }
+        return "Goal: CHASE THE BIG WIN";
       case 'Aggressive':
-        if (jobTitle != 'CEO' && jobTitle != 'CTO' && jobTitle != 'Founder') return "Goal: RISE TO THE TOP 🚀";
-        return "Goal: DOMINATE YOUR INDUSTRY 👑";
+        if (jobTitle != 'CEO' && jobTitle != 'CTO' && jobTitle != 'Founder') {
+          return "Goal: RISE TO THE TOP";
+        }
+        return "Goal: DOMINATE YOUR INDUSTRY";
       case 'Kind':
-        if (karma < 80) return "Goal: HELP OTHERS 🕊️";
-        return "Goal: BECOME A RADIANT SOUL ✨";
+        if (karma < 80) return "Goal: HELP OTHERS";
+        return "Goal: BECOME A RADIANT SOUL";
       case 'Lazy':
-        if (happiness < 70) return "Goal: FIND COMFORT 🛋️";
-        return "Goal: ENJOY THE SIMPLE LIFE 🍹";
+        if (happiness < 70) return "Goal: FIND COMFORT";
+        return "Goal: ENJOY THE SIMPLE LIFE";
       case 'Emotional':
-        return "Goal: FIND DEEPER CONNECTIONS 💖";
+        return "Goal: FIND DEEPER CONNECTIONS";
       case 'Logical':
-        return "Goal: MASTER YOUR CRAFT 🧠";
+        return "Goal: MASTER YOUR CRAFT";
     }
 
-    if (health < 50) return "Goal: RECOVER YOUR HEALTH 🏥";
-    if (momentumState == 'Emotional Collapse') return "Goal: SURVIVE THE STORM ⛈️";
-    
-    return "Goal: THRIVE IN LIFE 🌟";
+    if (health < 50) return "Goal: RECOVER YOUR HEALTH";
+    if (momentumState == 'Emotional Collapse') {
+      return "Goal: SURVIVE THE STORM";
+    }
+
+    return "Goal: THRIVE IN LIFE";
   }
 
   Character({
@@ -308,6 +422,28 @@ class Character extends HiveObject {
     this.universityType = 'None',
     this.isDroppedYear = false,
     this.stateVersion = 0,
+    this.parentWealth = 'Mid',
+    this.parentEdu = 'Basic',
+    this.stressLevel = 20,
+    this.prepLevel = 0,
+    this.schoolType = 'None',
+    this.specialization = 'None',
+    this.studyConsistency = 50,
+    this.discipline = 50,
+    this.dropYearsCount = 0,
+    this.lastDemotionAge = -1,
+    this.hasCareerWarning = false,
+    this.freelanceEffort = 0,
+    this.jobPerformance = 50,
+    this.yearsInJob = 0,
+    this.jobLevel = 0,
+    this.reputation = 50,
+    this.fame = 0,
+    this.ambition = 50,
+    this.financialIntelligence = 30,
+    this.looks = 50,
+    List<String>? unlockedActivityIds,
+    List<String>? unlockedCareerModuleIds,
     List<String>? achievements,
     List<String>? ownedAssets,
     List<Relationship>? relationships,
@@ -321,30 +457,48 @@ class Character extends HiveObject {
     List<Map<String, dynamic>>? majorDecisions,
     List<String>? tensionSignals,
     Map<String, int>? examResults,
-  })  : achievements = achievements != null ? List<String>.from(achievements) : [],
-        ownedAssets = ownedAssets != null ? List<String>.from(ownedAssets) : [],
-        relationships = relationships != null ? List<Relationship>.from(relationships) : [],
-        stockPortfolio = stockPortfolio != null ? List<Map<dynamic, dynamic>>.from(stockPortfolio) : [],
-        cryptoPortfolio = cryptoPortfolio != null ? List<Map<dynamic, dynamic>>.from(cryptoPortfolio) : [],
-        bondPortfolio = bondPortfolio != null ? List<Map<dynamic, dynamic>>.from(bondPortfolio) : [],
-        marketPrices = marketPrices != null ? Map<dynamic, dynamic>.from(marketPrices) : {},
-        eventChains = eventChains != null ? Map<String, int>.from(eventChains) : {},
-        personalityScores = personalityScores != null ? Map<String, int>.from(personalityScores) : {
-          'Disciplined': 30,
-          'Lazy': 30,
-          'Aggressive': 30,
-          'Kind': 30,
-          'Emotional': 30,
-          'Logical': 30,
-          'Risk-taker': 30,
-        },
-        hiddenModifiers = hiddenModifiers != null ? Map<String, double>.from(hiddenModifiers) : {},
-        majorDecisions = majorDecisions != null ? List<Map<String, dynamic>>.from(majorDecisions) : [],
-        tensionSignals = tensionSignals != null ? List<String>.from(tensionSignals) : [],
-        examResults = examResults != null ? Map<String, int>.from(examResults) : {} {
+    List<LoanModel>? loans,
+  })  : achievements = List<String>.from(achievements ?? [], growable: true),
+        ownedAssets = List<String>.from(ownedAssets ?? [], growable: true),
+        relationships =
+            (relationships ?? []).map((r) => r.clone()).toList(growable: true),
+        stockPortfolio = (stockPortfolio ?? [])
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        cryptoPortfolio = (cryptoPortfolio ?? [])
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        bondPortfolio = (bondPortfolio ?? [])
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        marketPrices = Map<dynamic, dynamic>.from(marketPrices ?? {}),
+        eventChains = Map<String, int>.from(eventChains ?? {}),
+        personalityScores = Map<String, int>.from(personalityScores ??
+            {
+              'Disciplined': 30,
+              'Lazy': 30,
+              'Aggressive': 30,
+              'Kind': 30,
+              'Emotional': 30,
+              'Logical': 30,
+              'Risk-taker': 30,
+            }),
+        hiddenModifiers = Map<String, double>.from(hiddenModifiers ?? {}),
+        majorDecisions = (majorDecisions ?? [])
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList(growable: true),
+        tensionSignals =
+            List<String>.from(tensionSignals ?? [], growable: true),
+        examResults = Map<String, int>.from(examResults ?? {}),
+        unlockedActivityIds =
+            List<String>.from(unlockedActivityIds ?? [], growable: true),
+        unlockedCareerModuleIds =
+            List<String>.from(unlockedCareerModuleIds ?? [], growable: true),
+        loans = (loans ?? []).map((l) => l.clone()).toList(growable: true) {
     // Initialize primary personality if scores are default
     if (this.personalityScores.values.every((v) => v == 30)) {
-      final Map<String, int> scores = Map<String, int>.from(this.personalityScores);
+      final Map<String, int> scores =
+          Map<String, int>.from(this.personalityScores);
       if (scores.containsKey(personality)) {
         scores[personality] = 70;
       } else {
@@ -376,6 +530,7 @@ class Character extends HiveObject {
     int smartsDelta = 0,
     int socialDelta = 0,
     int karmaDelta = 0,
+    int stressDelta = 0,
     double moneyDelta = 0,
   }) {
     happiness = _clamp(happiness + happinessDelta);
@@ -383,6 +538,7 @@ class Character extends HiveObject {
     smarts = _clamp(smarts + smartsDelta);
     social = _clamp(social + socialDelta);
     karma = _clamp(karma + karmaDelta);
+    stressLevel = _clamp(stressLevel + stressDelta);
     bankBalance = (bankBalance + moneyDelta).clamp(0, double.infinity);
     if (moneyDelta > 0) totalEarned += moneyDelta;
     if (health <= 0) isDead = true;
@@ -392,7 +548,7 @@ class Character extends HiveObject {
     if (delta == 0) return;
     final scores = Map<String, int>.from(personalityScores);
     int current = scores[trait] ?? 30;
-    
+
     // Diminishing Returns: It's harder to shift extreme traits further
     double factor = 1.0;
     if (delta > 0) {
@@ -402,10 +558,10 @@ class Character extends HiveObject {
     }
     int adjustedDelta = (delta * factor.clamp(0.4, 1.5)).round();
     if (adjustedDelta == 0 && delta != 0) adjustedDelta = delta.sign;
-    
+
     scores[trait] = (current + adjustedDelta).clamp(0, 100);
-    
-    // Soft Balance (instead of hard zero-sum) 
+
+    // Soft Balance (instead of hard zero-sum)
     // Increasing a trait only reduces the opposite by 40% of the movement
     final opposite = _getOppositeTrait(trait);
     if (opposite != null) {
@@ -413,19 +569,26 @@ class Character extends HiveObject {
       int reduction = (adjustedDelta * 0.4).round();
       scores[opposite] = (oppVal - reduction).clamp(0, 100);
     }
-    
+
     personalityScores = scores;
   }
 
   String? _getOppositeTrait(String trait) {
     switch (trait) {
-      case 'Disciplined': return 'Lazy';
-      case 'Lazy': return 'Disciplined';
-      case 'Logical': return 'Emotional';
-      case 'Emotional': return 'Logical';
-      case 'Kind': return 'Aggressive';
-      case 'Aggressive': return 'Kind';
-      default: return null;
+      case 'Disciplined':
+        return 'Lazy';
+      case 'Lazy':
+        return 'Disciplined';
+      case 'Logical':
+        return 'Emotional';
+      case 'Emotional':
+        return 'Logical';
+      case 'Kind':
+        return 'Aggressive';
+      case 'Aggressive':
+        return 'Kind';
+      default:
+        return null;
     }
   }
 
@@ -434,16 +597,20 @@ class Character extends HiveObject {
     name = name.isEmpty ? "New Soul" : name;
     age = age.clamp(0, 120);
     city = city.isEmpty ? "Mumbai" : city;
-    bankBalance = bankBalance.isNaN ? 0.0 : bankBalance.clamp(0, double.infinity);
-    annualIncome = annualIncome.isNaN ? 0.0 : annualIncome.clamp(0, double.infinity);
-    annualExpenses = annualExpenses.isNaN ? 36000.0 : annualExpenses.clamp(0, double.infinity);
-    
+    bankBalance =
+        bankBalance.isNaN ? 0.0 : bankBalance.clamp(0, double.infinity);
+    annualIncome =
+        annualIncome.isNaN ? 0.0 : annualIncome.clamp(0, double.infinity);
+    annualExpenses = annualExpenses.isNaN
+        ? 36000.0
+        : annualExpenses.clamp(0, double.infinity);
+
     happiness = _clamp(happiness);
     health = _clamp(health);
     smarts = _clamp(smarts);
     social = _clamp(social);
     karma = _clamp(karma);
-    
+
     // Ensure collections are initialized
     achievements = List<String>.from(achievements);
     ownedAssets = List<String>.from(ownedAssets);
@@ -458,10 +625,31 @@ class Character extends HiveObject {
     tensionSignals = List<String>.from(tensionSignals);
     examResults = Map<String, int>.from(examResults);
     universityType = universityType.isEmpty ? 'None' : universityType;
+    studyConsistency = studyConsistency.clamp(0, 100);
+    discipline = discipline.clamp(0, 100);
+    freelanceEffort = freelanceEffort.clamp(0, 100);
+    jobPerformance = jobPerformance.clamp(0.0, 100.0);
+    yearsInJob = yearsInJob.clamp(0, 100);
+    jobLevel = jobLevel.clamp(0, 100);
+    // Migrate legacy single-loan fields into loans list
+    if (loans.isEmpty && loanAmount > 0 && loanType != 'None') {
+      loans = [
+        LoanModel.fromLegacy(
+          type: loanType,
+          amount: loanAmount,
+          currentAge: age,
+        )
+      ];
+    }
     if (personalityScores.isEmpty) {
       personalityScores = {
-        'Disciplined': 30, 'Lazy': 30, 'Aggressive': 30, 
-        'Kind': 30, 'Emotional': 30, 'Logical': 30, 'Risk-taker': 30,
+        'Disciplined': 30,
+        'Lazy': 30,
+        'Aggressive': 30,
+        'Kind': 30,
+        'Emotional': 30,
+        'Logical': 30,
+        'Risk-taker': 30,
       };
       personalityScores[personality] = 70;
     }
@@ -507,12 +695,19 @@ class Character extends HiveObject {
     return 'Bankrupt 😰';
   }
 
+  double get bankInterestRate => hiddenModifiers['bank_interest_rate'] ?? 0.0;
+
+  set bankInterestRate(double value) {
+    hiddenModifiers['bank_interest_rate'] = value;
+  }
+
   double get creditLimit {
     if (!hasCreditCard) return 0;
     // Base 25k + CIBIL factor + 10% of income
     double cibilFactor = (cibilScore - 300).clamp(0, 600) * 100.0;
     double incomeFactor = (annualIncome / 12) * 2; // 2 months salary
-    return 25000 + cibilFactor + incomeFactor;
+    double baseLimit = 25000 + cibilFactor + incomeFactor;
+    return baseLimit * (hiddenModifiers['credit_limit_multiplier'] ?? 1.0);
   }
 
   double get creditMinDue => creditUsed * 0.05;
@@ -563,7 +758,30 @@ class Character extends HiveObject {
         'examResults': examResults,
         'isDroppedYear': isDroppedYear,
         'stateVersion': stateVersion,
+        'parentWealth': parentWealth,
+        'parentEdu': parentEdu,
+        'stressLevel': stressLevel,
+        'prepLevel': prepLevel,
+        'schoolType': schoolType,
+        'specialization': specialization,
+        'studyConsistency': studyConsistency,
+        'discipline': discipline,
+        'dropYearsCount': dropYearsCount,
+        'lastDemotionAge': lastDemotionAge,
+        'hasCareerWarning': hasCareerWarning,
+        'freelanceEffort': freelanceEffort,
+        'jobPerformance': jobPerformance,
+        'yearsInJob': yearsInJob,
+        'jobLevel': jobLevel,
+        'reputation': reputation,
+        'fame': fame,
+        'ambition': ambition,
+        'financialIntelligence': financialIntelligence,
+        'looks': looks,
+        'unlockedActivityIds': unlockedActivityIds,
+        'unlockedCareerModuleIds': unlockedCareerModuleIds,
         'relationships': relationships.map((r) => r.toJson()).toList(),
+        'loans': loans.map((l) => l.toJson()).toList(),
       };
 
   factory Character.fromJson(Map<String, dynamic> json) => Character(
@@ -596,35 +814,91 @@ class Character extends HiveObject {
         ownedAssets: List<String>.from(json['ownedAssets'] as List? ?? []),
         creditUsed: (json['creditUsed'] as num?)?.toDouble() ?? 0.0,
         lastActivityAge: json['lastActivityAge'] as int? ?? -1,
-        stockPortfolio: List<Map<dynamic, dynamic>>.from(json['stockPortfolio'] as List? ?? []),
-        cryptoPortfolio: List<Map<dynamic, dynamic>>.from(json['cryptoPortfolio'] as List? ?? []),
-        bondPortfolio: List<Map<dynamic, dynamic>>.from(json['bondPortfolio'] as List? ?? []),
-        marketPrices: Map<dynamic, dynamic>.from(json['marketPrices'] as Map? ?? {}),
+        stockPortfolio: List<Map<dynamic, dynamic>>.from(
+            json['stockPortfolio'] as List? ?? []),
+        cryptoPortfolio: List<Map<dynamic, dynamic>>.from(
+            json['cryptoPortfolio'] as List? ?? []),
+        bondPortfolio: List<Map<dynamic, dynamic>>.from(
+            json['bondPortfolio'] as List? ?? []),
+        marketPrices:
+            Map<dynamic, dynamic>.from(json['marketPrices'] as Map? ?? {}),
         eventChains: Map<String, int>.from(json['eventChains'] as Map? ?? {}),
+        reputation: json['reputation'] as int? ?? 50,
+        fame: json['fame'] as int? ?? 0,
+        ambition: json['ambition'] as int? ?? 50,
+        financialIntelligence: json['financialIntelligence'] as int? ?? 30,
         momentumStreak: json['momentumStreak'] as int? ?? 0,
         lastSavedAt: json['lastSavedAt'] as int? ?? 0,
-        personalityScores: Map<String, int>.from(json['personalityScores'] as Map? ?? {}),
-        activeDominantTrait: json['activeDominantTrait'] as String? ?? 'Balanced',
+        personalityScores:
+            Map<String, int>.from(json['personalityScores'] as Map? ?? {}),
+        activeDominantTrait:
+            json['activeDominantTrait'] as String? ?? 'Balanced',
         lastTraitShiftAge: json['lastTraitShiftAge'] as int? ?? -1,
         lastAutoDecisionAge: json['lastAutoDecisionAge'] as int? ?? -1,
         universityType: json['universityType'] as String? ?? 'None',
         examResults: Map<String, int>.from(json['examResults'] as Map? ?? {}),
         isDroppedYear: json['isDroppedYear'] as bool? ?? false,
         stateVersion: json['stateVersion'] as int? ?? 0,
-        relationships: (json['relationships'] as List?)
-                ?.map((r) => Relationship.fromJson(r as Map<String, dynamic>))
-                .toList() ??
-            List<Relationship>.from([]),
+        parentWealth: json['parentWealth'] as String? ?? 'Mid',
+        parentEdu: json['parentEdu'] as String? ?? 'Basic',
+        stressLevel: json['stressLevel'] as int? ?? 20,
+        prepLevel: json['prepLevel'] as int? ?? 0,
+        schoolType: json['schoolType'] as String? ?? 'None',
+        specialization: json['specialization'] as String? ?? 'None',
+        studyConsistency: json['studyConsistency'] as int? ?? 50,
+        discipline: json['discipline'] as int? ?? 50,
+        dropYearsCount: json['dropYearsCount'] as int? ?? 0,
+        lastDemotionAge: json['lastDemotionAge'] as int? ?? -1,
+        hasCareerWarning: json['hasCareerWarning'] as bool? ?? false,
+        freelanceEffort: json['freelanceEffort'] as int? ?? 0,
+        jobPerformance: (json['jobPerformance'] as num?)?.toDouble() ?? 50,
+        yearsInJob: json['yearsInJob'] as int? ?? 0,
+        jobLevel: json['jobLevel'] as int? ?? 0,
+        unlockedActivityIds:
+            List<String>.from(json['unlockedActivityIds'] as List? ?? []),
+        unlockedCareerModuleIds:
+            List<String>.from(json['unlockedCareerModuleIds'] as List? ?? []),
+        relationships: (json['relationships'] as List? ?? [])
+            .map((r) => Relationship.fromJson(r as Map<String, dynamic>))
+            .toList(growable: true),
+        loans: (json['loans'] as List? ?? [])
+            .map((l) => LoanModel.fromJson(l as Map<String, dynamic>))
+            .toList(growable: true),
       );
 
   Character copyWith({
-    String? name, int? age, String? city, double? bankBalance, String? jobTitle,
-    int? happiness, int? health, int? smarts, int? social, int? karma, bool? isDead,
-    String? personality, String? educationLevel, String? degree, double? totalEarned,
-    List<String>? achievements, String? gender, double? annualIncome, double? annualExpenses,
-    int? cibilScore, String? bankName, String? accountType, double? savingsBalance, 
-    double? loanAmount, bool? hasCreditCard, List<String>? ownedAssets, String? loanType,
-    double? creditUsed, int? lastActivityAge,
+    String? name,
+    int? age,
+    String? city,
+    double? bankBalance,
+    String? jobTitle,
+    int? happiness,
+    int? health,
+    int? smarts,
+    int? social,
+    int? karma,
+    bool? isDead,
+    String? personality,
+    String? educationLevel,
+    String? degree,
+    double? totalEarned,
+    List<String>? achievements,
+    String? gender,
+    double? annualIncome,
+    double? annualExpenses,
+    String? careerGroup,
+    int? careerStep,
+    int? yearsInRole,
+    int? cibilScore,
+    String? bankName,
+    String? accountType,
+    double? savingsBalance,
+    double? loanAmount,
+    bool? hasCreditCard,
+    List<String>? ownedAssets,
+    String? loanType,
+    double? creditUsed,
+    int? lastActivityAge,
     List<Map<dynamic, dynamic>>? stockPortfolio,
     List<Map<dynamic, dynamic>>? cryptoPortfolio,
     List<Map<dynamic, dynamic>>? bondPortfolio,
@@ -637,11 +911,37 @@ class Character extends HiveObject {
     String? activeDominantTrait,
     int? lastTraitShiftAge,
     int? lastAutoDecisionAge,
+    String? momentumState,
+    String? identityPhase,
+    int? phaseYearsStored,
     String? universityType,
     Map<String, int>? examResults,
     bool? isDroppedYear,
     int? stateVersion,
-  }) => Character(
+    String? parentWealth,
+    String? parentEdu,
+    int? stressLevel,
+    int? prepLevel,
+    String? schoolType,
+    String? specialization,
+    int? studyConsistency,
+    int? discipline,
+    int? dropYearsCount,
+    int? lastDemotionAge,
+    bool? hasCareerWarning,
+    int? freelanceEffort,
+    double? jobPerformance,
+    int? yearsInJob,
+    int? jobLevel,
+    List<String>? unlockedActivityIds,
+    List<String>? unlockedCareerModuleIds,
+    List<Relationship>? relationships,
+    Map<String, double>? hiddenModifiers,
+    List<Map<String, dynamic>>? majorDecisions,
+    List<String>? tensionSignals,
+    List<LoanModel>? loans,
+  }) =>
+      Character(
         name: name ?? this.name,
         age: age ?? this.age,
         city: city ?? this.city,
@@ -657,35 +957,84 @@ class Character extends HiveObject {
         educationLevel: educationLevel ?? this.educationLevel,
         degree: degree ?? this.degree,
         totalEarned: totalEarned ?? this.totalEarned,
-        achievements: achievements ?? this.achievements,
+        achievements: List<String>.from(achievements ?? this.achievements,
+            growable: true),
         gender: gender ?? this.gender,
         annualIncome: annualIncome ?? this.annualIncome,
         annualExpenses: annualExpenses ?? this.annualExpenses,
+        careerGroup: careerGroup ?? this.careerGroup,
+        careerStep: careerStep ?? this.careerStep,
+        yearsInRole: yearsInRole ?? this.yearsInRole,
         cibilScore: cibilScore ?? this.cibilScore,
         bankName: bankName ?? this.bankName,
         accountType: accountType ?? this.accountType,
         savingsBalance: savingsBalance ?? this.savingsBalance,
         loanAmount: loanAmount ?? this.loanAmount,
         hasCreditCard: hasCreditCard ?? this.hasCreditCard,
-        ownedAssets: ownedAssets ?? this.ownedAssets,
+        ownedAssets:
+            List<String>.from(ownedAssets ?? this.ownedAssets, growable: true),
         loanType: loanType ?? this.loanType,
         creditUsed: creditUsed ?? this.creditUsed,
         lastActivityAge: lastActivityAge ?? this.lastActivityAge,
-        stockPortfolio: stockPortfolio ?? this.stockPortfolio,
-        cryptoPortfolio: cryptoPortfolio ?? this.cryptoPortfolio,
-        bondPortfolio: bondPortfolio ?? this.bondPortfolio,
-        marketPrices: marketPrices ?? this.marketPrices,
-        eventChains: eventChains ?? this.eventChains,
+        stockPortfolio: (stockPortfolio ?? this.stockPortfolio)
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        cryptoPortfolio: (cryptoPortfolio ?? this.cryptoPortfolio)
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        bondPortfolio: (bondPortfolio ?? this.bondPortfolio)
+            .map((m) => Map<dynamic, dynamic>.from(m))
+            .toList(growable: true),
+        marketPrices:
+            Map<dynamic, dynamic>.from(marketPrices ?? this.marketPrices),
+        eventChains: Map<String, int>.from(eventChains ?? this.eventChains),
         momentumStreak: momentumStreak ?? this.momentumStreak,
         version: version ?? this.version,
         lastSavedAt: lastSavedAt ?? this.lastSavedAt,
-        personalityScores: personalityScores ?? this.personalityScores,
+        personalityScores:
+            Map<String, int>.from(personalityScores ?? this.personalityScores),
         activeDominantTrait: activeDominantTrait ?? this.activeDominantTrait,
         lastTraitShiftAge: lastTraitShiftAge ?? this.lastTraitShiftAge,
         lastAutoDecisionAge: lastAutoDecisionAge ?? this.lastAutoDecisionAge,
+        momentumState: momentumState ?? this.momentumState,
+        identityPhase: identityPhase ?? this.identityPhase,
+        phaseYearsStored: phaseYearsStored ?? this.phaseYearsStored,
         universityType: universityType ?? this.universityType,
-        examResults: examResults ?? this.examResults,
+        examResults: Map<String, int>.from(examResults ?? this.examResults),
         isDroppedYear: isDroppedYear ?? this.isDroppedYear,
         stateVersion: stateVersion ?? this.stateVersion,
+        parentWealth: parentWealth ?? this.parentWealth,
+        parentEdu: parentEdu ?? this.parentEdu,
+        stressLevel: stressLevel ?? this.stressLevel,
+        prepLevel: prepLevel ?? this.prepLevel,
+        schoolType: schoolType ?? this.schoolType,
+        specialization: specialization ?? this.specialization,
+        studyConsistency: studyConsistency ?? this.studyConsistency,
+        discipline: discipline ?? this.discipline,
+        dropYearsCount: dropYearsCount ?? this.dropYearsCount,
+        lastDemotionAge: lastDemotionAge ?? this.lastDemotionAge,
+        hasCareerWarning: hasCareerWarning ?? this.hasCareerWarning,
+        freelanceEffort: freelanceEffort ?? this.freelanceEffort,
+        jobPerformance: jobPerformance ?? this.jobPerformance,
+        yearsInJob: yearsInJob ?? this.yearsInJob,
+        jobLevel: jobLevel ?? this.jobLevel,
+        unlockedActivityIds: List<String>.from(
+            unlockedActivityIds ?? this.unlockedActivityIds,
+            growable: true),
+        unlockedCareerModuleIds: List<String>.from(
+            unlockedCareerModuleIds ?? this.unlockedCareerModuleIds,
+            growable: true),
+        relationships: (relationships ?? this.relationships)
+            .map((r) => r.clone())
+            .toList(growable: true),
+        hiddenModifiers:
+            Map<String, double>.from(hiddenModifiers ?? this.hiddenModifiers),
+        majorDecisions: (majorDecisions ?? this.majorDecisions)
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList(growable: true),
+        tensionSignals: List<String>.from(tensionSignals ?? this.tensionSignals,
+            growable: true),
+        loans:
+            (loans ?? this.loans).map((l) => l.clone()).toList(growable: true),
       );
 }

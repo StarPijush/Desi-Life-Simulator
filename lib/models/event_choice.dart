@@ -25,6 +25,15 @@ class StatEffect {
         'karma': karma,
         'money': money,
       };
+
+  factory StatEffect.fromMap(Map<String, dynamic> map) => StatEffect(
+        happiness: map['happiness'] ?? 0,
+        health: map['health'] ?? 0,
+        smarts: map['smarts'] ?? 0,
+        social: map['social'] ?? 0,
+        karma: map['karma'] ?? 0,
+        money: (map['money'] ?? 0).toDouble(),
+      );
 }
 
 class EventChoice {
@@ -51,4 +60,34 @@ class EventChoice {
     this.traitShiftsA,
     this.traitShiftsB,
   });
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'description': description,
+        'optionA': optionA,
+        'optionB': optionB,
+        'effectA': effectA.toMap(),
+        'effectB': effectB.toMap(),
+        'resultA': resultA,
+        'resultB': resultB,
+        'traitShiftsA': traitShiftsA,
+        'traitShiftsB': traitShiftsB,
+      };
+
+  factory EventChoice.fromMap(Map<String, dynamic> map) => EventChoice(
+        title: map['title'] ?? '',
+        description: map['description'] ?? '',
+        optionA: map['optionA'] ?? '',
+        optionB: map['optionB'] ?? '',
+        effectA: StatEffect.fromMap(map['effectA'] ?? {}),
+        effectB: StatEffect.fromMap(map['effectB'] ?? {}),
+        resultA: map['resultA'] ?? '',
+        resultB: map['resultB'] ?? '',
+        traitShiftsA: map['traitShiftsA'] != null
+            ? Map<String, int>.from(map['traitShiftsA'])
+            : null,
+        traitShiftsB: map['traitShiftsB'] != null
+            ? Map<String, int>.from(map['traitShiftsB'])
+            : null,
+      );
 }

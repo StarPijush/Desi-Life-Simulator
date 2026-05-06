@@ -1,28 +1,27 @@
-// lib/screens/home_page.dart
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../core/design_system.dart';
+import '../core/engine.dart';
+import '../core/enums.dart';
+import '../core/storage.dart';
 import '../models/character.dart';
 import '../models/life_event.dart';
-import '../core/enums.dart';
-import '../core/engine.dart';
-import '../core/storage.dart';
-import '../core/design_system.dart';
-import '../widgets/premium_stats_card.dart';
-import '../widgets/home_header.dart';
-import '../widgets/age_button.dart';
-import '../widgets/timeline_section.dart';
-
-import 'assets_page.dart';
-import 'activities_page.dart';
-import 'relations_page.dart';
+import 'create_character_screen.dart';
 import 'legacy_page.dart';
 import 'career_page.dart';
-import 'create_character_screen.dart';
+import 'activities_page.dart';
+import 'finance_page.dart';
+import 'people_page.dart';
+import '../models/event_choice.dart';
+
+typedef LifeAction = ActionResult Function(Character character);
 
 class HomePage extends StatefulWidget {
   final Character initialCharacter;
   final bool isNewLife;
+
   const HomePage({
     super.key,
     required this.initialCharacter,
@@ -33,39 +32,24 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   late ValueNotifier<Character> _characterNotifier;
   late ValueNotifier<List<LifeEvent>> _eventsNotifier;
-  Map<String, int>? _currentStatDeltas;
   final ValueNotifier<bool> _isAgingNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _showCriticalFlashNotifier = ValueNotifier(false);
-  bool _isScrolling = false;
+  final ScrollController _scrollController = ScrollController();
 
-  // Buffer for the next year's pre-calculated result
-  AgeUpResult? _nextYearBuffer;
-  bool _isBuffering = false;
-
-  // Strict execution lock for the Age Up simulation
   bool _isExecutingAgeUp = false;
+  bool _fastForward = false;
   int _latestExecutionId = 0;
 
-  // Rapid-tap fast-forward: if user taps again while aging, skip delays
-  bool _fastForward = false;
-
-  // Active bottom nav tab: 0=Life, 1=Career, 2=Assets, 3=Relations, 4=Activities
-  int _currentTabIndex = 0;
-
-  // Event list cap — keeps memory bounded across long sessions
-  static const int _kEventCap = 100;
+  static const int _eventCap = 120;
 
   @override
   void initState() {
     super.initState();
     _characterNotifier = ValueNotifier(widget.initialCharacter);
     _eventsNotifier = ValueNotifier(_loadInitialEvents());
-
-    // Start pre-calculating the first available next year
-    _bufferNextYear();
   }
 
   @override
@@ -74,58 +58,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _eventsNotifier.dispose();
     _isAgingNotifier.dispose();
     _showCriticalFlashNotifier.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   List<LifeEvent> _loadInitialEvents() {
-    final List<LifeEvent> events = [];
-    final savedData = StorageService.loadEvents();
-    if (savedData.isNotEmpty) {
-      for (var item in savedData) {
-        if (item is Map<String, dynamic>) {
-          events.add(LifeEvent.fromJson(item));
-        }
+    final saved = StorageService.loadEvents();
+    final events = <LifeEvent>[];
+
+    for (final item in saved) {
+      if (item is Map<String, dynamic>) {
+        events.add(LifeEvent.fromJson(item));
       }
-    } else {
-      events.add(LifeEvent(
-        title: '🌟 A new life begins!',
-        description: 'Welcome to ${widget.initialCharacter.city}, ${widget.initialCharacter.name}.',
-        type: LifeEventType.milestone,
-        metadata: {'age': 0},
-      ));
     }
-    return events;
+
+    if (events.isEmpty) {
+      events.add(
+        LifeEvent(
+          title: 'A new life begins',
+          description:
+              '${widget.initialCharacter.name} was born in ${widget.initialCharacter.city}.',
+          type: LifeEventType.milestone,
+          metadata: {'age': widget.initialCharacter.age},
+        ),
+      );
+    }
+
+    return _sanitizeTimeline(events);
   }
 
   void _saveEvents() {
-    final data = _eventsNotifier.value.map((e) => e.toJson()).toList();
-    StorageService.saveEvents(data);
-  }
-
-  /// Background pre-calculation of the next year.
-  Future<void> _bufferNextYear() async {
-    if (_isBuffering || _isExecutingAgeUp || _characterNotifier.value.isDead) return;
-
-    _isBuffering = true;
-    try {
-      final characterJson = _characterNotifier.value.toJson();
-      final resultData = await compute(simulateAgeUp, characterJson);
-      if (mounted) {
-        _nextYearBuffer = AgeUpResult.fromJson(resultData);
-      }
-    } catch (e) {
-      debugPrint("Simulation buffer error: $e");
-    } finally {
-      if (mounted) _isBuffering = false;
-    }
+    StorageService.saveEvents(
+      _eventsNotifier.value.map((event) => event.toJson()).toList(),
+    );
   }
 
   Future<void> _handleAgeUp() async {
     if (_characterNotifier.value.isDead) return;
-    
-    // Strict Execution Lock: Prevent any new trigger while simulation is in progress
+
     if (_isExecutingAgeUp) {
-      // Rapid tap handling: If already aging, enable fast-forward to skip animation delays
       _fastForward = true;
       return;
     }
@@ -133,236 +104,245 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _isExecutingAgeUp = true;
     _isAgingNotifier.value = true;
     _fastForward = false;
-    
-    final int myId = ++_latestExecutionId;
-
-    if (enableLogging) {
-      debugPrint("[AGE UP] Execution Started (ID: $myId) for ${_characterNotifier.value.name}");
-    }
-
-    AgeUpResult? results;
-
-    // 1. Try to use pre-calculated buffer
-    if (_nextYearBuffer != null) {
-      if (_nextYearBuffer!.sourceVersion == _characterNotifier.value.stateVersion) {
-        results = _nextYearBuffer;
-        if (enableLogging) debugPrint("[AGE UP] Using Valid Buffered Result (v${results!.sourceVersion})");
-      } else {
-        if (enableLogging) {
-          debugPrint("[AGE UP] Discarding Stale Buffer (Buffer v${_nextYearBuffer!.sourceVersion} != Current v${_characterNotifier.value.stateVersion})");
-        }
-      }
-      _nextYearBuffer = null;
-    } 
-    
-    // 2. If no valid buffer, run simulation
-    if (results == null) {
-      try {
-        final characterJson = _characterNotifier.value.toJson();
-        final int currentVersion = _characterNotifier.value.stateVersion;
-        
-        final resultData = await compute(simulateAgeUp, characterJson);
-        
-        // Ownership Check: Did another request start while we were in the isolate?
-        if (myId != _latestExecutionId) {
-          if (enableLogging) debugPrint("[AGE UP] Discarding Late Isolate Result (ID $myId)");
-          return;
-        }
-
-        results = AgeUpResult.fromJson(resultData);
-        
-        // Double-check version match after isolate returns (safety catch for delayed isolates)
-        if (results.sourceVersion != currentVersion) {
-          debugPrint("[AGE UP] Discarding Stale Isolate Result (v${results.sourceVersion} != current v$currentVersion)");
-          _isExecutingAgeUp = false;
-          _isAgingNotifier.value = false;
-          _handleAgeUp(); // Retry with fresh state
-          return;
-        }
-      } catch (e) {
-        debugPrint("Age up isolate error: $e. Falling back to sync simulation.");
-        
-        // Ownership check before fallback
-        if (myId != _latestExecutionId) return;
-
-        try {
-          results = GameEngine.ageUp(_characterNotifier.value);
-        } catch (innerE) {
-          debugPrint("Critical Age up failure: $innerE");
-          _isExecutingAgeUp = false;
-          _isAgingNotifier.value = false;
-          _showErrorSnackBar("Simulation failed. Please try again.");
-          return;
-        }
-      }
-    }
-
-    // Double check ownership before handoff
-    if (myId != _latestExecutionId) return;
-
-    // 3. Unified Result Pipeline: Hand off for UI and state updates
-    await _applyAgeUpResult(results, myId);
-  }
-
-  /// The unified result pipeline: Guarantees consistent state updates, 
-  /// UI notifications, and persistence regardless of simulation path.
-  Future<void> _applyAgeUpResult(AgeUpResult results, int executionId) async {
-    if (!mounted) {
-      _isExecutingAgeUp = false;
-      _isAgingNotifier.value = false;
-      return;
-    }
-
-    // Ownership Check: Only the latest request is allowed to update the UI
-    if (executionId != _latestExecutionId) {
-      if (enableLogging) debugPrint("[AGE UP] Discarding Ownership (ID $executionId != $_latestExecutionId)");
-      return;
-    }
+    final executionId = ++_latestExecutionId;
 
     try {
-      final bool hasCritical = results.events.any((e) => e.type == LifeEventType.critical);
-      final bool hasRare = results.events.any((e) => e.priority == EventPriority.rare);
-
-      // Haptic signals
-      if (hasCritical || hasRare) {
-        HapticFeedback.heavyImpact();
-      } else {
-        HapticFeedback.lightImpact();
-      }
-
-      // Visual flash for critical events
-      if (hasCritical && !_fastForward) {
-        _showCriticalFlashNotifier.value = true;
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (mounted) _showCriticalFlashNotifier.value = false;
-      }
-
-      final List<LifeEvent> displayEvents = [];
-      if (results.events.isEmpty) {
-        displayEvents.add(LifeEvent(
-          title: 'A quiet year…',
-          description: 'Nothing significant happened this year.',
-          type: LifeEventType.neutral,
-          metadata: {'age': results.character.age},
-        ));
-      } else {
-        displayEvents.addAll(results.events);
-      }
-
-      // Add personality narrative feedback
-      for (var feedback in results.personalityFeedback) {
-        displayEvents.insert(0, LifeEvent(
-          title: feedback,
-          description: 'Your personality is evolving.',
-          type: LifeEventType.milestone,
-          metadata: {'age': results.character.age, 'isNarrative': true},
-        ));
-      }
-
-      // ATOMIC STATE UPDATE
-      // Replace character state and stat deltas in one cycle
-      _characterNotifier.value = results.character;
-      _currentStatDeltas = results.statChanges;
-
-      if (enableLogging) {
-        debugPrint("[AGE UP] State Applied. Age: ${_characterNotifier.value.age}");
-      }
-
-      // Chronological Event Injection (with optional animation delays)
-      for (int i = 0; i < displayEvents.length; i++) {
-        // Ownership check inside animation loops
-        if (executionId != _latestExecutionId) return;
-
-        final newEvents = [displayEvents[i], ..._eventsNotifier.value];
-        _eventsNotifier.value = _sanitizeTimeline(newEvents);
-
-        if (!_fastForward && i < displayEvents.length - 1) {
-          await Future.delayed(const Duration(milliseconds: 32));
-        }
-      }
-
-      // ATOMIC PERSISTENCE
-      // Ensure save operation always completes after state update
-      await StorageService.saveCharacter(_characterNotifier.value);
-      _saveEvents();
-
-    } catch (e) {
-      debugPrint("[AGE UP] Error during result application: $e");
+      final result = GameEngine.ageUp(_characterNotifier.value.copyWith());
+      if (executionId != _latestExecutionId) return;
+      await _applyAgeUpResult(result, executionId);
+    } catch (error) {
+      debugPrint('[AGE UP] $error');
     } finally {
-      // Re-enable Age Up and trigger next buffer
-      // Only release the lock if we ARE the latest execution
       if (mounted && executionId == _latestExecutionId) {
         _isExecutingAgeUp = false;
         _isAgingNotifier.value = false;
-        _bufferNextYear();
       }
     }
   }
 
-  /// Smart timeline trimming that protects critical milestones and rare narrative chains.
-  List<LifeEvent> _sanitizeTimeline(List<LifeEvent> events) {
-    if (events.length <= _kEventCap) return events;
+  Future<void> _applyAgeUpResult(AgeUpResult result, int executionId) async {
+    final currentVersion = _characterNotifier.value.stateVersion;
+    final updatedCharacter = result.character.copyWith(
+      stateVersion: result.character.stateVersion <= currentVersion
+          ? currentVersion + 1
+          : result.character.stateVersion,
+    );
 
-    // Protection priority: Critical > Milestone > Rare > Decision > All Else
-    final List<LifeEvent> protected = events.where((e) {
-      return e.type == LifeEventType.critical || 
-             e.type == LifeEventType.milestone || 
-             e.priority == EventPriority.critical;
-    }).toList();
+    final events = _normalizeAgeUpEvents(result);
+    final currentEvents = List<LifeEvent>.from(_eventsNotifier.value);
 
-    final List<LifeEvent> regular = events.where((e) => !protected.contains(e)).toList();
+    // Process events in chronological order (NOT reversed)
+    // Inserting at index 0 ensures the newest event appears at the top
+    for (final event in events) {
+      if (!mounted || executionId != _latestExecutionId) return;
+      
+      if (event.choice != null) {
+        debugPrint('[DECISION] Event has choices: ${event.title}');
+        debugPrint('[DECISION] Opening modal for choice: ${event.choice?.title}');
+        
+        // 1. SHOW decision modal (await user input)
+        final choiceResult = await _showDecisionPopup(event.choice!);
+        
+        if (choiceResult != null) {
+          debugPrint('[DECISION] Choice made, adding result to timeline');
+          // 2. ADD result event to timeline
+          currentEvents.insert(0, choiceResult);
+          _eventsNotifier.value = _sanitizeTimeline(currentEvents);
+          _scrollToLatest();
+          HapticFeedback.lightImpact();
+        }
+      } else {
+        // 3. Add normal event directly to timeline
+        currentEvents.insert(0, event);
+        _eventsNotifier.value = _sanitizeTimeline(currentEvents);
+        _scrollToLatest();
 
-    // Reconstruct list up to cap
-    final List<LifeEvent> sanitized = [...protected];
-    int remainingSpace = _kEventCap - sanitized.length;
-    
-    if (remainingSpace > 0) {
-      sanitized.addAll(regular.take(remainingSpace));
-    } else {
-      // If we have TOO MANY protected events, we must keep at least most recent ones
-      // but strictly enforce the hard limit of _kEventCap for performance
-      return protected.take(_kEventCap).toList();
+        if (event.type == LifeEventType.negative) {
+          HapticFeedback.mediumImpact();
+        } else {
+          HapticFeedback.lightImpact();
+        }
+
+        if (event.priority == EventPriority.critical ||
+            event.type == LifeEventType.critical) {
+          _showCriticalFlashNotifier.value = true;
+          await Future.delayed(const Duration(milliseconds: 90));
+          _showCriticalFlashNotifier.value = false;
+        }
+      }
+
+      if (!_fastForward) {
+        await Future.delayed(const Duration(milliseconds: 70));
+      }
     }
 
-    return sanitized;
+    _characterNotifier.value = updatedCharacter;
+    await StorageService.saveCharacter(updatedCharacter);
+    _saveEvents();
+
+    if (updatedCharacter.isDead && mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => LegacyPage(character: updatedCharacter),
+        ),
+      );
+    }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
+  List<LifeEvent> _normalizeAgeUpEvents(AgeUpResult result) {
+    final events = List<LifeEvent>.from(result.events);
+
+    for (final feedback in result.personalityFeedback.reversed) {
+      events.insert(
+        0,
+        LifeEvent(
+          title: feedback,
+          description: 'Your personality shifted this year.',
+          type: LifeEventType.milestone,
+          metadata: {'age': result.character.age},
+        ),
+      );
+    }
+
+    if (events.isEmpty) {
+      events.add(
+        LifeEvent(
+          title: 'Age ${result.character.age}',
+          description: 'A quiet year passed in ${result.character.city}.',
+          type: LifeEventType.neutral,
+          metadata: {'age': result.character.age},
+        ),
+      );
+    }
+
+    return events;
+  }
+
+  void _runGameAction(GameAction action) {
+    _applyActionResult(
+      GameEngine.processAction(_characterNotifier.value, action),
+    );
+  }
+
+  void _runLifeAction(LifeAction action) {
+    _applyActionResult(action(_characterNotifier.value));
+  }
+
+  void _applyActionResult(ActionResult result) {
+    final currentVersion = _characterNotifier.value.stateVersion;
+    final updatedCharacter = result.character.copyWith(
+      stateVersion: result.character.stateVersion <= currentVersion
+          ? currentVersion + 1
+          : result.character.stateVersion,
+    );
+
+    final actionEvents = result.events.isEmpty
+        ? [
+            LifeEvent(
+              title: result.success ? 'Action complete' : 'Action failed',
+              description: result.message,
+              type: result.success
+                  ? LifeEventType.neutral
+                  : LifeEventType.negative,
+              metadata: {'age': updatedCharacter.age},
+            ),
+          ]
+        : result.events
+            .map((event) => LifeEvent.fromJson(event.toJson()))
+            .toList();
+
+    _characterNotifier.value = updatedCharacter;
+    _eventsNotifier.value = _sanitizeTimeline([
+      ...actionEvents,
+      ..._eventsNotifier.value,
+    ]);
+
+    HapticFeedback.lightImpact();
+    _scrollToLatest();
+    StorageService.saveCharacter(updatedCharacter);
+    _saveEvents();
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _scrollToLatest() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Future<LifeEvent?> _showDecisionPopup(EventChoice choice) async {
+    if (!mounted) return null;
+    return showDialog<LifeEvent>(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: false,
+      builder: (context) => _DecisionModal(
+        choice: choice,
+        onChosen: (isOptionA) {
+          final effect = isOptionA ? choice.effectA : choice.effectB;
+          final result = isOptionA ? choice.resultA : choice.resultB;
+          
+          // Apply effects to character
+          final current = _characterNotifier.value;
+          final updated = current.copyWith(
+            happiness: (current.happiness + effect.happiness).clamp(0, 100).toInt(),
+            health: (current.health + effect.health).clamp(0, 100).toInt(),
+            smarts: (current.smarts + effect.smarts).clamp(0, 100).toInt(),
+            social: (current.social + effect.social).clamp(0, 100).toInt(),
+            karma: (current.karma + effect.karma).clamp(0, 100).toInt(),
+            bankBalance: current.bankBalance + effect.money,
+          );
+          _characterNotifier.value = updated;
+          StorageService.saveCharacter(updated);
+
+          // Create result event
+          String statHint = '';
+          if (effect.happiness != 0) statHint += ' Happiness ${effect.happiness > 0 ? '+' : ''}${effect.happiness}';
+          if (effect.money != 0) statHint += ' Money ${effect.money > 0 ? '+' : ''}${effect.money.toInt()}';
+
+          Navigator.of(context).pop(LifeEvent(
+            title: isOptionA ? choice.optionA : choice.optionB,
+            description: result + (statHint.isNotEmpty ? ' ($statHint)' : ''),
+            type: effect.happiness >= 0 && effect.health >= 0 ? LifeEventType.positive : LifeEventType.negative,
+            metadata: {'age': current.age},
+          ));
+        },
       ),
     );
   }
 
-  void _handleEventTap(LifeEvent event) {
-    // Placeholder for decision events
+  List<LifeEvent> _sanitizeTimeline(List<LifeEvent> events) {
+    if (events.isEmpty) return _loadInitialEvents();
+    return List<LifeEvent>.from(events.take(_eventCap));
   }
+
+
 
   void _openProfileSheet() {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (_) => _ProfileSheet(
         character: _characterNotifier.value,
         onLegacyTap: () {
           Navigator.pop(context);
-          _navigateTo(page: LegacyPage(character: _characterNotifier.value));
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegacyPage(character: _characterNotifier.value),
+            ),
+          );
         },
         onNewLife: () async {
+          final navigator = Navigator.of(context);
           await StorageService.clearAll();
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              PageRouteBuilder(
-                pageBuilder: (c, a, s) => const CreateCharacterScreen(),
-                transitionDuration: AppMotion.modal,
-                transitionsBuilder: (c, a, s, child) =>
-                    FadeTransition(opacity: a, child: child),
-              ),
+            navigator.pushReplacement(
+              MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),
             );
           }
         },
@@ -370,339 +350,428 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _navigateTo({required Widget page}) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (c, a, s) => page,
-        transitionDuration: AppMotion.navigation,
-        transitionsBuilder: (c, a, s, child) => FadeTransition(
-          opacity: CurvedAnimation(parent: a, curve: AppMotion.appearCurve),
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.04, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: a, curve: AppMotion.navCurve)),
-            child: child,
-          ),
-        ),
-      ),
-    ).then((_) {
-      // Refresh character state when returning from any secondary screen
-      final saved = StorageService.loadCharacter();
-      if (mounted) {
-        _characterNotifier.value = saved;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Container(
-          color: Colors.black,
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Scaffold(
-              backgroundColor: AppColors.scaffoldBg,
-              body: Stack(
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Scaffold(
+          backgroundColor: AppColors.scaffoldBg,
+          body: Stack(
+            children: [
+              Column(
                 children: [
-                  // ── Tab body (IndexedStack keeps all tabs alive) ──
-                  IndexedStack(
-                    index: _currentTabIndex,
-                    children: [
-                      _buildLifeScreen(),
-                      ValueListenableBuilder<Character>(
-                        valueListenable: _characterNotifier,
-                        builder: (_, char, __) => CareerPage(
-                          character: char,
-                          isTab: true,
-                          onBack: () => setState(() => _currentTabIndex = 0),
-                        ),
-                      ),
-                      ValueListenableBuilder<Character>(
-                        valueListenable: _characterNotifier,
-                        builder: (_, char, __) => AssetsPage(
-                          character: char,
-                          isTab: true,
-                          onBack: () => setState(() => _currentTabIndex = 0),
-                        ),
-                      ),
-                      ValueListenableBuilder<Character>(
-                        valueListenable: _characterNotifier,
-                        builder: (_, char, __) => RelationsPage(
-                          character: char,
-                          isTab: true,
-                          onBack: () => setState(() => _currentTabIndex = 0),
-                        ),
-                      ),
-                      ValueListenableBuilder<Character>(
-                        valueListenable: _characterNotifier,
-                        builder: (_, char, __) => ActivitiesPage(
-                          character: char,
-                          isTab: true,
-                          onBack: () => setState(() => _currentTabIndex = 0),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Critical flash overlay — only on Life tab
-                  if (_currentTabIndex == 0)
-                    ValueListenableBuilder<bool>(
-                      valueListenable: _showCriticalFlashNotifier,
-                      builder: (context, show, _) => show
-                          ? Positioned.fill(
-                              child: IgnorePointer(
-                                child: Container(
-                                  color: Colors.red.withValues(alpha: 0.14),
+                  Expanded(
+                    child: ValueListenableBuilder<Character>(
+                      valueListenable: _characterNotifier,
+                      builder: (_, character, __) {
+                        return ValueListenableBuilder<List<LifeEvent>>(
+                          valueListenable: _eventsNotifier,
+                          builder: (_, events, __) {
+                            return ListView(
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              children: [
+                                  SafeArea(
+                                    bottom: false,
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: _openProfileSheet,
+                                      child: IdentityHeader(
+                                        name: character.name,
+                                        occupation: character.jobTitle,
+                                        balance: character.bankBalance,
+                                      ),
+                                    ),
+                                  ),
+                                _TimelineList(
+                                  events: events,
+                                  character: character,
                                 ),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
+                                const SizedBox(height: 200), // Space for bottom controls
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
-                  
-                  // Persistent Docked Bottom UI (Nav Bar + FAB)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: _buildDockedBottomUI(),
                   ),
                 ],
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// The Life (Root) Screen — fully scrollable with header, stats, module nav, timeline.
-  Widget _buildLifeScreen() {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        final scrolling = notification is! ScrollEndNotification;
-        if (scrolling != _isScrolling) {
-          setState(() => _isScrolling = scrolling);
-        }
-        return false;
-      },
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // 1. Header
-          SliverToBoxAdapter(
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 0),
+              ValueListenableBuilder<bool>(
+                valueListenable: _showCriticalFlashNotifier,
+                builder: (_, show, __) => show
+                    ? Positioned.fill(
+                        child: IgnorePointer(
+                          child: Container(
+                            color: AppColors.danger.withValues(alpha: 0.1),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: ValueListenableBuilder<Character>(
                   valueListenable: _characterNotifier,
-                  builder: (context, character, _) => HomeHeader(
-                    character: character,
-                    onAvatarTap: _openProfileSheet,
-                  ),
+                  builder: (_, character, __) {
+                    return _BottomLifeControls(
+                      character: character,
+                      onLife: _scrollToLatest,
+                      onActivities: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => ActivitiesPage(
+                              character: character,
+                              onGameAction: _runGameAction))),
+                      onCareer: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => CareerPage(
+                              character: character,
+                              onGameAction: _runGameAction,
+                              onLifeAction: _runLifeAction))),
+                      onFinance: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => FinancePage(
+                              character: character,
+                              onGameAction: _runGameAction))),
+                      onPeople: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => PeoplePage(
+                              character: character,
+                              onGameAction: _runGameAction))),
+                      onAge: _handleAgeUp,
+                      isAgingListenable: _isAgingNotifier,
+                    );
+                  },
                 ),
               ),
-            ),
+            ],
           ),
-
-          // 2. Goal Banner
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, 0),
-              child: ValueListenableBuilder<Character>(
-                valueListenable: _characterNotifier,
-                builder: (context, char, _) => _buildGoalBanner(char),
-              ),
-            ),
-          ),
-
-          // 3. Stats Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, 0),
-              child: ValueListenableBuilder<Character>(
-                valueListenable: _characterNotifier,
-                builder: (context, char, _) => PremiumStatsCard(
-                  character: char,
-                  statDeltas: _currentStatDeltas,
-                ),
-              ),
-            ),
-          ),
-
-          // 4. Timeline Header
-          SliverToBoxAdapter(child: TimelineSection.buildHeader()),
-
-          // 6. Timeline
-          ValueListenableBuilder<List<LifeEvent>>(
-            valueListenable: _eventsNotifier,
-            builder: (context, events, _) => TimelineSection(
-              events: events,
-              onEventTap: _handleEventTap,
-            ),
-          ),
-
-          // Bottom padding for persistent navigation bar
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 160),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGoalBanner(Character char) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s12,
-        vertical: AppSpacing.s8,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.12),
-          width: 1,
         ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.track_changes_rounded,
-            size: 13,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Text(
-              char.suggestedGoal,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Master Docked UI: Layers the Navigation Bar and the AgeButton FAB.
-  Widget _buildDockedBottomUI() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      child: SafeArea(
-        top: false,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.bottomCenter,
-          children: [
-            // Layer 1: The Navigation Bar
-            _buildBottomNav(),
-
-            // Layer 2: The Centered FAB (Docked)
-            Positioned(
-              // Refined for ~42% overlap (30px inside / 72px total)
-              bottom: 40,
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _isAgingNotifier,
-                builder: (context, bool isAging, _) => AgeButton(
-                  onTap: _handleAgeUp,
-                  isScrolling: _isScrolling || isAging,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    // Indices for: Career (1), Assets (2), [Space], Relations (3), Activities (4)
-    final barItems = [1, 2, -1, 3, 4];
-    final icons = {
-      1: Icons.school_rounded,
-      2: Icons.account_balance_wallet_rounded,
-      3: Icons.people_rounded,
-      4: Icons.sports_esports_rounded,
-    };
-    final gradients = {
-      1: AppColors.smartsGradient,
-      2: AppColors.happyGradient,
-      3: AppColors.primaryGradient,
-      4: AppColors.healthGradient,
-    };
-
-    return Container(
-      height: 70, 
-      padding: const EdgeInsets.only(top: 8), // Tighter top space
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05), // Ultra-soft shadow
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: barItems.map((idx) {
-          if (idx == -1) {
-            // Fixed Width Center Space for FAB + Spacing
-            return const SizedBox(width: 90);
-          }
-
-          final bool isActive = _currentTabIndex == idx;
-          final Color activeColor = gradients[idx]!.first;
-
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (_currentTabIndex != idx) {
-                  HapticFeedback.selectionClick();
-                  setState(() => _currentTabIndex = idx);
-                }
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  margin: const EdgeInsets.only(top: 4), // Refined lowered icons
-                  decoration: isActive 
-                    ? BoxDecoration(
-                        color: activeColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      )
-                    : null,
-                  child: Icon(
-                    icons[idx],
-                    size: 28,
-                    color: isActive ? activeColor : AppColors.textMuted.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }
 }
 
-// ──────────────────────────────────────────────────────────────────
+
+
+class _LifeStats extends StatelessWidget {
+  final Character character;
+
+  const _LifeStats({required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Column(
+        children: [
+          StatBar(emoji: '😊', label: 'Happiness', value: character.happiness, color: AppColors.happiness),
+          StatBar(emoji: '❤️', label: 'Health', value: character.health, color: AppColors.health),
+          StatBar(emoji: '🧠', label: 'Smarts', value: character.smarts, color: AppColors.smarts),
+          StatBar(emoji: '✨', label: 'Looks', value: character.social, color: AppColors.looks, isLast: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineList extends StatelessWidget {
+  final List<LifeEvent> events;
+  final Character character;
+
+  const _TimelineList({required this.events, required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    // Ensure we always have events to show
+    final displayEvents = events.isEmpty
+        ? [
+            LifeEvent(
+              title: 'Born',
+              description: '${character.name} was born in ${character.city}.',
+              type: LifeEventType.milestone,
+              metadata: {'age': 0},
+            )
+          ]
+        : events;
+
+    // Group events by age
+    final Map<int, List<LifeEvent>> groupedEvents = {};
+    final List<int> sortedAges = [];
+
+    for (final event in displayEvents) {
+      final age = event.metadata['age'] ?? 0;
+      if (!groupedEvents.containsKey(age)) {
+        groupedEvents[age] = [];
+        sortedAges.add(age);
+      }
+      groupedEvents[age]!.add(event);
+    }
+    
+    // Sort ages descending to match chronological reversed order (newest first)
+    sortedAges.sort((a, b) => b.compareTo(a));
+
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final age in sortedAges) ...[
+            _AgeGroupHeader(age: age),
+            for (final event in groupedEvents[age]!)
+              _TimelineRow(event: event),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AgeGroupHeader extends StatelessWidget {
+  final int age;
+  const _AgeGroupHeader({required this.age});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        'Age $age',
+        style: AppTextStyles.rowTitle.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelineRow extends StatelessWidget {
+  final LifeEvent event;
+
+  const _TimelineRow({required this.event});
+
+  static Color _dotColor(LifeEvent e) {
+    switch (e.type) {
+      case LifeEventType.positive:
+        return AppColors.success; // Green
+      case LifeEventType.negative:
+      case LifeEventType.critical:
+        return AppColors.danger; // Red
+      case LifeEventType.milestone:
+      case LifeEventType.rare:
+        return AppColors.smarts; // Blue (Special)
+      default:
+        return AppColors.textMuted; // Grey (Normal)
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final desc = cleanText(event.description);
+    final title = cleanText(event.title);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 2, 16, 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 5),
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(
+              color: _dotColor(event),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              desc.isNotEmpty ? desc : title,
+              style: AppTextStyles.rowSubtitle.copyWith(
+                fontSize: 10,
+                color: AppColors.textPrimary,
+                height: 1.2,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomLifeControls extends StatelessWidget {
+  final Character character;
+  final VoidCallback onLife;
+  final VoidCallback onActivities;
+  final VoidCallback onCareer;
+  final VoidCallback onFinance;
+  final VoidCallback onPeople;
+  final VoidCallback onAge;
+  final ValueListenable<bool> isAgingListenable;
+
+  const _BottomLifeControls({
+    required this.character,
+    required this.onLife,
+    required this.onActivities,
+    required this.onCareer,
+    required this.onFinance,
+    required this.onPeople,
+    required this.onAge,
+    required this.isAgingListenable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _LifeStats(character: character),
+          // Age Up button
+          ValueListenableBuilder<bool>(
+            valueListenable: isAgingListenable,
+            builder: (_, isAging, __) => _AgeUpButton(isAging: isAging, onTap: onAge),
+          ),
+          // Nav bar
+          SafeArea(
+            top: false,
+            child: Container(
+              height: 50,
+              color: Colors.white,
+              child: Row(
+                children: [
+                  _NavTab(icon: Icons.work_outline_rounded, label: 'Career', onTap: onCareer),
+                  _NavTab(icon: Icons.account_balance_wallet_outlined, label: 'Finance', onTap: onFinance),
+                  _NavTab(icon: Icons.touch_app_outlined, label: 'Activities', onTap: onActivities),
+                  _NavTab(icon: Icons.people_outline_rounded, label: 'People', onTap: onPeople),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AgeUpButton extends StatefulWidget {
+  final bool isAging;
+  final VoidCallback onTap;
+  const _AgeUpButton({required this.isAging, required this.onTap});
+
+  @override
+  State<_AgeUpButton> createState() => _AgeUpButtonState();
+}
+
+class _AgeUpButtonState extends State<_AgeUpButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) {
+        setState(() => _pressed = true);
+        HapticFeedback.lightImpact();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _pressed ? 0.98 : 1,
+        duration: AppMotion.tap,
+        child: Container(
+          height: 36,
+          margin: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+          decoration: BoxDecoration(
+            color: AppColors.success,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          alignment: Alignment.center,
+          child: widget.isAging
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2.0, color: Colors.white),
+                )
+              : Text(
+                  'AGE +',
+                  style: AppTextStyles.rowTitle.copyWith(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _NavTab({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label.toUpperCase(),
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 9,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileSheet extends StatelessWidget {
   final Character character;
   final VoidCallback onLegacyTap;
@@ -719,172 +788,39 @@ class _ProfileSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xxl),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s12),
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(AppRadius.full),
-              ),
-            ),
-          ),
-
-          // Profile Header Section
-          const SizedBox(height: AppSpacing.s12),
           Container(
-            padding: const EdgeInsets.all(AppSpacing.s24),
-            child: Row(
-              children: [
-                // Avatar
-                Hero(
-                  tag: 'avatar-profile',
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: AppColors.avatarRingGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          character.name[0].toUpperCase(),
-                          style: AppTextStyles.h1
-                              .copyWith(color: Colors.white, fontSize: 34),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(character.name,
-                          style: AppTextStyles.h2.copyWith(fontSize: 24)),
-                      const SizedBox(height: 2),
-                      Text(
-                        character.identityTitle,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySurface,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.full),
-                        ),
-                        child: Text(
-                          '${character.lifeStage.toUpperCase()} · ${character.city}',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.8,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.dividerLight,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-
-          const SizedBox(height: AppSpacing.s24),
-          Divider(color: AppColors.textMuted.withValues(alpha: 0.15), height: 1),
-
-          // Actions
-          _SheetAction(
-            icon: Icons.history_edu_rounded,
-            label: 'Legacy',
-            subtitle: 'View your life\'s final story',
-            iconColor: AppColors.primaryLight,
-            onTap: onLegacyTap,
-          ),
-          Divider(
-            color: AppColors.textMuted.withValues(alpha: 0.1),
-            height: 1,
-            indent: AppSpacing.s16 + 44 + AppSpacing.s16,
-          ),
-          _SheetAction(
-            icon: Icons.emoji_events_rounded,
-            label: 'Achievements',
-            subtitle: '${character.achievements.length} earned',
-            iconColor: const Color(0xFFF59E0B),
-            onTap: () => Navigator.pop(context),
-          ),
-          Divider(
-            color: AppColors.textMuted.withValues(alpha: 0.1),
-            height: 1,
-            indent: AppSpacing.s16 + 44 + AppSpacing.s16,
-          ),
-          _SheetAction(
-            icon: Icons.refresh_rounded,
-            label: 'New Life',
-            subtitle: 'Start a fresh journey',
-            iconColor: AppColors.alertRed,
-            onTap: () {
-              Navigator.pop(context);
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                  ),
-                  title: Text('Start New Life?', style: AppTextStyles.h3),
-                  content: Text(
-                    'This will erase your current progress permanently.',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'Cancel',
-                        style: AppTextStyles.label
-                            .copyWith(color: AppColors.textMuted),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: onNewLife,
-                      child: Text(
-                        'Yes, reset',
-                        style: AppTextStyles.label
-                            .copyWith(color: AppColors.alertRed),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          SizedBox(
-            height: MediaQuery.of(context).padding.bottom + AppSpacing.s16,
+          const SizedBox(height: 24),
+          Text(character.name, style: AppTextStyles.pageTitle),
+          Text('Born in ${character.city}', style: AppTextStyles.pageSubtitle),
+          const SizedBox(height: 24),
+          RowGroup(
+            rows: [
+              GameRow(
+                icon: Icons.history_edu_rounded,
+                title: 'Journal',
+                subtitle: 'View your life summary',
+                onTap: onLegacyTap,
+              ),
+              GameRow(
+                icon: Icons.restart_alt_rounded,
+                title: 'New Life',
+                subtitle: 'Start over from scratch',
+                onTap: onNewLife,
+              ),
+            ],
           ),
         ],
       ),
@@ -892,66 +828,75 @@ class _ProfileSheet extends StatelessWidget {
   }
 }
 
-class _SheetAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final Color iconColor;
-  final VoidCallback onTap;
 
-  const _SheetAction({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.iconColor,
-    required this.onTap,
-  });
+class _DecisionModal extends StatelessWidget {
+  final EventChoice choice;
+  final Function(bool) onChosen;
+
+  const _DecisionModal({required this.choice, required this.onChosen});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      backgroundColor: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16,
-          vertical: AppSpacing.s16,
-        ),
-        child: Row(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.medium),
-              ),
-              child: Center(
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
+            Text(
+              choice.title,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.pageTitle.copyWith(fontSize: 16),
             ),
-            const SizedBox(width: AppSpacing.s16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: AppTextStyles.bodyBold),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTextStyles.subtitle.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 12),
+            Text(
+              choice.description,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.rowSubtitle.copyWith(fontSize: 12),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textMuted,
-              size: 20,
+            const SizedBox(height: 24),
+            _DecisionButton(
+              label: choice.optionA,
+              onTap: () => onChosen(true),
+            ),
+            const SizedBox(height: 8),
+            _DecisionButton(
+              label: choice.optionB,
+              onTap: () => onChosen(false),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DecisionButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _DecisionButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFF2F2F7),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.rowTitle.copyWith(
+            color: AppColors.info,
+            fontSize: 13,
+          ),
         ),
       ),
     );

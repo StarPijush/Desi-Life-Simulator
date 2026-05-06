@@ -13,3 +13,9 @@ build/
 android/local.properties
 android/.gradle/
 android/captures/
+
+.agent/
+analyze_results.txt
+analyzer_output.txt
+graphify-out/
+scratch/

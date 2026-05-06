@@ -32,7 +32,11 @@ class Relationship {
   @HiveField(8)
   int rivalIntensity;
 
+  @HiveField(9)
+  final String id;
+
   Relationship({
+    required this.id,
     required this.name,
     required this.type,
     this.bond = 50,
@@ -45,6 +49,7 @@ class Relationship {
   });
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'name': name,
         'type': type,
         'bond': bond,
@@ -57,6 +62,7 @@ class Relationship {
       };
 
   factory Relationship.fromJson(Map<String, dynamic> json) => Relationship(
+        id: json['id'] as String? ?? 'rel_${DateTime.now().microsecondsSinceEpoch}',
         name: json['name'] as String,
         type: json['type'] as String,
         bond: json['bond'] as int? ?? 50,
@@ -66,5 +72,18 @@ class Relationship {
         isRival: json['isRival'] as bool? ?? false,
         rivalCareer: json['rivalCareer'] as String? ?? '',
         rivalIntensity: json['rivalIntensity'] as int? ?? 0,
+      );
+
+  Relationship clone() => Relationship(
+        id: id,
+        name: name,
+        type: type,
+        bond: bond,
+        age: age,
+        isAlive: isAlive,
+        initial: initial,
+        isRival: isRival,
+        rivalCareer: rivalCareer,
+        rivalIntensity: rivalIntensity,
       );
 }

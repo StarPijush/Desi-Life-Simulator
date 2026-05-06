@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// Manually maintained - updated to include job fields (71-73).
 
 part of 'character.dart';
 
@@ -32,15 +33,12 @@ class CharacterAdapter extends TypeAdapter<Character> {
       educationLevel: fields[12] as String,
       degree: fields[13] as String,
       totalEarned: fields[14] as double,
-      achievements: (fields[15] as List).cast<String>(),
       gender: fields[16] as String,
       annualIncome: fields[17] as double,
       annualExpenses: fields[18] as double,
       careerGroup: fields[19] as String,
       careerStep: fields[20] as int,
       yearsInRole: fields[21] as int,
-      ownedAssets: (fields[22] as List).cast<String>(),
-      relationships: (fields[23] as List).cast<Relationship>(),
       cibilScore: fields[24] as int,
       bankName: fields[25] as String,
       accountType: fields[26] as String,
@@ -50,40 +48,65 @@ class CharacterAdapter extends TypeAdapter<Character> {
       loanType: fields[30] as String,
       creditUsed: fields[31] as double,
       lastActivityAge: fields[32] as int,
-      stockPortfolio: (fields[33] as List)
-          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
-      cryptoPortfolio: (fields[34] as List)
-          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
-      bondPortfolio: (fields[35] as List)
-          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
-      marketPrices: (fields[36] as Map).cast<dynamic, dynamic>(),
-      eventChains: (fields[37] as Map).cast<String, int>(),
       momentumStreak: fields[38] as int,
       version: fields[39] as int,
       lastSavedAt: fields[40] as int,
       activeDominantTrait: fields[42] as String,
       lastTraitShiftAge: fields[43] as int,
       lastAutoDecisionAge: fields[44] as int,
-      personalityScores: (fields[41] as Map).cast<String, int>(),
       momentumState: fields[45] as String,
       identityPhase: fields[46] as String,
       phaseYearsStored: fields[47] as int,
-      hiddenModifiers: (fields[48] as Map).cast<String, double>(),
-      majorDecisions: (fields[49] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
       legacyPoints: fields[50] as int,
-      tensionSignals: (fields[51] as List).cast<String>(),
+      universityType: fields[52] as String,
+      isDroppedYear: fields[54] as bool,
+      stateVersion: fields[55] as int,
+      parentWealth: fields[56] as String,
+      parentEdu: fields[57] as String,
+      stressLevel: fields[58] as int,
+      prepLevel: fields[59] as int,
+      schoolType: fields[60] as String,
+      specialization: fields[61] as String,
+      studyConsistency: fields[62] as int,
+      discipline: fields[63] as int,
+      dropYearsCount: fields[64] as int,
+      lastDemotionAge: fields[65] as int,
+      hasCareerWarning: fields[66] as bool,
+      freelanceEffort: fields[67] as int,
+      achievements: (fields[15] as List?)?.cast<String>(),
+      ownedAssets: (fields[22] as List?)?.cast<String>(),
+      relationships: (fields[23] as List?)?.cast<Relationship>(),
+      stockPortfolio: (fields[33] as List?)
+          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      cryptoPortfolio: (fields[34] as List?)
+          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      bondPortfolio: (fields[35] as List?)
+          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      marketPrices: (fields[36] as Map?)?.cast<dynamic, dynamic>(),
+      eventChains: (fields[37] as Map?)?.cast<String, int>(),
+      personalityScores: (fields[41] as Map?)?.cast<String, int>(),
+      hiddenModifiers: (fields[48] as Map?)?.cast<String, double>(),
+      majorDecisions: (fields[49] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
+      tensionSignals: (fields[51] as List?)?.cast<String>(),
+      examResults: (fields[53] as Map?)?.cast<String, int>(),
+      unlockedActivityIds: (fields[68] as List?)?.cast<String>(),
+      unlockedCareerModuleIds: (fields[69] as List?)?.cast<String>(),
+      loans: (fields[70] as List?)?.cast<LoanModel>(),
+      jobPerformance: (fields[71] as num?)?.toDouble() ?? 50,
+      yearsInJob: fields[72] as int? ?? 0,
+      jobLevel: fields[73] as int? ?? 0,
     );
   }
 
   @override
   void write(BinaryWriter writer, Character obj) {
     writer
-      ..writeByte(52)
+      ..writeByte(74)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -187,7 +210,51 @@ class CharacterAdapter extends TypeAdapter<Character> {
       ..writeByte(50)
       ..write(obj.legacyPoints)
       ..writeByte(51)
-      ..write(obj.tensionSignals);
+      ..write(obj.tensionSignals)
+      ..writeByte(52)
+      ..write(obj.universityType)
+      ..writeByte(53)
+      ..write(obj.examResults)
+      ..writeByte(54)
+      ..write(obj.isDroppedYear)
+      ..writeByte(55)
+      ..write(obj.stateVersion)
+      ..writeByte(56)
+      ..write(obj.parentWealth)
+      ..writeByte(57)
+      ..write(obj.parentEdu)
+      ..writeByte(58)
+      ..write(obj.stressLevel)
+      ..writeByte(59)
+      ..write(obj.prepLevel)
+      ..writeByte(60)
+      ..write(obj.schoolType)
+      ..writeByte(61)
+      ..write(obj.specialization)
+      ..writeByte(62)
+      ..write(obj.studyConsistency)
+      ..writeByte(63)
+      ..write(obj.discipline)
+      ..writeByte(64)
+      ..write(obj.dropYearsCount)
+      ..writeByte(65)
+      ..write(obj.lastDemotionAge)
+      ..writeByte(66)
+      ..write(obj.hasCareerWarning)
+      ..writeByte(67)
+      ..write(obj.freelanceEffort)
+      ..writeByte(68)
+      ..write(obj.unlockedActivityIds)
+      ..writeByte(69)
+      ..write(obj.unlockedCareerModuleIds)
+      ..writeByte(70)
+      ..write(obj.loans)
+      ..writeByte(71)
+      ..write(obj.jobPerformance)
+      ..writeByte(72)
+      ..write(obj.yearsInJob)
+      ..writeByte(73)
+      ..write(obj.jobLevel);
   }
 
   @override
