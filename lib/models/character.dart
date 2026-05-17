@@ -251,6 +251,124 @@ class Character extends HiveObject {
   @HiveField(78)
   int looks; // 0-100: Physical appearance stat
 
+  @HiveField(79)
+  Map<String, bool> memories; // Narrative flags for consequence chaining
+
+  @HiveField(80)
+  Map<String, int> eventHistory; // title -> age triggered for deduplication
+
+  Character({
+    required this.name,
+    this.age = 0,
+    required this.city,
+    this.bankBalance = 0,
+    this.jobTitle = 'Unemployed',
+    this.happiness = 50,
+    this.health = 50,
+    this.smarts = 50,
+    this.social = 50,
+    this.karma = 50,
+    this.isDead = false,
+    this.personality = 'Kind',
+    this.educationLevel = 'None',
+    this.degree = 'None',
+    this.totalEarned = 0,
+    List<String> achievements = const [],
+    required this.gender,
+    this.annualIncome = 0,
+    this.annualExpenses = 0,
+    this.careerGroup = 'None',
+    this.careerStep = 0,
+    this.yearsInRole = 0,
+    List<String> ownedAssets = const [],
+    List<Relationship> relationships = const [],
+    this.cibilScore = 750,
+    this.bankName = 'None',
+    this.accountType = 'None',
+    this.savingsBalance = 0,
+    this.loanAmount = 0,
+    this.hasCreditCard = false,
+    this.loanType = 'None',
+    this.creditUsed = 0,
+    this.lastActivityAge = -1,
+    List<Map<dynamic, dynamic>> stockPortfolio = const [],
+    List<Map<dynamic, dynamic>> cryptoPortfolio = const [],
+    List<Map<dynamic, dynamic>> bondPortfolio = const [],
+    Map<dynamic, dynamic> marketPrices = const {},
+    Map<String, int> eventChains = const {},
+    this.momentumStreak = 0,
+    this.version = kCurrentSaveVersion,
+    this.lastSavedAt = 0,
+    Map<String, int> personalityScores = const {
+      'Smart': 50,
+      'Kind': 50,
+      'Lazy': 50,
+      'Aggressive': 50,
+      'Lucky': 50,
+      'Risk-taker': 50,
+      'Emotional': 50,
+      'Logical': 50,
+      'Disciplined': 50,
+    },
+    this.activeDominantTrait = 'Kind',
+    this.lastTraitShiftAge = 0,
+    this.lastAutoDecisionAge = -1,
+    this.momentumState = 'Steady',
+    this.identityPhase = 'Common Soul',
+    this.phaseYearsStored = 0,
+    Map<String, double> hiddenModifiers = const {},
+    List<Map<String, dynamic>> majorDecisions = const [],
+    this.legacyPoints = 0,
+    List<String> tensionSignals = const [],
+    this.universityType = 'None',
+    Map<String, int> examResults = const {},
+    this.isDroppedYear = false,
+    this.stateVersion = 0,
+    this.parentWealth = 'Mid',
+    this.parentEdu = 'Basic',
+    this.stressLevel = 30,
+    this.prepLevel = 0,
+    this.schoolType = 'None',
+    this.specialization = 'None',
+    this.studyConsistency = 50,
+    this.discipline = 50,
+    this.dropYearsCount = 0,
+    this.lastDemotionAge = -1,
+    this.hasCareerWarning = false,
+    this.freelanceEffort = 0,
+    List<String> unlockedActivityIds = const [],
+    List<String> unlockedCareerModuleIds = const [],
+    List<LoanModel> loans = const [],
+    this.jobPerformance = 50,
+    this.yearsInJob = 0,
+    this.jobLevel = 0,
+    this.reputation = 50,
+    this.fame = 0,
+    this.ambition = 50,
+    this.financialIntelligence = 50,
+    this.looks = 50,
+    Map<String, bool> memories = const {},
+    Map<String, int> eventHistory = const {},
+  }) : 
+    achievements = List<String>.from(achievements),
+    ownedAssets = List<String>.from(ownedAssets),
+    relationships = List<Relationship>.from(relationships),
+    stockPortfolio = List<Map<dynamic, dynamic>>.from(stockPortfolio),
+    cryptoPortfolio = List<Map<dynamic, dynamic>>.from(cryptoPortfolio),
+    bondPortfolio = List<Map<dynamic, dynamic>>.from(bondPortfolio),
+    marketPrices = Map<dynamic, dynamic>.from(marketPrices),
+    eventChains = Map<String, int>.from(eventChains),
+    personalityScores = Map<String, int>.from(personalityScores),
+    hiddenModifiers = Map<String, double>.from(hiddenModifiers),
+    majorDecisions = List<Map<String, dynamic>>.from(majorDecisions),
+    tensionSignals = List<String>.from(tensionSignals),
+    examResults = Map<String, int>.from(examResults),
+    unlockedActivityIds = List<String>.from(unlockedActivityIds),
+    unlockedCareerModuleIds = List<String>.from(unlockedCareerModuleIds),
+    loans = List<LoanModel>.from(loans),
+    memories = Map<String, bool>.from(memories),
+    eventHistory = Map<String, int>.from(eventHistory);
+
   String get dominantTrait {
     if (personalityScores.isEmpty) return personality;
     String top = personality;
@@ -378,137 +496,6 @@ class Character extends HiveObject {
     return "Goal: THRIVE IN LIFE";
   }
 
-  Character({
-    required this.name,
-    required this.age,
-    required this.city,
-    this.bankBalance = 5000.0,
-    this.jobTitle = 'Student',
-    this.happiness = 70,
-    this.health = 80,
-    this.smarts = 60,
-    this.social = 65,
-    this.karma = 50,
-    this.isDead = false,
-    this.personality = 'Balanced',
-    this.educationLevel = 'None',
-    this.degree = 'None',
-    this.totalEarned = 0,
-    this.gender = 'Male',
-    this.annualIncome = 0,
-    this.annualExpenses = 36000,
-    this.careerGroup = 'None',
-    this.careerStep = 0,
-    this.yearsInRole = 0,
-    this.cibilScore = 650,
-    this.bankName = '',
-    this.accountType = '',
-    this.savingsBalance = 0.0,
-    this.loanAmount = 0.0,
-    this.hasCreditCard = false,
-    this.loanType = 'None',
-    this.creditUsed = 0.0,
-    this.lastActivityAge = -1,
-    this.momentumStreak = 0,
-    this.version = kCurrentSaveVersion,
-    this.lastSavedAt = 0,
-    this.activeDominantTrait = 'Balanced',
-    this.lastTraitShiftAge = -1,
-    this.lastAutoDecisionAge = -1,
-    this.momentumState = 'Steady',
-    this.identityPhase = 'The Beginning',
-    this.phaseYearsStored = 0,
-    this.legacyPoints = 0,
-    this.universityType = 'None',
-    this.isDroppedYear = false,
-    this.stateVersion = 0,
-    this.parentWealth = 'Mid',
-    this.parentEdu = 'Basic',
-    this.stressLevel = 20,
-    this.prepLevel = 0,
-    this.schoolType = 'None',
-    this.specialization = 'None',
-    this.studyConsistency = 50,
-    this.discipline = 50,
-    this.dropYearsCount = 0,
-    this.lastDemotionAge = -1,
-    this.hasCareerWarning = false,
-    this.freelanceEffort = 0,
-    this.jobPerformance = 50,
-    this.yearsInJob = 0,
-    this.jobLevel = 0,
-    this.reputation = 50,
-    this.fame = 0,
-    this.ambition = 50,
-    this.financialIntelligence = 30,
-    this.looks = 50,
-    List<String>? unlockedActivityIds,
-    List<String>? unlockedCareerModuleIds,
-    List<String>? achievements,
-    List<String>? ownedAssets,
-    List<Relationship>? relationships,
-    List<Map<dynamic, dynamic>>? stockPortfolio,
-    List<Map<dynamic, dynamic>>? cryptoPortfolio,
-    List<Map<dynamic, dynamic>>? bondPortfolio,
-    Map<dynamic, dynamic>? marketPrices,
-    Map<String, int>? eventChains,
-    Map<String, int>? personalityScores,
-    Map<String, double>? hiddenModifiers,
-    List<Map<String, dynamic>>? majorDecisions,
-    List<String>? tensionSignals,
-    Map<String, int>? examResults,
-    List<LoanModel>? loans,
-  })  : achievements = List<String>.from(achievements ?? [], growable: true),
-        ownedAssets = List<String>.from(ownedAssets ?? [], growable: true),
-        relationships =
-            (relationships ?? []).map((r) => r.clone()).toList(growable: true),
-        stockPortfolio = (stockPortfolio ?? [])
-            .map((m) => Map<dynamic, dynamic>.from(m))
-            .toList(growable: true),
-        cryptoPortfolio = (cryptoPortfolio ?? [])
-            .map((m) => Map<dynamic, dynamic>.from(m))
-            .toList(growable: true),
-        bondPortfolio = (bondPortfolio ?? [])
-            .map((m) => Map<dynamic, dynamic>.from(m))
-            .toList(growable: true),
-        marketPrices = Map<dynamic, dynamic>.from(marketPrices ?? {}),
-        eventChains = Map<String, int>.from(eventChains ?? {}),
-        personalityScores = Map<String, int>.from(personalityScores ??
-            {
-              'Disciplined': 30,
-              'Lazy': 30,
-              'Aggressive': 30,
-              'Kind': 30,
-              'Emotional': 30,
-              'Logical': 30,
-              'Risk-taker': 30,
-            }),
-        hiddenModifiers = Map<String, double>.from(hiddenModifiers ?? {}),
-        majorDecisions = (majorDecisions ?? [])
-            .map((m) => Map<String, dynamic>.from(m))
-            .toList(growable: true),
-        tensionSignals =
-            List<String>.from(tensionSignals ?? [], growable: true),
-        examResults = Map<String, int>.from(examResults ?? {}),
-        unlockedActivityIds =
-            List<String>.from(unlockedActivityIds ?? [], growable: true),
-        unlockedCareerModuleIds =
-            List<String>.from(unlockedCareerModuleIds ?? [], growable: true),
-        loans = (loans ?? []).map((l) => l.clone()).toList(growable: true) {
-    // Initialize primary personality if scores are default
-    if (this.personalityScores.values.every((v) => v == 30)) {
-      final Map<String, int> scores =
-          Map<String, int>.from(this.personalityScores);
-      if (scores.containsKey(personality)) {
-        scores[personality] = 70;
-      } else {
-        scores['Logical'] = 70; // Fallback
-      }
-      this.personalityScores = scores;
-      activeDominantTrait = personality;
-    }
-  }
-
   /// Part of robust save system: Default Safe Character
   factory Character.defaultCharacter() => Character(
         name: 'New Soul',
@@ -520,6 +507,7 @@ class Character extends HiveObject {
         smarts: 50,
         social: 50,
         karma: 50,
+        gender: 'Male',
       );
 
   int _clamp(int value) => value.clamp(0, 100);
@@ -531,17 +519,40 @@ class Character extends HiveObject {
     int socialDelta = 0,
     int karmaDelta = 0,
     int stressDelta = 0,
+    int reputationDelta = 0,
+    double jobPerformanceDelta = 0,
     double moneyDelta = 0,
   }) {
+    // ── REPUTATION VOLATILITY DAMPENING & SOCIAL RECOVERY ─────────────────
+    int adjustedReputationDelta = reputationDelta;
+    if (reputationDelta < 0) {
+      // High reputation is harder to instantly destroy (soft scaling shielding)
+      final double shield = 1.0 - (reputation / 150.0).clamp(0.0, 0.7);
+      adjustedReputationDelta = (reputationDelta * shield).round();
+    } else if (reputationDelta > 0) {
+      // Social recovery is encouraged and boosted when reputation is low
+      if (reputation < 40) {
+        adjustedReputationDelta = (reputationDelta * 1.5).round();
+      }
+    }
+
     happiness = _clamp(happiness + happinessDelta);
     health = _clamp(health + healthDelta);
     smarts = _clamp(smarts + smartsDelta);
     social = _clamp(social + socialDelta);
     karma = _clamp(karma + karmaDelta);
     stressLevel = _clamp(stressLevel + stressDelta);
+    reputation = _clamp(reputation + adjustedReputationDelta);
+    jobPerformance = (jobPerformance + jobPerformanceDelta).clamp(0, 100).toDouble();
     bankBalance = (bankBalance + moneyDelta).clamp(0, double.infinity);
     if (moneyDelta > 0) totalEarned += moneyDelta;
     if (health <= 0) isDead = true;
+  }
+
+  String get lifestyleTier {
+    if (bankBalance > 5000000) return 'Upper';
+    if (bankBalance > 500000) return 'Middle';
+    return 'Lower';
   }
 
   void shiftPersonality(String trait, int delta) {
@@ -712,6 +723,97 @@ class Character extends HiveObject {
 
   double get creditMinDue => creditUsed * 0.05;
 
+  /// True net worth: cash + savings + investments + assets − debts
+  double get totalNetWorth {
+    double total = bankBalance + savingsBalance;
+
+    // Stock portfolio — use saved market price if available, else purchase price
+    for (final item in stockPortfolio) {
+      final name = item['name'] as String? ?? '';
+      final qty = (item['qty'] as num?)?.toDouble() ??
+          (item['quantity'] as num?)?.toDouble() ?? 0;
+      final currentPrice =
+          (marketPrices[name] as num?)?.toDouble() ??
+          (item['price'] as num?)?.toDouble() ??
+          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+      total += currentPrice * qty;
+    }
+
+    // Crypto portfolio
+    for (final item in cryptoPortfolio) {
+      final name = item['name'] as String? ?? '';
+      final qty = (item['qty'] as num?)?.toDouble() ??
+          (item['quantity'] as num?)?.toDouble() ?? 0;
+      final currentPrice =
+          (marketPrices[name] as num?)?.toDouble() ??
+          (item['price'] as num?)?.toDouble() ??
+          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+      total += currentPrice * qty;
+    }
+
+    // Bond portfolio
+    for (final item in bondPortfolio) {
+      final qty = (item['qty'] as num?)?.toDouble() ??
+          (item['quantity'] as num?)?.toDouble() ?? 0;
+      final price = (item['price'] as num?)?.toDouble() ??
+          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+      total += price * qty;
+    }
+
+    // Owned real assets — engine stores current value as 'asset_<id>'
+    for (final assetId in ownedAssets) {
+      final savedVal =
+          (marketPrices['asset_$assetId'] as num?)?.toDouble();
+      if (savedVal != null && savedVal > 0) total += savedVal;
+    }
+
+    // Subtract all active loans
+    double totalDebt = loans.fold(0.0, (sum, l) => sum + l.remainingAmount);
+    // Fallback: legacy single-loan field
+    if (loans.isEmpty && loanAmount > 0) totalDebt += loanAmount;
+    // Credit card balance
+    totalDebt += creditUsed;
+
+    return (total - totalDebt).clamp(0.0, double.infinity);
+  }
+
+  /// Financial health score (0–100) — debt ratio + savings ratio + investment diversity
+  int get financialHealthScore {
+    double score = 0;
+
+    // 1. Savings ratio (30 pts): savings vs annual expenses
+    if (annualExpenses > 0) {
+      final ratio = savingsBalance / (annualExpenses * 3).clamp(1, double.infinity);
+      score += (ratio * 30).clamp(0, 30);
+    }
+
+    // 2. Debt ratio (30 pts): low debt = high score
+    final totalDebt = loans.fold(0.0, (s, l) => s + l.remainingAmount) +
+        (loans.isEmpty ? loanAmount : 0) + creditUsed;
+    final income = annualIncome > 0 ? annualIncome : 1;
+    final debtRatio = totalDebt / income;
+    if (debtRatio <= 0) {
+      score += 30;
+    } else {
+      score += (30 - (debtRatio * 6).clamp(0, 30));
+    }
+
+    // 3. Investment diversity (20 pts)
+    int investments = 0;
+    if (stockPortfolio.isNotEmpty) investments++;
+    if (cryptoPortfolio.isNotEmpty) investments++;
+    if (bondPortfolio.isNotEmpty) investments++;
+    score += investments * 7;
+
+    // 4. Cash flow positive (20 pts)
+    final cashFlow = annualIncome - annualExpenses;
+    if (cashFlow > 0) {
+      score += (cashFlow / annualExpenses * 20).clamp(0, 20);
+    }
+
+    return score.clamp(0, 100).toInt();
+  }
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'age': age,
@@ -864,6 +966,8 @@ class Character extends HiveObject {
         loans: (json['loans'] as List? ?? [])
             .map((l) => LoanModel.fromJson(l as Map<String, dynamic>))
             .toList(growable: true),
+        memories: Map<String, bool>.from(json['memories'] as Map? ?? {}),
+        looks: json['looks'] as int? ?? 50,
       );
 
   Character copyWith({
@@ -940,6 +1044,8 @@ class Character extends HiveObject {
     List<Map<String, dynamic>>? majorDecisions,
     List<String>? tensionSignals,
     List<LoanModel>? loans,
+    Map<String, bool>? memories,
+    int? looks,
   }) =>
       Character(
         name: name ?? this.name,
@@ -1036,5 +1142,7 @@ class Character extends HiveObject {
             growable: true),
         loans:
             (loans ?? this.loans).map((l) => l.clone()).toList(growable: true),
+        memories: Map<String, bool>.from(memories ?? this.memories),
+        looks: looks ?? this.looks,
       );
 }

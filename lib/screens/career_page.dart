@@ -1,11 +1,13 @@
 // lib/screens/career_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/character.dart';
 import '../core/engine.dart';
 import '../core/design_system.dart';
 import '../core/career_data.dart';
 import '../core/institute_data.dart';
+import 'exam_quiz_page.dart';
 
 typedef LifeAction = ActionResult Function(Character character);
 
@@ -38,6 +40,7 @@ class CareerPage extends StatelessWidget {
                 icon: Text(character.annualIncome > 0 ? '💼' : '🏫', style: const TextStyle(fontSize: 24)),
                 title: character.annualIncome > 0 ? character.jobTitle : 'Student',
                 subtitle: character.annualIncome > 0 ? character.careerGroup : 'Studying at School',
+                isPrestige: character.annualIncome > 0 && (character.fame > 70 || character.bankBalance > 5000000 || character.jobTitle.contains('CEO') || character.jobTitle.contains('Director') || character.jobTitle.contains('Cricketer') || character.jobTitle.contains('Actor') || character.jobTitle.contains('Politician') || character.jobTitle.contains('Special')),
                 onTap: () {},
               ),
               if (character.annualIncome > 0 || character.age >= 5)
@@ -195,12 +198,9 @@ class _JobsListScreen extends StatelessWidget {
             ),
           ),
           
-          _buildPartTimeRow(context, '🍔', 'Fast Food Worker', '\$15/hr • Age 14+', 14),
-          _buildPartTimeRow(context, '📦', 'Delivery Boy', '\$12/hr • Age 16+', 16),
-          _buildPartTimeRow(context, '🛒', 'Shop Assistant', '\$14/hr • Age 15+', 15),
-          _buildPartTimeRow(context, '☕', 'Cafe Worker', '\$16/hr • Age 16+', 16),
-          _buildPartTimeRow(context, '🐕', 'Dog Walker', '\$10/hr • Age 12+', 12),
-          _buildPartTimeRow(context, '📰', 'Paper Route', '\$8/hr • Age 10+', 10),
+          ...CareerData.allJobs.where((j) => j.tier == CareerTier.partTime).map((job) => 
+            _buildPartTimeRow(context, job.emoji, job.title, '₹${GameEngine.formatMoney(job.startingSalary)}/yr • Age ${job.eduReq == "None" ? 14 : 16}+', 14)
+          ),
 
           Padding(
             padding: const EdgeInsets.all(16),
@@ -329,54 +329,25 @@ class _JobsListScreen extends StatelessWidget {
   }
 
   Widget _buildFullTimeJobs(BuildContext context) {
-    final medGroup = CareerSystem.allGroups.firstWhere((g) => g.name == 'Medical');
-    final medLocked = !CareerSystem.canEnter(medGroup, character);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'JOBS',
-                    style: GoogleFonts.lexend(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF181C1F),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF005228),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'LVL ${character.age}',
-                      style: GoogleFonts.lexend(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF2ECC71),
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFFFFFFFF),
+      appBar: _buildAppBar(
+        context, 
+        'FULL-TIME JOBS', 
+        trailing: GestureDetector(
+          onTap: () {},
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8EEFF),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'REFRESH',
+              style: GoogleFonts.lexend(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF10B981),
               ),
             ),
           ),
@@ -387,179 +358,96 @@ class _JobsListScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 16),
 
-          _buildSectionHeader('ENTRY LEVEL'),
+          _buildSectionHeader('COMPETITIVE EXAMS'),
           _FlatRowGroup(
             rows: [
               _FlatRow(
-                icon: const Text('🧑‍💼', style: TextStyle(fontSize: 24)),
-                title: 'Office Assistant',
-                subtitle: '\$30,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Office Assistant',
-                    emoji: '🧑‍💼',
-                    salary: 30000,
-                    stressLevel: 'Low',
-                    workHours: 40,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::Business',
-                  ),
-                )),
+                icon: const Text('🏛️', style: TextStyle(fontSize: 24)),
+                title: 'UPSC/Civil Services',
+                subtitle: character.memories.containsKey('passed_UPSC') ? 'Cleared' : 'Requires Preparation',
+                onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.exam::UPSC'})),
               ),
               _FlatRow(
-                icon: const Text('📦', style: TextStyle(fontSize: 24)),
-                title: 'Delivery Driver',
-                subtitle: '\$25,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Delivery Driver',
-                    emoji: '📦',
-                    salary: 25000,
-                    stressLevel: 'Low',
-                    workHours: 40,
-                    promotionChance: 'High',
-                    actionId: 'career.apply_group::Business',
-                  ),
-                )),
+                icon: const Text('🏦', style: TextStyle(fontSize: 24)),
+                title: 'Bank PO Exam',
+                subtitle: character.memories.containsKey('passed_BankPO') ? 'Cleared' : 'Requires Preparation',
+                onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.exam::BankPO'})),
               ),
             ],
           ),
 
-          const SizedBox(height: 8),
-          _buildSectionHeader('CORPORATE'),
-          _FlatRowGroup(
-            rows: [
-              _FlatRow(
-                icon: const Text('💼', style: TextStyle(fontSize: 24)),
-                title: 'Junior Analyst',
-                subtitle: '\$55,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Junior Analyst',
-                    emoji: '💼',
-                    salary: 55000,
-                    stressLevel: 'High',
-                    workHours: 50,
-                    promotionChance: 'High',
-                    actionId: 'career.apply_group::Corporate',
-                  ),
-                )),
-              ),
-              _FlatRow(
-                icon: const Text('👔', style: TextStyle(fontSize: 24)),
-                title: 'HR Assistant',
-                subtitle: '\$48,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'HR Assistant',
-                    emoji: '👔',
-                    salary: 48000,
-                    stressLevel: 'Low',
-                    workHours: 40,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::Government',
-                  ),
-                )),
-              ),
-            ],
-          ),
+          ...Industry.values.map((industry) {
+            final industryJobs = CareerData.allJobs.where((j) => j.industry == industry && j.tier != CareerTier.partTime && j.tier != CareerTier.freelance).toList();
+            if (industryJobs.isEmpty) return const SizedBox.shrink();
+            
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                _buildSectionHeader(industry.name.toUpperCase()),
+                _FlatRowGroup(
+                  rows: industryJobs.map((job) {
+                    bool locked = false;
+                    String lockSubtitle = '₹${GameEngine.formatMoney(job.startingSalary)}/year';
 
-          const SizedBox(height: 8),
-          _buildSectionHeader('TECH'),
-          _FlatRowGroup(
-            rows: [
-              _FlatRow(
-                icon: const Text('💻', style: TextStyle(fontSize: 24)),
-                title: 'Junior Developer',
-                subtitle: '\$65,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Junior Developer',
-                    emoji: '💻',
-                    salary: 65000,
-                    stressLevel: 'Low',
-                    workHours: 40,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::Tech',
-                  ),
-                )),
-              ),
-              _FlatRow(
-                icon: const Text('🖥️', style: TextStyle(fontSize: 24)),
-                title: 'IT Support',
-                subtitle: '\$50,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'IT Support',
-                    emoji: '🖥️',
-                    salary: 50000,
-                    stressLevel: 'Moderate',
-                    workHours: 40,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::Tech',
-                  ),
-                )),
-              ),
-            ],
-          ),
+                    if (job.smartsReq > character.smarts) {
+                      locked = true;
+                    }
+                    final eduLevels = ['None', 'Primary', 'Secondary', 'Higher Secondary', 'Undergraduate', 'Graduate', 'Postgraduate'];
+                    final charEduIdx = eduLevels.indexOf(character.educationLevel);
+                    final reqEduIdx = eduLevels.indexOf(job.eduReq);
+                    if (reqEduIdx > charEduIdx) locked = true;
 
-          const SizedBox(height: 8),
-          _buildSectionHeader('HEALTHCARE'),
-          _FlatRowGroup(
-            rows: [
-              _FlatRow(
-                icon: const Text('🏥', style: TextStyle(fontSize: 24)),
-                title: 'Nursing Assistant',
-                subtitle: '\$40,000/year',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Nursing Assistant',
-                    emoji: '🏥',
-                    salary: 40000,
-                    stressLevel: 'High',
-                    workHours: 50,
-                    promotionChance: 'High',
-                    actionId: 'career.apply_group::Medical',
-                  ),
-                )),
-              ),
-              _FlatRow(
-                icon: const Text('🩺', style: TextStyle(fontSize: 24)),
-                title: 'Surgeon (Locked)',
-                subtitle: 'Requires Medical School',
-                locked: medLocked,
-                titleStyle: medLocked ? GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF5C5E62)) : null,
-                subtitleStyle: medLocked ? GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w400, color: const Color(0xFFBA1A1A)) : null,
-                onTap: medLocked ? () {} : () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: 'Surgeon',
-                    emoji: '🩺',
-                    salary: 200000,
-                    stressLevel: 'Extreme',
-                    workHours: 70,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::Medical',
-                  ),
-                )),
-              ),
-            ],
-          ),
+                    if (locked && job.lockReason != null) {
+                      lockSubtitle = '🔒 ${job.lockReason}';
+                    } else if (locked) {
+                      lockSubtitle = '🔒 Requires more experience';
+                    }
+
+                    if (job.examReq != null && !character.memories.containsKey('passed_${job.examReq}')) {
+                      locked = true;
+                      lockSubtitle = '🔒 ${job.lockReason ?? "Requires ${job.examReq} clearance"}';
+                    }
+                    
+                    if (job.specializationReq != null) {
+                      final spec = job.specializationReq!;
+                      final hasSpec = character.specialization == spec ||
+                          character.degree.toLowerCase().contains(spec.toLowerCase()) ||
+                          character.memories.containsKey('track_${spec.toLowerCase()}') ||
+                          character.memories.containsKey('cleared_$spec');
+                      if (!hasSpec) {
+                        locked = true;
+                        lockSubtitle = '🔒 ${job.lockReason ?? "Requires $spec specialization"}';
+                      }
+                    }
+
+                    return _FlatRow(
+                      icon: Text(job.emoji, style: const TextStyle(fontSize: 24)),
+                      title: job.title,
+                      subtitle: lockSubtitle,
+                      locked: locked,
+                      subtitleStyle: locked
+                          ? GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFFDC2626))
+                          : null,
+                      onTap: locked ? () {} : () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => _JobDetailScreen(
+                          character: character,
+                          onGameAction: onGameAction,
+                          jobTitle: job.title,
+                          emoji: job.emoji,
+                          salary: job.startingSalary,
+                          stressLevel: job.stressLevel > 70 ? 'Extreme' : job.stressLevel > 40 ? 'High' : 'Low',
+                          workHours: 40,
+                          promotionChance: 'Moderate',
+                          actionId: 'career.apply::${job.title}',
+                        ),
+                      )),
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          }),
 
           // Metric Bars (Simulation aesthetic)
           Container(
@@ -666,7 +554,7 @@ class _JobDetailScreen extends StatelessWidget {
               ),
               _FlatRow(
                 icon: const Text('💰', style: TextStyle(fontSize: 24)),
-                title: '\$${GameEngine.formatMoney(salary)}/year',
+                title: '₹${GameEngine.formatMoney(salary)}/year',
                 subtitle: 'Salary',
                 titleStyle: GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF161C28)),
                 subtitleStyle: GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF5C5E62)),
@@ -720,7 +608,7 @@ class _JobDetailScreen extends StatelessWidget {
                 subtitle: 'Learn more about the role',
                 titleStyle: GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF161C28)),
                 subtitleStyle: GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF5C5E62)),
-                onTap: () {},
+                onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.research_company'})),
               ),
               _FlatRow(
                 icon: const Text('🔙', style: TextStyle(fontSize: 20)),
@@ -739,9 +627,9 @@ class _JobDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: [
-                _buildJobMetricBarDetailed('Performance', 80, const Color(0xFF2ECC71)),
+                _buildJobMetricBarDetailed('Performance', character.jobPerformance.toInt(), const Color(0xFF2ECC71)),
                 const SizedBox(height: 16),
-                _buildJobMetricBarDetailed('Stress', 15, const Color(0xFFFF9875)),
+                _buildJobMetricBarDetailed('Stress', character.stressLevel, const Color(0xFFFF9875)),
               ],
             ),
           ),
@@ -818,6 +706,7 @@ class _SpecialFlatRowState extends State<_SpecialFlatRow> {
       onTapDown: widget.locked ? null : (_) => setState(() => _pressed = true),
       onTapUp: widget.locked ? null : (_) {
         setState(() => _pressed = false);
+        HapticFeedback.selectionClick();
         widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),
@@ -845,15 +734,23 @@ class _SpecialFlatRowState extends State<_SpecialFlatRow> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.title,
-                      style: GoogleFonts.lexend(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF5C5E62),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Text(
+                          widget.title,
+                          style: GoogleFonts.lexend(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: widget.locked ? const Color(0xFF5C5E62) : const Color(0xFFB58A3D),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (!widget.locked) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.stars, color: Color(0xFFFFD700), size: 18),
+                        ],
+                      ],
                     ),
                     Text(
                       widget.subtitle,
@@ -871,7 +768,7 @@ class _SpecialFlatRowState extends State<_SpecialFlatRow> {
               if (widget.locked)
                 const Icon(Icons.lock, color: Color(0xFF6C7B6D), size: 24)
               else
-                const Icon(Icons.chevron_right, color: Color(0xFF6C7B6D), size: 24),
+                const Icon(Icons.chevron_right, color: Color(0xFFFFD700), size: 24),
             ],
           ),
         ),
@@ -1076,11 +973,21 @@ class _EducationListScreen extends StatelessWidget {
           _buildSectionHeader('OPTIONS'),
           _FlatRowGroup(
             rows: [
-              _FlatRow(icon: const Text('🎭', style: TextStyle(fontSize: 24)), title: 'School Activities', onTap: () {}),
-              _FlatRow(icon: const Text('📝', style: TextStyle(fontSize: 24)), title: 'Exams', onTap: () {}),
-              _FlatRow(icon: const Text('💰', style: TextStyle(fontSize: 24)), title: 'Scholarships', onTap: () {}),
-              _FlatRow(icon: const Text('🏛️', style: TextStyle(fontSize: 24)), title: 'Libraries', onTap: () {}),
-              _FlatRow(icon: const Text('👨‍🏫', style: TextStyle(fontSize: 24)), title: 'Tutors', onTap: () {}),
+              _FlatRow(icon: const Text('🎭', style: TextStyle(fontSize: 24)), title: 'School Activities', onTap: () => onGameAction(const GameAction('activity.perform', {'activityId': 'Socialize'}))),
+              _FlatRow(
+                icon: const Text('📝', style: TextStyle(fontSize: 24)),
+                title: 'Exams',
+                subtitle: 'Take entrance exam (JEE / NEET)',
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ExamQuizPage(
+                    character: character,
+                    onGameAction: onGameAction,
+                  ),
+                )),
+              ),
+              _FlatRow(icon: const Text('💰', style: TextStyle(fontSize: 24)), title: 'Scholarships', subtitle: 'Check eligibility', onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.study_hard'}))),
+              _FlatRow(icon: const Text('🏛️', style: TextStyle(fontSize: 24)), title: 'Libraries', subtitle: 'Study session', onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.study_hard'}))),
+              _FlatRow(icon: const Text('👨‍🏫', style: TextStyle(fontSize: 24)), title: 'Tutors', subtitle: 'Boost prep level', onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.prepare_exams'}))),
             ],
           ),
 
@@ -1106,6 +1013,58 @@ class _EducationListScreen extends StatelessWidget {
               ),
             ],
           ),
+          // --- COMPETITIVE EXAMS (Graduate+) ---
+          if (character.educationLevel == 'Graduate' || character.educationLevel == 'Postgraduate') ...[  
+            _buildSectionHeader('COMPETITIVE EXAMS'),
+            _FlatRowGroup(
+              rows: [
+                _FlatRow(
+                  icon: const Text('\ud83c\udfdb\ufe0f', style: TextStyle(fontSize: 24)),
+                  title: character.memories.containsKey('passed_UPSC') ? '\u2705 UPSC Cleared' : 'Prepare UPSC',
+                  subtitle: character.memories.containsKey('passed_UPSC')
+                      ? 'IAS/IPS/IFS unlocked'
+                      : 'Prep: ${character.prepLevel}% \u2022 Need 30%+',
+                  locked: character.memories.containsKey('passed_UPSC'),
+                  onTap: character.memories.containsKey('passed_UPSC') ? () {} :
+                    () => onGameAction(const GameAction('career.perform', {'actionId': 'career.prepare_upsc'})),
+                ),
+                if (!character.memories.containsKey('passed_UPSC'))
+                  _FlatRow(
+                    icon: const Text('\ud83d\udcdd', style: TextStyle(fontSize: 24)),
+                    title: 'Attempt UPSC',
+                    subtitle: 'Very low pass rate \u2022 High preparation needed',
+                    onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.take_upsc'})),
+                  ),
+                _FlatRow(
+                  icon: const Text('\ud83d\udccb', style: TextStyle(fontSize: 24)),
+                  title: character.memories.containsKey('passed_SSC') ? '\u2705 SSC Cleared' : 'Prepare SSC',
+                  subtitle: character.memories.containsKey('passed_SSC')
+                      ? 'Government clerk/officer posts unlocked'
+                      : 'Stable government job \u2022 Moderate difficulty',
+                  locked: character.memories.containsKey('passed_SSC'),
+                  onTap: character.memories.containsKey('passed_SSC') ? () {} :
+                    () => onGameAction(const GameAction('career.perform', {'actionId': 'career.prepare_ssc'})),
+                ),
+                if (!character.memories.containsKey('passed_SSC'))
+                  _FlatRow(
+                    icon: const Text('\u270f\ufe0f', style: TextStyle(fontSize: 24)),
+                    title: 'Attempt SSC',
+                    subtitle: 'Prep: ${character.prepLevel}% \u2022 Need 20%+',
+                    onTap: () => onGameAction(const GameAction('career.perform', {'actionId': 'career.take_ssc'})),
+                  ),
+                _FlatRow(
+                  icon: const Text('\ud83c\udfe6', style: TextStyle(fontSize: 24)),
+                  title: character.memories.containsKey('passed_BankPO') ? '\u2705 Bank PO Cleared' : 'Attempt Bank PO',
+                  subtitle: character.memories.containsKey('passed_BankPO')
+                      ? 'Bank PO/RBI posts unlocked'
+                      : 'Good salary \u2022 Respectable government role',
+                  locked: character.memories.containsKey('passed_BankPO'),
+                  onTap: character.memories.containsKey('passed_BankPO') ? () {} :
+                    () => onGameAction(const GameAction('career.perform', {'actionId': 'career.take_bank_po'})),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 40),
         ],
       ),
@@ -1264,7 +1223,10 @@ PreferredSizeWidget _buildAppBar(BuildContext context, String title, {Widget? tr
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.of(context).pop();
+                },
                 child: const Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
               ),
               const SizedBox(width: 16),
@@ -1429,6 +1391,7 @@ class _FlatRow extends StatefulWidget {
   final String title;
   final String? subtitle;
   final bool locked;
+  final bool isPrestige;
 
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
@@ -1439,6 +1402,7 @@ class _FlatRow extends StatefulWidget {
     required this.title,
     this.subtitle,
     this.locked = false,
+    this.isPrestige = false,
 
     this.titleStyle,
     this.subtitleStyle,
@@ -1458,6 +1422,7 @@ class _FlatRowState extends State<_FlatRow> {
       onTapDown: widget.locked ? null : (_) => setState(() => _pressed = true),
       onTapUp: widget.locked ? null : (_) {
         setState(() => _pressed = false);
+        HapticFeedback.selectionClick();
         widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),
@@ -1482,15 +1447,25 @@ class _FlatRowState extends State<_FlatRow> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.title,
-                      style: widget.titleStyle ?? GoogleFonts.lexend(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF181C1F),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.title,
+                            style: widget.titleStyle ?? GoogleFonts.lexend(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: widget.isPrestige ? const Color(0xFFB58A3D) : const Color(0xFF181C1F),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (widget.isPrestige) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.stars, color: Color(0xFFFFD700), size: 18),
+                        ],
+                      ],
                     ),
                     if (widget.subtitle != null)
                       Text(
@@ -1506,7 +1481,7 @@ class _FlatRowState extends State<_FlatRow> {
                   ],
                 ),
               ),
-              Icon(widget.locked ? Icons.lock : Icons.chevron_right, color: const Color(0xFFD4D4D8), size: 24),
+              Icon(widget.locked ? Icons.lock : Icons.chevron_right, color: widget.isPrestige ? const Color(0xFFFFD700) : const Color(0xFFD4D4D8), size: 24),
             ],
           ),
         ),

@@ -1,5 +1,6 @@
 // lib/screens/people_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/design_system.dart';
 import '../core/engine.dart';
@@ -33,7 +34,10 @@ class PeoplePage extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
                     child: const Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
                   ),
                   const SizedBox(width: 16),
@@ -225,7 +229,10 @@ class _FriendsListScreen extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
                     child: const Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
                   ),
                   const SizedBox(width: 16),

@@ -203,8 +203,21 @@ class StorageService {
 
   /// Clear all data
   static Future<void> clearAll() async {
-    await _characterBox?.clear();
-    await _eventsBox?.clear();
+    try {
+      await _characterBox?.clear();
+    } catch (e) {
+      print("⚠️ Error clearing character box: $e");
+    }
+    try {
+      await _backupBox?.clear();
+    } catch (e) {
+      print("⚠️ Error clearing backup box: $e");
+    }
+    try {
+      await _eventsBox?.clear();
+    } catch (e) {
+      print("⚠️ Error clearing events box: $e");
+    }
   }
 
   /// Close boxes (call on app dispose)

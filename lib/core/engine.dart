@@ -1141,7 +1141,7 @@ class CareerSystem {
     assignCareer(c, newGroup);
     c.smarts = (c.smarts - 5).clamp(0, 100);
     c.happiness = (c.happiness + 10).clamp(0, 100);
-    return 'Career switch: you joined ${newGroup.name} as ${newGroup.steps.first.title}. Salary: Rs ${GameEngine.formatMoney(newGroup.steps.first.annualSalary)}/yr.';
+    return 'Career switch: you joined ${newGroup.name} as ${newGroup.steps.first.title}. Salary: ${GameEngine.formatMoney(newGroup.steps.first.annualSalary)}/yr.';
   }
 
   static String? tryPromotion(Character c, Random rng) {
@@ -1217,9 +1217,9 @@ class CareerSystem {
     }
 
     if (c.careerStep == group.steps.length - 1) {
-      return 'Pinnacle reached: you are now ${nextStep.title}. Salary: Rs ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
+      return 'Pinnacle reached: you are now ${nextStep.title}. Salary: ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
     }
-    return 'Promoted: you are now ${nextStep.title}. New salary: Rs ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
+    return 'Promoted: you are now ${nextStep.title}. New salary: ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
   }
 
   static String? tryDemotion(Character c, Random rng) {
@@ -1454,16 +1454,17 @@ class GameEngine {
     final cached = _moneyCache[n];
     if (cached != null) return cached;
 
-    final String result;
+    final String val;
     if (n >= 10000000) {
-      result = '${(n / 10000000).toStringAsFixed(1)}Cr';
+      val = '${(n / 10000000).toStringAsFixed(1)}Cr';
     } else if (n >= 100000) {
-      result = '${(n / 100000).toStringAsFixed(1)}L';
+      val = '${(n / 100000).toStringAsFixed(1)}L';
     } else if (n >= 1000) {
-      result = '${(n / 1000).toStringAsFixed(0)}K';
+      val = '${(n / 1000).toStringAsFixed(0)}K';
     } else {
-      result = n.toStringAsFixed(0);
+      val = n.toStringAsFixed(0);
     }
+    final result = '₹$val';
 
     // Evict oldest entries to bound cache size
     if (_moneyCache.length >= _moneyCacheMax) {
@@ -1494,20 +1495,66 @@ class GameEngine {
     Character character,
     List<LifeEvent> events,
   ) {
-    final guaranteed = events
-        .map((event) => LifeEvent.fromJson(event.toJson()))
-        .toList(growable: true);
-
-    if (guaranteed.isEmpty) {
-      guaranteed.add(LifeEvent(
-        title: 'A quiet year passes...',
-        description: 'You focus on your routine. Nothing major happened.',
-        type: LifeEventType.neutral,
-        metadata: {'age': character.age, 'source': 'age_up_fallback'},
-      ));
+    if (events.isEmpty) {
+      return [
+        LifeEvent(
+          title: 'A quiet year passes...',
+          description: 'You focus on your routine. Nothing major happened.',
+          type: LifeEventType.neutral,
+          metadata: {'age': character.age, 'source': 'age_up_fallback'},
+        )
+      ];
     }
 
-    return guaranteed;
+    // 1. Score events based on priority
+    final scoredEvents = events.map((e) {
+      int score = 0;
+      switch (e.priority) {
+        case EventPriority.critical:
+          score = 4;
+          break;
+        case EventPriority.rare:
+          score = 3;
+          break;
+        case EventPriority.important:
+          score = 2;
+          break;
+        case EventPriority.normal:
+          score = 1;
+          break;
+      }
+      return MapEntry(e, score);
+    }).toList();
+
+    // 2. Sort by score descending
+    scoredEvents.sort((a, b) => b.value.compareTo(a.value));
+
+    // 3. Select Dominant Event
+    final dominant = scoredEvents.first.key;
+
+    // 4. Filter secondary events (Max 2)
+    final List<LifeEvent> result = [dominant];
+    final secondaryCandidates = scoredEvents.skip(1).map((e) => e.key).toList();
+    
+    int added = 0;
+    for (var e in secondaryCandidates) {
+      if (added >= 2) break;
+      
+      // Suppress lower-tier events if stronger events exist
+      bool allowed = true;
+      if (dominant.priority == EventPriority.critical || dominant.priority == EventPriority.rare) {
+        if (e.priority == EventPriority.normal) {
+          allowed = false; // Suppress normal events if we have a critical/rare focus
+        }
+      }
+      
+      if (allowed) {
+        result.add(e);
+        added++;
+      }
+    }
+
+    return result;
   }
 
   // ── Identity title cache — key is a fingerprint of the relevant stats
@@ -1602,7 +1649,8 @@ class GameEngine {
       personality: personality,
       age: 0,
     );
-    char.relationships.addAll(_generateFamily(char.city));
+    // Ensure relationship list is a regular mutable List, not a HiveList.
+    char.relationships = List<Relationship>.from(_generateFamily(char.city));
     return char;
   }
 
@@ -1856,7 +1904,7 @@ class GameEngine {
     char.bankBalance -= amount;
     char.savingsBalance += amount;
     return ActionResult(
-        message: 'Deposited Rs ${formatMoney(amount)} into savings.',
+        message: 'Deposited ${formatMoney(amount)} into savings.',
         character: char);
   }
 
@@ -1868,7 +1916,7 @@ class GameEngine {
     char.savingsBalance -= amount;
     char.bankBalance += amount;
     return ActionResult(
-        message: 'Withdrew Rs ${formatMoney(amount)} from savings.',
+        message: 'Withdrew ${formatMoney(amount)} from savings.',
         character: char);
   }
 
@@ -1893,7 +1941,7 @@ class GameEngine {
     char.bankBalance -= actualPay;
     char.creditUsed -= actualPay;
     return ActionResult(
-        message: 'Repaid Rs ${formatMoney(actualPay)} on your credit card.',
+        message: 'Repaid ${formatMoney(actualPay)} on your credit card.',
         character: char);
   }
 
@@ -1909,7 +1957,7 @@ class GameEngine {
     char.loans.add(loan);
     char.bankBalance += amount;
     return ActionResult(
-        message: 'Student loan of Rs ${formatMoney(amount)} approved!',
+        message: 'Student loan of ${formatMoney(amount)} approved!',
         character: char);
   }
 
@@ -1925,7 +1973,7 @@ class GameEngine {
     char.loans.add(loan);
     char.bankBalance += amount;
     return ActionResult(
-        message: 'Personal loan of Rs ${formatMoney(amount)} approved!',
+        message: 'Personal loan of ${formatMoney(amount)} approved!',
         character: char);
   }
 
@@ -1941,7 +1989,7 @@ class GameEngine {
     char.loans.add(loan);
     char.bankBalance += amount;
     return ActionResult(
-        message: 'Home loan of Rs ${formatMoney(amount)} approved!',
+        message: 'Home loan of ${formatMoney(amount)} approved!',
         character: char);
   }
 
@@ -1966,7 +2014,7 @@ class GameEngine {
     loan.remainingAmount -= actualPay;
     if (loan.remainingAmount <= 0) char.loans.remove(loan);
     return ActionResult(
-        message: 'Repaid Rs ${formatMoney(actualPay)} towards your loan.',
+        message: 'Repaid ${formatMoney(actualPay)} towards your loan.',
         character: char);
   }
 
@@ -1975,7 +2023,7 @@ class GameEngine {
     if (char.karma > 60 && _rng.nextDouble() < 0.7) {
       char.bankBalance += 10000;
       return ActionResult(
-          message: 'Your parents gave you Rs 10,000 for your savings!',
+          message: 'Your parents gave you ₹10,000 for your savings!',
           character: char);
     }
     return ActionResult(
@@ -2008,26 +2056,41 @@ class GameEngine {
     relation = char.relationships[relationIndex];
     String msg = '';
     bool success = true;
+    // Personality Multipliers
+    double bondMult = 1.0;
+    if (relation.personality == 'Supportive') bondMult = 1.5;
+    if (relation.personality == 'Strict') bondMult = 0.7;
+    if (relation.personality == 'Toxic') bondMult = 0.5;
+
     switch (interactionType) {
       case 'Talk':
-        relation.bond = (relation.bond + 5).clamp(0, 100);
-        msg = 'You had a nice conversation with ${relation.name}.';
+        relation.bond = (relation.bond + (5 * bondMult).round()).clamp(0, 100);
+        msg = 'You had a conversation with ${relation.name}.';
+        if (relation.personality == 'Strict') msg += " They seemed a bit uninterested.";
+        if (relation.personality == 'Caring') msg += " They listened intently.";
         break;
       case 'Spend Time':
-        relation.bond = (relation.bond + 10).clamp(0, 100);
+        relation.bond = (relation.bond + (10 * bondMult).round()).clamp(0, 100);
         char.updateStats(happinessDelta: 5);
-        msg = 'You spent some quality time with ${relation.name}.';
+        msg = 'You spent some time with ${relation.name}.';
+        if (relation.personality == 'Toxic') {
+          msg = 'You spent time with ${relation.name}, but they spent the whole time complaining.';
+          char.updateStats(happinessDelta: -5);
+        }
         break;
       case 'Give Gift':
-        double cost = relation.type == 'Partner' ? 5000 : 2000;
+        double cost = (relation.type == 'Partner') ? 5000 : 2000;
         if (char.bankBalance < cost) {
           msg = 'Not enough money for a gift.';
           success = false;
         } else {
           char.bankBalance -= cost;
-          relation.bond = (relation.bond + 15).clamp(0, 100);
+          double giftMult = bondMult;
+          if (relation.personality == 'Jealous') giftMult = 0.5; // Harder to please
+          relation.bond = (relation.bond + (15 * giftMult).round()).clamp(0, 100);
           char.updateStats(happinessDelta: 5);
-          msg = 'You gave a gift to ${relation.name}. They loved it!';
+          msg = 'You gave a gift to ${relation.name}.';
+          if (relation.personality == 'Jealous') msg += " They liked it, but mentioned someone else got a better one.";
         }
         break;
       case 'Go on Date':
@@ -2036,9 +2099,10 @@ class GameEngine {
           success = false;
         } else {
           char.bankBalance -= 3000;
-          relation.bond = (relation.bond + 20).clamp(0, 100);
+          relation.bond = (relation.bond + (20 * bondMult).round()).clamp(0, 100);
           char.updateStats(happinessDelta: 15);
-          msg = 'You had a wonderful date with ${relation.name}.';
+          msg = 'You had a date with ${relation.name}.';
+          if (relation.personality == 'Ambitious') msg += " They spent most of the time talking about their career.";
         }
         break;
       case 'Argue':
@@ -2051,7 +2115,7 @@ class GameEngine {
           double amount = relation.type == 'Partner' ? 2000 : 5000;
           char.bankBalance += amount;
           relation.bond -= 10;
-          msg = '${relation.name} lent you Rs ${formatMoney(amount)}.';
+          msg = '${relation.name} lent you ${formatMoney(amount)}.';
         } else {
           relation.bond -= 5;
           msg = '${relation.name} refused to lend you money.';
@@ -2113,6 +2177,7 @@ class GameEngine {
     if (character.annualIncome > 0 && character.careerGroup != 'None') {
       character.yearsInJob += 1;
     }
+    character.memories.remove('prepped_this_year');
 
     // HARD SYNC: Recalculate all unlocks based on new age/stats
     _syncUnlocks(character);
@@ -2175,19 +2240,28 @@ class GameEngine {
     }
 
     // ── NARRATIVE & SMART EVENTS ───────────────────────────────────────────
-    final narrativeCount = (events.isEmpty) ? (_rng.nextInt(2) + 2) : 1;
+    // Clean Flow: Ensure life feels focused. 1-2 events per year + contextual additions
+    int narrativeCount = _rng.nextInt(2) + 1; 
+    if (character.social > 70) narrativeCount += 1; // Socially active people get more drama
+    if (character.reputation < 30) narrativeCount += 1; // Infamous people get more gossip
+
     final smartPool = _pickSmartEvents(character, count: narrativeCount);
 
     if (smartPool.isEmpty && events.isEmpty) {
-      _addEvent(events, character.age, 'A quiet year passes...',
-          description: 'Nothing significant happened this year.',
-          type: LifeEventType.neutral);
+      final reflection = _getQuietReflection(character);
+      _addEvent(events, character.age, reflection['title']!,
+          description: reflection['desc']!,
+          type: LifeEventType.neutral,
+          priority: EventPriority.normal);
     } else {
       events.addAll(smartPool);
     }
 
     // ── AUTO-DECISIONS (Consequences of Neglect) ────────────────────────────
     _applyAutoDecisions(character, events);
+
+    // ── CONSEQUENCE CHAINS (Drama & Memories) ───────────────────────────────
+    _applyConsequenceDrama(character, events);
 
     if (_rng.nextInt(_rareEventFrequency) == 0) {
       final rareEvent = _triggerRareEvent(character, newAchievements);
@@ -2259,7 +2333,7 @@ class GameEngine {
     // ── NEW ENGAGEMENT SYSTEMS ──
     _updateRivals(character, events, personalityFeedback);
     _processRegrets(character, events, personalityFeedback);
-    _generateTensionSignals(character);
+    _generateTensionSignals(character, events);
 
     if (character.isDead) {
       final guaranteedEvents = _guaranteeAgeUpEvents(character, events);
@@ -2794,7 +2868,7 @@ class GameEngine {
         c.bankBalance -= fee;
         _addEvent(events, c.age, '🏧 BANK SERVICE FEE',
             description:
-                '${c.bankName} deducted a yearly maintenance fee of ₹${formatMoney(fee)}.',
+                '${c.bankName} deducted a yearly maintenance fee of ${formatMoney(fee)}.',
             type: LifeEventType.negative);
       }
     }
@@ -2811,7 +2885,7 @@ class GameEngine {
           c.age,
           'Performance bonus',
           description:
-              'Strong performance earned you a bonus of Rs ${formatMoney(highPerformanceBonus)}.',
+              'Strong performance earned you a bonus of ${formatMoney(highPerformanceBonus)}.',
           type: LifeEventType.positive,
         );
       }
@@ -3141,7 +3215,7 @@ class GameEngine {
         double hit = c.bankBalance * (_rng.nextDouble() * 0.10 + 0.05); // 5-15%
         c.bankBalance -= hit;
         _addEvent(events, c.age, '🚑 UNEXPECTED EMERGENCY!',
-            description: 'A medical issue cost you ₹${formatMoney(hit)}.',
+            description: 'A medical issue cost you ${formatMoney(hit)}.',
             type: LifeEventType.negative,
             priority: EventPriority.important);
       }
@@ -3151,7 +3225,7 @@ class GameEngine {
     if (c.age % 5 == 0 || (totalIncome - totalPayable) < -50000) {
       _addEvent(events, c.age, '💸 Financial Update',
           description:
-              'Total Income: ₹${formatMoney(totalIncome)} | Expenses: ₹${formatMoney(totalPayable)}',
+              'Total Income: ${formatMoney(totalIncome)} | Expenses: ${formatMoney(totalPayable)}',
           type: (totalIncome - totalPayable >= 0)
               ? LifeEventType.neutral
               : LifeEventType.negative);
@@ -3165,7 +3239,29 @@ class GameEngine {
     for (var rel in c.relationships) {
       if (!rel.isAlive) continue;
       rel.age += 1;
-      rel.bond = (rel.bond - _rng.nextInt(3)).clamp(0, 100);
+
+      // Personality-driven Bond Logic
+      int decay = _rng.nextInt(3);
+      if (rel.personality == 'Toxic') decay += 2;
+      if (rel.personality == 'Strict' && c.happiness < 40) decay += 2;
+      if (rel.personality == 'Jealous' && c.annualIncome > 500000) decay += 3;
+      if (rel.personality == 'Supportive') decay = _rng.nextInt(2); // Lower decay
+
+      rel.bond = (rel.bond - decay).clamp(0, 100);
+
+      // Random Supportive Boost
+      if (rel.personality == 'Supportive' && _rng.nextDouble() < 0.1) {
+        rel.bond = (rel.bond + 5).clamp(0, 100);
+      }
+
+      // Toxic/Jealous Drama Triggers
+      if (rel.personality == 'Toxic' && _rng.nextDouble() < 0.05) {
+        _addEvent(events, c.age, '🎭 Toxic Interaction',
+            description: '${rel.name} made a hurtful comment about your lifestyle.',
+            type: LifeEventType.negative);
+        c.happiness = (c.happiness - 10).clamp(0, 100);
+      }
+
       if (rel.bond < 15 && rel.type == 'Partner') {
         toRemove.add(rel);
         _addEvent(events, c.age, '😭 BREAKUP!',
@@ -3204,17 +3300,25 @@ class GameEngine {
       });
     }
 
+    // Narrative persistence: Memory Flags
+    final flag = choseA ? choice.memoryFlagA : choice.memoryFlagB;
+    if (flag != null) {
+      final newMemories = Map<String, bool>.from(character.memories);
+      newMemories[flag] = true;
+      character.memories = newMemories;
+    }
+
     // Logic for Regret System: Record High-Impact Decisions
     if ((effect.happiness.abs() > 15 || effect.karma.abs() > 10) &&
         character.age >= 13) {
-      character.majorDecisions =
-          List<Map<String, dynamic>>.from(character.majorDecisions)
-            ..add({
+      final newDecisions = List<Map<String, dynamic>>.from(character.majorDecisions);
+      newDecisions.add({
               'age': character.age,
               'choice': choseA ? choice.optionA : choice.optionB,
               'regretPotential':
                   (effect.happiness < 0 || effect.karma < 0) ? 70 : 15,
             });
+      character.majorDecisions = newDecisions;
     }
 
     return ActionResult(
@@ -3330,7 +3434,7 @@ class GameEngine {
       _updateProgression(c, hints, ambition: 5, reputation: 5);
       return ActionResult(
         message:
-            'You joined ${group.name} as ${group.steps.first.title}. Salary: Rs ${formatMoney(group.steps.first.annualSalary)}/yr.',
+            'You joined ${group.name} as ${group.steps.first.title}. Salary: ${formatMoney(group.steps.first.annualSalary)}/yr.',
         character: c,
         progressionHints: hints,
       );
@@ -3418,7 +3522,7 @@ class GameEngine {
       _updateProgression(c, hints, ambition: 5, reputation: 5);
       return ActionResult(
         message:
-            'Hired: you got the ${group.steps.first.title} role for Rs ${formatMoney(group.steps.first.annualSalary)}/yr.',
+            'Hired: you got the ${group.steps.first.title} role for ${formatMoney(group.steps.first.annualSalary)}/yr.',
         character: c,
         progressionHints: hints,
       );
@@ -3432,6 +3536,28 @@ class GameEngine {
         orElse: () => InstituteData.topInstitutes.first,
       );
       return enrollInInstitute(c, inst);
+    }
+
+    const examMultiplierPrefix = 'career.take_exam_with_multiplier::';
+    if (actionId.startsWith(examMultiplierPrefix)) {
+      if (!hasHigherSecondary) {
+        return ActionResult(
+          message: 'You can only take entrance exams after Higher Secondary.',
+          character: c,
+          success: false,
+        );
+      }
+      final multiplierStr = actionId.substring(examMultiplierPrefix.length);
+      final multiplier = double.tryParse(multiplierStr) ?? 1.0;
+      String examType = 'JEE';
+      if (c.specialization == 'PCB') {
+        examType = 'NEET';
+      } else if (c.memories.containsKey('track_commerce')) {
+        examType = 'CA Foundation';
+      } else if (c.memories.containsKey('track_arts')) {
+        examType = 'CLAT';
+      }
+      return takeEntranceExam(c, examType, multiplier: multiplier);
     }
 
     switch (actionId) {
@@ -3583,8 +3709,83 @@ class GameEngine {
             success: false,
           );
         }
-        final examType = c.specialization == 'PCB' ? 'NEET' : 'JEE';
-        return takeEntranceExam(c, examType, multiplier: 1.0);
+        String ceExamType = 'JEE';
+        if (c.memories.containsKey('track_pcb')) ceExamType = 'NEET';
+        else if (c.memories.containsKey('track_commerce')) ceExamType = 'CA Foundation';
+        else if (c.memories.containsKey('track_arts')) ceExamType = 'CLAT';
+        return takeEntranceExam(c, ceExamType, multiplier: 1.0);
+
+      case 'career.prepare_upsc':
+        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
+          return ActionResult(message: '❌ UPSC requires a graduation degree first.', character: c, success: false);
+        }
+        if (c.memories.containsKey('prepped_this_year')) {
+          return ActionResult(message: '❌ You have already done focused preparation this year. Age up to process the year.', character: c, success: false);
+        }
+        c.prepLevel = (c.prepLevel + 10).clamp(0, 100);
+        c.smarts = (c.smarts + 2).clamp(0, 100);
+        c.stressLevel = (c.stressLevel + 10).clamp(0, 100);
+        c.happiness = (c.happiness - 5).clamp(0, 100);
+        c.memories['upsc_prep'] = true;
+        c.memories['prepped_this_year'] = true;
+        return ActionResult(message: '📚 You dedicated this year entirely to UPSC prep. You isolated yourself in coaching libraries. Your social life faded during preparation.', character: c);
+
+      case 'career.take_upsc':
+        if (!c.memories.containsKey('upsc_prep') || c.prepLevel < 30) {
+          return ActionResult(message: '❌ You need dedicated UPSC preparation (Prep level 30+) before attempting.', character: c, success: false);
+        }
+        final upscScore = (c.smarts * 0.5 + c.prepLevel * 0.4 + c.discipline * 0.1);
+        
+        c.examResults['pending_UPSC'] = upscScore.toInt();
+        c.memories['attempted_UPSC'] = true; // For tracking
+        
+        return ActionResult(
+          message: '📝 You have appeared for the UPSC Civil Services Examination. The results will be declared in the next year. The agonizing wait begins.',
+          character: c,
+          success: true,
+        );
+
+      case 'career.prepare_ssc':
+        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
+          return ActionResult(message: '❌ SSC requires graduation.', character: c, success: false);
+        }
+        if (c.memories.containsKey('prepped_this_year')) {
+          return ActionResult(message: '❌ You have already done focused preparation this year. Age up to process the year.', character: c, success: false);
+        }
+        c.prepLevel = (c.prepLevel + 12).clamp(0, 100);
+        c.smarts = (c.smarts + 1).clamp(0, 100);
+        c.stressLevel = (c.stressLevel + 6).clamp(0, 100);
+        c.memories['ssc_prep'] = true;
+        c.memories['prepped_this_year'] = true;
+        return ActionResult(message: '📖 You dedicated this year to SSC preparation. You spent hours solving mock tests and analyzing cutoffs.', character: c);
+
+      case 'career.take_ssc':
+        if (!c.memories.containsKey('ssc_prep') || c.prepLevel < 20) {
+          return ActionResult(message: '❌ More preparation needed for SSC (Prep 20+ required).', character: c, success: false);
+        }
+        final sscScore = (c.smarts * 0.5 + c.prepLevel * 0.5);
+        
+        c.examResults['pending_SSC'] = sscScore.toInt();
+        
+        return ActionResult(
+          message: '📝 You have appeared for the SSC exam. The results will be declared in the next year.',
+          character: c,
+          success: true,
+        );
+
+      case 'career.take_bank_po':
+        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
+          return ActionResult(message: '❌ Bank PO requires graduation.', character: c, success: false);
+        }
+        final bankScore = (c.smarts * 0.5 + c.prepLevel * 0.4 + c.social * 0.1);
+        
+        c.examResults['pending_BankPO'] = bankScore.toInt();
+        
+        return ActionResult(
+          message: '📝 You have appeared for the Bank PO exam. The results will be declared in the next year.',
+          character: c,
+          success: true,
+        );
 
       case 'career.apply_jobs':
         if (c.age < 18) {
@@ -3613,7 +3814,7 @@ class GameEngine {
         c.happiness = (c.happiness + 8).clamp(0, 100);
         return ActionResult(
           message:
-              'Job offer: you joined ${group.name} as ${group.steps.first.title}. Salary: Rs ${formatMoney(group.steps.first.annualSalary)}/yr.',
+              'Job offer: you joined ${group.name} as ${group.steps.first.title}. Salary: ${formatMoney(group.steps.first.annualSalary)}/yr.',
           character: c,
         );
 
@@ -3633,7 +3834,7 @@ class GameEngine {
           c.happiness = (c.happiness + 4).clamp(0, 100);
           return ActionResult(
             message:
-                'You took on freelance work, built momentum, and earned Rs ${formatMoney(12000)}.',
+                'You took on freelance work, built momentum, and earned ${formatMoney(12000)}.',
             character: c,
           );
         }
@@ -3660,7 +3861,7 @@ class GameEngine {
         c.happiness = (c.happiness + 2).clamp(0, 100);
         return ActionResult(
           message:
-              'You started an internship, gained experience, and earned Rs ${formatMoney(8000)}.',
+              'You started an internship, gained experience, and earned ${formatMoney(8000)}.',
           character: c,
         );
 
@@ -3755,7 +3956,7 @@ class GameEngine {
     character.marketPrices = Map<dynamic, dynamic>.from(character.marketPrices)
       ..[condKey] = 100.0;
     return ActionResult(
-      message: 'Repaired ${asset.name} for Rs ${formatMoney(repairCost)}.',
+      message: 'Repaired ${asset.name} for ${formatMoney(repairCost)}.',
       character: character,
     );
   }
@@ -3782,7 +3983,7 @@ class GameEngine {
       ..remove(valKey)
       ..remove(condKey);
     return ActionResult(
-      message: 'Sold ${asset.name} for Rs ${formatMoney(currentVal)}.',
+      message: 'Sold ${asset.name} for ${formatMoney(currentVal)}.',
       character: character,
     );
   }
@@ -3802,6 +4003,16 @@ class GameEngine {
       'Deshmukh'
     ];
     final lastName = lastNames[_rng.nextInt(lastNames.length)];
+    final personalities = [
+      'Strict',
+      'Supportive',
+      'Jealous',
+      'Toxic',
+      'Ambitious',
+      'Manipulative',
+      'Caring',
+      'Irresponsible'
+    ];
 
     final maleNames = [
       'Sanjay',
@@ -3834,6 +4045,7 @@ class GameEngine {
         type: 'Father',
         bond: 80 + _rng.nextInt(10),
         initial: fatherName[0],
+        personality: personalities[_rng.nextInt(personalities.length)],
         age: 25 + _rng.nextInt(15)));
     res.add(Relationship(
         id: 'mother_${DateTime.now().microsecondsSinceEpoch}',
@@ -3841,6 +4053,7 @@ class GameEngine {
         type: 'Mother',
         bond: 85 + _rng.nextInt(10),
         initial: motherName[0],
+        personality: personalities[_rng.nextInt(personalities.length)],
         age: 22 + _rng.nextInt(15)));
 
     if (_rng.nextBool()) {
@@ -3854,6 +4067,7 @@ class GameEngine {
           type: 'Sibling',
           bond: 65 + _rng.nextInt(15),
           initial: sibName[0],
+          personality: personalities[_rng.nextInt(personalities.length)],
           age: _rng.nextInt(10)));
     }
     return res;
@@ -3932,14 +4146,111 @@ class GameEngine {
           type: LifeEventType.milestone);
     }
 
+    if (c.age == 16 && c.educationLevel == 'Secondary') {
+      // Class 10 Board Results
+      final boardScore = (c.smarts * 0.8 + c.studyConsistency * 0.2 + _rng.nextInt(10)).clamp(0, 100);
+      c.hiddenModifiers['class10_score'] = boardScore.toDouble();
+      
+      String desc = '';
+      LifeEventType type = LifeEventType.neutral;
+      if (boardScore >= 90) {
+        desc = 'You topped the boards with ${boardScore.toInt()}%! Your parents are distributing sweets and telling everyone in the society.';
+        type = LifeEventType.positive;
+        c.updateStats(happinessDelta: 20, karmaDelta: 10);
+      } else if (boardScore >= 75) {
+        desc = 'You scored a solid ${boardScore.toInt()}%. Your family is pleased, but suggests you could have done better.';
+        type = LifeEventType.positive;
+        c.updateStats(happinessDelta: 10);
+      } else if (boardScore >= 50) {
+        desc = 'You scored ${boardScore.toInt()}%. "Average," says your father. The comparison with Sharma Ji\'s son begins.';
+        type = LifeEventType.neutral;
+      } else {
+        desc = 'You scored only ${boardScore.toInt()}%. The disappointment at home is heavy. Silence speaks louder than words.';
+        type = LifeEventType.negative;
+        c.updateStats(happinessDelta: -20, socialDelta: -10);
+      }
+      
+      _addEvent(events, c.age, '📜 Class 10 Board Results',
+          description: desc,
+          type: type,
+          priority: EventPriority.critical);
+          
+      // Stream Selection Popup (Part 1: Science vs Non-Science)
+      events.add(LifeEvent(
+        title: 'Choose Your Stream',
+        description: 'Your board results are in. What stream do you want to pursue?',
+        type: LifeEventType.milestone,
+        priority: EventPriority.critical,
+        metadata: {'age': c.age},
+        choice: const EventChoice(
+          title: 'Select Stream',
+          description: 'This choice will shape your future careers.',
+          optionA: 'Science (PCM/PCB)',
+          optionB: 'Commerce or Arts',
+          effectA: StatEffect(happiness: -5, smarts: 5),
+          effectB: StatEffect(happiness: 5, smarts: 0),
+          resultA: 'You chose the Science stream. Prepare for long nights of study.',
+          resultB: 'You chose to pursue Commerce or Arts.',
+          memoryFlagA: 'stream_science_pending',
+          memoryFlagB: 'stream_non_science_pending',
+        ),
+      ));
+    }
+
     if (c.age == 17 && c.educationLevel == 'Secondary') {
       if (enableLogging)
         debugPrint("[EDUCATION] 🧪 Starting Higher Secondary (Board Years)");
-      c.educationLevel = 'Higher Secondary';
-      _addEvent(events, c.age, '📚 11th & 12th Grade',
-          description:
-              'The critical board exam years. Your study consistency matters now more than ever.',
-          type: LifeEventType.milestone);
+      
+      // Check flags from age 16 choice
+      if (c.memories.containsKey('stream_science_pending')) {
+        events.add(LifeEvent(
+          title: 'Science Branch Split',
+          description: 'You are in Science. Which track do you want to focus on?',
+          type: LifeEventType.milestone,
+          priority: EventPriority.critical,
+          metadata: {'age': c.age},
+          choice: const EventChoice(
+            title: 'Select Track',
+            description: 'Engineering (JEE) or Medical (NEET)?',
+            optionA: 'Engineering (PCM)',
+            optionB: 'Medical (PCB)',
+            effectA: StatEffect(smarts: 10),
+            effectB: StatEffect(smarts: 10),
+            resultA: 'You chose PCM. Time to start JEE coaching.',
+            resultB: 'You chose PCB. Time to start NEET coaching.',
+            memoryFlagA: 'track_pcm',
+            memoryFlagB: 'track_pcb',
+          ),
+        ));
+        c.educationLevel = 'Higher Secondary';
+      } else if (c.memories.containsKey('stream_non_science_pending')) {
+        events.add(LifeEvent(
+          title: 'Commerce or Arts?',
+          description: 'You chose the non-science path. Which stream do you prefer?',
+          type: LifeEventType.milestone,
+          priority: EventPriority.critical,
+          metadata: {'age': c.age},
+          choice: const EventChoice(
+            title: 'Select Stream',
+            description: 'Commerce or Arts?',
+            optionA: 'Commerce',
+            optionB: 'Arts/Humanities',
+            effectA: StatEffect(karma: 5),
+            effectB: StatEffect(happiness: 10),
+            resultA: 'You chose Commerce. Accountancy and Economics await.',
+            resultB: 'You chose Arts. History, Literature, and Philosophy await.',
+            memoryFlagA: 'track_commerce',
+            memoryFlagB: 'track_arts',
+          ),
+        ));
+        c.educationLevel = 'Higher Secondary';
+      } else {
+        // Fallback if no choice was made or flags missing
+        c.educationLevel = 'Higher Secondary';
+        _addEvent(events, c.age, '📚 11th & 12th Grade',
+            description: 'The critical board exam years. Your study consistency matters now more than ever.',
+            type: LifeEventType.milestone);
+      }
     }
 
     // ── SCHOOL CONSISTENCY & REPEATED NEGLECT ──
@@ -3978,6 +4289,190 @@ class GameEngine {
       if (c.studyConsistency > 60) {
         c.updateStats(smartsDelta: (2 * growthMult).round());
       }
+
+      // Stream-specific preparation (Ages 16-18)
+      if (c.age >= 16 && c.age <= 18) {
+        if (c.memories.containsKey('track_pcm') || c.memories.containsKey('track_pcb')) {
+          // Science students get more stress but also more prep
+          c.stressLevel = (c.stressLevel + 5).clamp(0, 100);
+          if (c.studyConsistency > 70) {
+            c.prepLevel = (c.prepLevel + 10).clamp(0, 100);
+          }
+        } else if (c.memories.containsKey('track_commerce')) {
+          if (c.studyConsistency > 60) {
+            c.prepLevel = (c.prepLevel + 8).clamp(0, 100);
+          }
+        } else if (c.memories.containsKey('track_arts')) {
+          if (c.studyConsistency > 50) {
+            c.prepLevel = (c.prepLevel + 7).clamp(0, 100);
+          }
+        }
+      }
+    }
+
+    if (c.age == 18 && c.educationLevel == 'Higher Secondary') {
+      String examName = '';
+      int examTypeId = 0; // 1: PCM/JEE, 2: PCB/NEET, 3: Commerce, 4: Arts
+      
+      if (c.memories.containsKey('track_pcm')) {
+        examName = 'JEE';
+        examTypeId = 1;
+      } else if (c.memories.containsKey('track_pcb')) {
+        examName = 'NEET';
+        examTypeId = 2;
+      } else if (c.memories.containsKey('track_commerce')) {
+        examName = 'CA Foundation';
+        examTypeId = 3;
+      } else if (c.memories.containsKey('track_arts')) {
+        examName = 'CLAT';
+        examTypeId = 4;
+      }
+      
+      if (examTypeId > 0) {
+        final stressFactor = (120 - c.stressLevel).clamp(0, 100) / 100.0;
+        final score = ((c.smarts * 0.4 + c.discipline * 0.2 + c.prepLevel * 0.4) * stressFactor).clamp(0, 100);
+        
+        c.examResults['pending_score'] = score.toInt();
+        c.examResults['pending_type'] = examTypeId;
+        
+        _addEvent(events, c.age, '📝 Attempted $examName',
+            description: 'You gave the exam. Now begins the agonizing wait for the results. Cutoff rumors are already spreading.',
+            type: LifeEventType.neutral,
+            priority: EventPriority.important);
+            
+        c.stressLevel = (c.stressLevel + 15).clamp(0, 100);
+      }
+    }
+
+    if (c.age == 19 && c.educationLevel == 'Higher Secondary') {
+      final score = c.examResults['pending_score'];
+      final typeId = c.examResults['pending_type'];
+      
+      if (score != null && typeId != null) {
+        String examName = 'JEE';
+        String trackName = 'PCM';
+        if (typeId == 2) { examName = 'NEET'; trackName = 'PCB'; }
+        else if (typeId == 3) { examName = 'CA Foundation'; trackName = 'Commerce'; }
+        else if (typeId == 4) { examName = 'CLAT'; trackName = 'Arts'; }
+        
+        // Calculate rank based on score (simulated)
+        int rank;
+        if (score >= 90) rank = _rng.nextInt(100) + 1;
+        else if (score >= 75) rank = _rng.nextInt(900) + 101;
+        else if (score >= 60) rank = _rng.nextInt(4000) + 1001;
+        else if (score >= 50) rank = _rng.nextInt(15000) + 5001;
+        else rank = _rng.nextInt(100000) + 20001;
+        
+        c.examResults[examName] = rank; // Store final rank
+        
+        String desc = '';
+        LifeEventType type = LifeEventType.neutral;
+        
+        if (score >= 75) {
+          desc = 'The results are OUT! You cleared $examName with AIR $rank! Your family is distributing sweets and celebrating.';
+          type = LifeEventType.positive;
+          c.updateStats(happinessDelta: 25, socialDelta: 15);
+          c.memories['cleared_$trackName'] = true;
+        } else if (score >= 50) {
+          desc = 'The results are OUT. You cleared $examName with AIR $rank. You can get a decent college.';
+          type = LifeEventType.positive;
+          c.updateStats(happinessDelta: 10);
+          c.memories['cleared_$trackName'] = true;
+        } else {
+          desc = 'The results are OUT. You failed to clear $examName (Rank $rank). The disappointment at home is heavy. Your father is silent.';
+          type = LifeEventType.negative;
+          c.updateStats(happinessDelta: -20, healthDelta: -5);
+          c.memories['failed_$trackName'] = true;
+        }
+        
+        _addEvent(events, c.age, '📜 $examName Results',
+            description: desc,
+            type: type,
+            priority: EventPriority.critical);
+            
+        // Clear pending
+        c.examResults.remove('pending_score');
+        c.examResults.remove('pending_type');
+      }
+    }
+
+    // --- UPSC REVEAL ---
+    if (c.examResults.containsKey('pending_UPSC')) {
+      final score = c.examResults['pending_UPSC']!;
+      c.examResults.remove('pending_UPSC');
+      
+      String desc = '';
+      LifeEventType type = LifeEventType.neutral;
+      
+      if (score >= 75 && _rng.nextDouble() < 0.3) {
+        c.memories['passed_UPSC'] = true;
+        desc = '🏛️ THE RESULTS ARE OUT! You have cleared UPSC! Your family is crying tears of joy. You are now an officer of India.';
+        type = LifeEventType.positive;
+        c.updateStats(happinessDelta: 30, socialDelta: 20);
+      } else if (score >= 60) {
+        desc = '😔 So close. You missed the UPSC cutoff this attempt by a narrow margin. You feel emotionally crushed. The silence at home speaks louder than any lecture. You avoid making eye contact with your father.';
+        type = LifeEventType.negative;
+        c.updateStats(happinessDelta: -15, healthDelta: -5);
+      } else {
+        desc = '❌ UPSC Results: You failed to clear the exam. The competition was too brutal. You feel a sense of failure settling in. Your parents don\'t say anything, but their silence hurts more.';
+        type = LifeEventType.negative;
+        c.updateStats(happinessDelta: -20, healthDelta: -10);
+      }
+      
+      _addEvent(events, c.age, '📜 UPSC Results',
+          description: desc,
+          type: type,
+          priority: EventPriority.critical);
+    }
+
+    // --- SSC REVEAL ---
+    if (c.examResults.containsKey('pending_SSC')) {
+      final score = c.examResults['pending_SSC']!;
+      c.examResults.remove('pending_SSC');
+      
+      String desc = '';
+      LifeEventType type = LifeEventType.neutral;
+      
+      if (score >= 55 && _rng.nextDouble() < 0.5) {
+        c.memories['passed_SSC'] = true;
+        desc = '✅ SSC CLEARED! Government job secured. Your parents finally stop asking when you\'ll get a job.';
+        type = LifeEventType.positive;
+        c.updateStats(happinessDelta: 20, socialDelta: 10);
+      } else {
+        desc = '❌ SSC attempt failed this time. You can try again after more preparation.';
+        type = LifeEventType.negative;
+        c.updateStats(happinessDelta: -10);
+      }
+      
+      _addEvent(events, c.age, '📜 SSC Results',
+          description: desc,
+          type: type,
+          priority: EventPriority.critical);
+    }
+
+    // --- BANK PO REVEAL ---
+    if (c.examResults.containsKey('pending_BankPO')) {
+      final score = c.examResults['pending_BankPO']!;
+      c.examResults.remove('pending_BankPO');
+      
+      String desc = '';
+      LifeEventType type = LifeEventType.neutral;
+      
+      if (score >= 60 && _rng.nextDouble() < 0.45) {
+        c.memories['passed_BankPO'] = true;
+        desc = '🏦 BANK PO CLEARED! Your relatives are already calling to congratulate. Stable job, good salary, government benefits.';
+        type = LifeEventType.positive;
+        c.updateStats(happinessDelta: 25, socialDelta: 15);
+      } else {
+        desc = '❌ Bank PO exam not cleared this time. The cutoff was tough. Prepare harder next time.';
+        type = LifeEventType.negative;
+        c.updateStats(happinessDelta: -10);
+      }
+      
+      _addEvent(events, c.age, '📜 Bank PO Results',
+          description: desc,
+          type: type,
+          priority: EventPriority.critical);
     }
 
     if (c.age == 19 &&
@@ -3991,7 +4486,8 @@ class GameEngine {
     }
 
     // Traditional post-school milestones (for NPC/Auto-progression or Legacy)
-    if (c.age == 22 && c.educationLevel == 'Graduate' && c.degree != 'None') {
+    if (c.age == 22 && c.educationLevel == 'Undergraduate' && c.degree != 'None') {
+      c.educationLevel = 'Graduate';
       _addEvent(events, c.age, '🎓 Graduated University',
           description: 'Congratulations! You earned your ${c.degree} degree!',
           type: LifeEventType.positive,
@@ -4096,7 +4592,8 @@ class GameEngine {
       rank = _rng.nextInt(200000) + 100001;
     }
 
-    c.examResults = Map<String, int>.from(c.examResults)..[examType] = rank;
+    // Store as pending instead of final result
+    c.examResults = Map<String, int>.from(c.examResults)..['pending_$examType'] = rank;
 
     // Track attempt history
     c.majorDecisions.add({
@@ -4111,20 +4608,7 @@ class GameEngine {
     c.updateStats(happinessDelta: -10, healthDelta: -5);
     c.stressLevel = (c.stressLevel + 40).clamp(0, 100);
 
-    final String msg;
-    if (rank <= 500) {
-      msg =
-          '🤯 UNBELIEVABLE! AIR $rank in $examType! You are a national topper.';
-    } else if (rank <= 5000) {
-      msg =
-          '🌟 SPECTACULAR! AIR $rank in $examType. Premier IITs/AIIMS are waiting.';
-    } else if (rank <= 20000) {
-      msg =
-          '✅ Great Work! AIR $rank in $examType. You qualify for top NITs and State colleges.';
-    } else {
-      msg =
-          '😐 Rank: $rank. Competition was brutal. You might qualify for Private institutes.';
-    }
+    final String msg = '📝 You have completed the $examType exam! Now begins the agonizing wait for the results. Cutoff rumors are already spreading online.';
 
     return ActionResult(
       message: msg,
@@ -4136,19 +4620,46 @@ class GameEngine {
   static List<JobDefinition> getFilteredJobs(Character c) {
     if (c.age < 18) return [];
 
-    // Logic: Filter 50+ jobs down to 5-8 relevant ones
+    // Derive a clean list of the player's qualification tags
+    final quals = <String>{
+      c.educationLevel,
+      c.specialization,
+      c.degree,
+      ...c.memories.keys, // cleared_PCM, cleared_Commerce, track_pcb, etc.
+    };
+
     const all = CareerData.allJobs;
     final relevant = all.where((j) {
-      if (j.eduReq == 'Postgraduate' && c.educationLevel != 'Postgraduate')
-        return false;
-      if (j.eduReq == 'Graduate' &&
+      // --- EDUCATION LEVEL GATE (Hard) ---
+      final edu = j.eduReq;
+      if (edu == 'Postgraduate' && c.educationLevel != 'Postgraduate') return false;
+      if (edu == 'Graduate' &&
           c.educationLevel != 'Graduate' &&
           c.educationLevel != 'Postgraduate') return false;
-      if (j.specializationReq != null &&
-          c.specialization != j.specializationReq &&
-          c.degree != j.specializationReq) {
-        if (c.smarts < 85) return false;
+      if (edu == 'Higher Secondary' &&
+          c.educationLevel != 'Higher Secondary' &&
+          c.educationLevel != 'Undergraduate' &&
+          c.educationLevel != 'Graduate' &&
+          c.educationLevel != 'Postgraduate') return false;
+      if (edu == 'Secondary' && c.age < 16) return false;
+
+      // --- SPECIALIZATION GATE (Strict — No Smarts Bypass) ---
+      final spec = j.specializationReq;
+      if (spec != null) {
+        // Check against specialization, degree field, OR qualifying memory flag
+        final hasSpec = c.specialization == spec ||
+            c.degree == spec ||
+            c.degree.toLowerCase().contains(spec.toLowerCase()) ||
+            quals.any((q) => q.toLowerCase().contains(spec.toLowerCase()));
+        if (!hasSpec) return false;
       }
+
+      // --- COMPETITIVE EXAM GATE ---
+      final examReq = j.examReq;
+      if (examReq != null && !c.memories.containsKey('passed_$examReq')) {
+        return false;
+      }
+
       return true;
     }).toList();
 
@@ -4187,14 +4698,30 @@ class GameEngine {
     }
 
     c.universityType = inst.tier;
-    c.educationLevel = 'Graduate';
-    c.degree = inst.availableStreams.contains('PCB')
-        ? 'MBBS'
-        : inst.availableStreams.contains('PCM')
-            ? 'B.Tech'
-            : inst.availableStreams.contains('Commerce')
-                ? 'B.Com'
-                : 'B.A';
+    c.educationLevel = 'Undergraduate';
+    // Degree strictly follows player's chosen stream track, not institute's list
+    if (c.memories.containsKey('track_pcb')) {
+      c.degree = 'MBBS';
+      c.specialization = 'PCB';
+    } else if (c.memories.containsKey('track_pcm')) {
+      c.degree = 'B.Tech';
+      c.specialization = 'PCM';
+    } else if (c.memories.containsKey('track_commerce')) {
+      c.degree = 'B.Com';
+      c.specialization = 'Commerce';
+    } else if (c.memories.containsKey('track_arts')) {
+      c.degree = 'B.A';
+      c.specialization = 'Arts';
+    } else {
+      // Fallback to stream-based detection
+      c.degree = c.specialization == 'PCB'
+          ? 'MBBS'
+          : c.specialization == 'PCM'
+              ? 'B.Tech'
+              : c.specialization == 'Commerce'
+                  ? 'B.Com'
+                  : 'B.A';
+    }
 
     c.annualExpenses += inst.feesPerYear;
     c.bankBalance -= inst.feesPerYear * 0.5; // Initial deposit
@@ -4275,7 +4802,7 @@ class GameEngine {
       });
       return ActionResult(
         message:
-            'Business started: you invested Rs ${formatMoney(seedCapital)} and opened your first venture.',
+            'Business started: you invested ${formatMoney(seedCapital)} and opened your first venture.',
         character: c,
       );
     }
@@ -4310,7 +4837,7 @@ class GameEngine {
         c.stressLevel = (c.stressLevel + 4).clamp(0, 100);
         return ActionResult(
           message:
-              'You invested Rs ${formatMoney(amount)} into the business. Growth potential improved.',
+              'You invested ${formatMoney(amount)} into the business. Growth potential improved.',
           character: c,
         );
 
@@ -4330,7 +4857,7 @@ class GameEngine {
         const hiringCost = 75000.0;
         if (c.bankBalance < hiringCost) {
           return ActionResult(
-            message: 'Hiring needs Rs ${formatMoney(hiringCost)} in cash.',
+            message: 'Hiring needs ${formatMoney(hiringCost)} in cash.',
             character: c,
             success: false,
           );
@@ -4351,7 +4878,7 @@ class GameEngine {
         const expandCost = 250000.0;
         if (c.bankBalance < expandCost) {
           return ActionResult(
-            message: 'Expansion needs Rs ${formatMoney(expandCost)} in cash.',
+            message: 'Expansion needs ${formatMoney(expandCost)} in cash.',
             character: c,
             success: false,
           );
@@ -4411,7 +4938,7 @@ class GameEngine {
       c.happiness = (c.happiness + 5).clamp(0, 100);
       return ActionResult(
         message:
-            'Success: you ${career.actionVerb}. ${career.successEvent} You earned Rs ${formatMoney(reward)}.',
+            'Success: you ${career.actionVerb}. ${career.successEvent} You earned ${formatMoney(reward)}.',
         character: c,
       );
     }
@@ -4533,7 +5060,7 @@ class GameEngine {
       c.yearsInJob = 0;
       return;
     }
-    if (c.age < 22 && c.educationLevel == 'Graduate') {
+    if (c.age < 22 && c.educationLevel == 'Undergraduate') {
       c.jobTitle = 'College Student';
       c.annualIncome = 12000;
       c.jobLevel = 0;
@@ -4546,7 +5073,7 @@ class GameEngine {
     // First job assignment at 22 (or when school done at 18 without college)
     final isFirstJob = c.careerGroup == 'None' &&
         c.annualIncome == 0 &&
-        (c.age == 22 || (c.age == 18 && c.educationLevel != 'Graduate'));
+        (c.age == 22 || (c.age == 18 && c.educationLevel != 'Undergraduate' && c.educationLevel != 'Graduate'));
     if (isFirstJob) {
       final group = CareerSystem.bestMatchGroup(c);
       if (enableLogging)
@@ -4825,6 +5352,25 @@ class GameEngine {
 
   static List<LifeEvent> _pickSmartEvents(Character c, {int count = 1}) {
     final eligible = EventData.allSmartEvents.where((e) {
+      // --- EVENT DEDUPLICATION (COOLDOWN) ---
+      final title = e['title'] as String?;
+      if (title != null && c.eventHistory.containsKey(title)) {
+        if (c.age - c.eventHistory[title]! < 20) return false;
+      }
+
+      // --- CONTEXTUAL FILTERING (LIFESTYLE TIERS) ---
+      final requiredTier = e['tier'] as String?;
+      if (requiredTier != null && c.lifestyleTier != requiredTier) return false;
+
+      // 1. Wealth Filtering (Rich people don't get minor money stress)
+      if (c.bankBalance > 2000000 && e['type'] == 'Financial' && (e['money'] ?? 0) > -50000 && (e['money'] ?? 0) < 0) return false;
+      
+      // 2. Fame Filtering (Famous people get more drama, less generic neutral events)
+      if (c.fame > 75 && e['type'] == 'Neutral' && _rng.nextDouble() < 0.5) return false;
+
+      // 3. Identity Insecurity (High-fame/Wealthy characters don't get "Sharma Ji" type insecurity)
+      if ((c.bankBalance > 5000000 || c.fame > 80) && e['title'] != null && e['title'].contains('Sharma')) return false;
+
       try {
         final dynamic cond = e['cond'];
         if (cond is bool Function(Character)) {
@@ -4915,13 +5461,37 @@ class GameEngine {
       }
 
       final selected = eligible[selectedIdx];
+      
+      // Update Event History (Deduplication)
+      if (selected['title'] != null) {
+        c.eventHistory[selected['title']] = c.age;
+      }
+      
+      EventChoice? choice;
+      if (selected['choice'] != null) {
+        final cMap = selected['choice'];
+        choice = EventChoice(
+          title: cMap['title'],
+          description: cMap['desc'],
+          optionA: cMap['optionA'],
+          optionB: cMap['optionB'],
+          effectA: StatEffect.fromMap(cMap['effectA']),
+          effectB: StatEffect.fromMap(cMap['effectB']),
+          resultA: cMap['resultA'],
+          resultB: cMap['resultB'],
+          memoryFlagA: cMap['memoryFlagA'],
+          memoryFlagB: cMap['memoryFlagB'],
+        );
+      }
+
       results.add(LifeEvent(
         title: selected['title'],
         description: selected['desc'],
         type: _inferType(selected['type']),
+        choice: choice,
         priority: selected['type'] == 'Rare'
             ? EventPriority.rare
-            : EventPriority.normal,
+            : (selected['choice'] != null ? EventPriority.important : EventPriority.normal),
         statChanges: {
           if (selected['happiness'] != null)
             'happiness': selected['happiness'] as int,
@@ -4964,8 +5534,16 @@ class GameEngine {
     }
 
     for (var e in EventData.autoDecisionEvents) {
-      final cond = e['cond'] as bool Function(Character);
-      if (cond(c)) {
+      final dynamic cond = e['cond'];
+      bool shouldTrigger = false;
+      if (cond != null) {
+        try {
+          shouldTrigger = cond(c) == true;
+        } catch (err) {
+          debugPrint("Error evaluating auto decision condition: $err");
+        }
+      }
+      if (shouldTrigger) {
         // Triggered!
         c.lastAutoDecisionAge = c.age;
         _addEvent(events, c.age, e['title'],
@@ -5282,10 +5860,99 @@ class GameEngine {
     }
   }
 
-  static void _generateTensionSignals(Character c) {
-    if (c.health < 40) c.tensionSignals.add('⚠️ Your body feels heavy.');
-    if (c.bankBalance < c.annualExpenses)
-      c.tensionSignals.add('💸 Money is tight.');
+  static void _generateTensionSignals(Character c, List<LifeEvent> events) {
+    final roll = _rng.nextDouble();
+    
+    // --- VARIABLE OUTCOME TENSION ---
+    // Instead of guaranteed signals, they are now probabilistic
+    
+    // Health Dread (Hidden Risk)
+    if (c.health < 45 && roll < 0.25) {
+      _addEvent(events, c.age, '⌛ A lingering fatigue...',
+          description: 'Your body hasn\'t felt right lately. You feel a constant, dull ache.',
+          type: LifeEventType.negative);
+      c.hiddenModifiers['health_decay'] = (c.hiddenModifiers['health_decay'] ?? 0) + 1.0;
+    }
+    
+    // Career Dread (Contextual)
+    if (c.jobPerformance < 40 && c.annualIncome > 0 && roll < 0.2) {
+      _addEvent(events, c.age, '🏢 Office whispers...',
+          description: 'You noticed your boss becoming distant. The atmosphere at work is chilly.',
+          type: LifeEventType.negative);
+      c.reputation = (c.reputation - 5).clamp(0, 100);
+    }
+
+    // Relationship Dread (Echoes)
+    if (c.relationships.any((r) => r.type == 'Partner' && r.bond < 50) && roll < 0.15) {
+      _addEvent(events, c.age, '🥀 Emotional distance...',
+          description: 'Your partner seems emotionally withdrawn. Conversations are brief and forced.',
+          type: LifeEventType.negative);
+    }
+    
+    // --- NARRATIVE ECHOES (LATE LIFE) ---
+    if (c.age > 50 && roll < 0.2) {
+      if (c.memories.containsKey('school_fighter') && _rng.nextBool()) {
+        _addEvent(events, c.age, '🦴 A ghostly ache...',
+            description: 'That old injury from the school fight at age 14 is hurting again. Time is catching up.',
+            type: LifeEventType.negative);
+        c.health -= 5;
+      }
+      
+      if (c.memories.containsKey('corrupt_worker') && _rng.nextDouble() < 0.1) {
+         _addEvent(events, c.age, '⚖️ A restless night...',
+            description: 'You woke up sweating, thinking about the sales you inflated decades ago. Will anyone ever find out?',
+            type: LifeEventType.neutral);
+         c.happiness -= 10;
+      }
+    }
+  }
+
+  static Map<String, String> _getQuietReflection(Character c) {
+    final trait = c.activeDominantTrait;
+    
+    if (c.age < 12) {
+      return {
+        'title': 'A year of play',
+        'desc': 'You spent most of your time playing and exploring the world.'
+      };
+    }
+
+    if (trait == 'Disciplined') {
+      return {
+        'title': 'The Architect of Life',
+        'desc': 'You continued building your future quietly, one brick at a time.'
+      };
+    } else if (trait == 'Risk-taker') {
+      return {
+        'title': 'Quiet before the storm',
+        'desc': 'You spent the year waiting for the next big opportunity to strike.'
+      };
+    } else if (trait == 'Lazy') {
+      return {
+        'title': 'Unbothered existence',
+        'desc': 'You enjoyed a peaceful year doing as little as possible.'
+      };
+    } else if (trait == 'Aggressive') {
+      return {
+        'title': 'Controlled energy',
+        'desc': 'You focused your intensity on routine tasks, keeping your edge sharp.'
+      };
+    } else if (trait == 'Kind') {
+      return {
+        'title': 'A year of harmony',
+        'desc': 'You maintained peace in your circle and enjoyed simple connections.'
+      };
+    } else if (c.age > 60) {
+      return {
+        'title': 'A peaceful sunset',
+        'desc': 'You enjoyed a quiet year of reflection and rest.'
+      };
+    }
+    
+    return {
+      'title': 'Steady momentum',
+      'desc': 'A year of routine and steady progress in ${c.city}.'
+    };
   }
 
   static void _applyRandomYearlyEvents(Character c, List<LifeEvent> events) {
@@ -5330,7 +5997,7 @@ class GameEngine {
       final reasons = ['Car broke down', 'Home repair needed', 'Lost your wallet', 'Gadget failure'];
       final reason = reasons[_rng.nextInt(reasons.length)];
       _addEvent(events, c.age, '💸 UNEXPECTED EXPENSE',
-          description: '$reason cost you ₹${formatMoney(expense)}.',
+          description: '$reason cost you ${formatMoney(expense)}.',
           type: LifeEventType.negative);
     }
 
@@ -5369,6 +6036,77 @@ class GameEngine {
           resultB: 'You chose your health over work. You feel refreshed, but your boss looks disappointed.',
         ),
       ));
+    }
+  }
+  static void _applyConsequenceDrama(Character c, List<LifeEvent> events) {
+    // 1. Rejected Marriage Consequence (Echoes)
+    if (c.memories.containsKey('rejected_arranged_marriage') &&
+        c.age % 4 == 0 &&
+        _rng.nextDouble() < 0.4) {
+      _addEvent(events, c.age, '🏛️ Family Tension',
+          description:
+              'Your parents are still cold to you after you rejected their marriage proposal years ago. The atmosphere at home is heavy.',
+          type: LifeEventType.negative,
+          priority: EventPriority.important);
+      c.updateStats(happinessDelta: -15, socialDelta: -10);
+    }
+
+    // 2. Corrupt Worker Consequence (Echoes)
+    if (c.memories.containsKey('corrupt_worker') && _rng.nextDouble() < 0.05) {
+      _addEvent(events, c.age, '⚖️ Workplace Audit',
+          description:
+              'An internal audit discovered your past inflated numbers. You have been fired and blacklisted from the industry.',
+          type: LifeEventType.critical,
+          priority: EventPriority.rare);
+      c.annualIncome = 0;
+      c.careerGroup = 'None';
+      c.jobTitle = 'Unemployed';
+      c.updateStats(reputationDelta: -50, happinessDelta: -30);
+    }
+
+    // --- NEW RIVAL SYSTEM ---
+    if (c.memories.containsKey('school_fighter') && c.age > 25 && c.age < 45 && _rng.nextDouble() < 0.08) {
+       _addEvent(events, c.age, '⚔️ THE RETURN OF THE RIVAL',
+          description: 'You bumped into that kid you fought in school. He is now a senior executive at your competitor\'s firm.',
+          type: LifeEventType.negative,
+          priority: EventPriority.important);
+       c.memories['active_rival'] = true;
+       c.updateStats(stressDelta: 20);
+    }
+
+    if (c.memories.containsKey('active_rival') && c.age % 6 == 0 && _rng.nextDouble() < 0.5) {
+       _addEvent(events, c.age, '📉 RIVAL SABOTAGE',
+          description: 'Your industry rival blocked a major deal your company was chasing.',
+          type: LifeEventType.negative);
+       c.updateStats(jobPerformanceDelta: -15, happinessDelta: -5);
+    }
+    
+    // --- REPUTATION GOSSIP ---
+    if (c.reputation < 35 && _rng.nextDouble() < 0.3) {
+      final gossips = [
+        'The neighbors are whispering about your recent behavior. You feel their eyes on you.',
+        'A local WhatsApp group is circulating a story about your "scandalous" choices.',
+        'You were uninvited from a neighborhood function. The reason given was "lack of space".',
+      ];
+      _addEvent(events, c.age, '🗣️ Local Gossip',
+          description: gossips[_rng.nextInt(gossips.length)],
+          type: LifeEventType.negative);
+      c.updateStats(happinessDelta: -10, socialDelta: -5);
+    }
+
+    // --- LATE LIFE MORAL ECHOES ---
+    if (c.age > 65 && _rng.nextDouble() < 0.1) {
+      if (c.karma > 80) {
+        _addEvent(events, c.age, '🕊️ A Peaceful Legacy',
+            description: 'Your life of kindness has come full circle. People speak of you with genuine respect.',
+            type: LifeEventType.positive);
+        c.updateStats(happinessDelta: 20);
+      } else if (c.karma < 30) {
+        _addEvent(events, c.age, '🏚️ A Lonely Winter',
+            description: 'The bridges you burnt in your youth have left you isolated in your old age.',
+            type: LifeEventType.negative);
+        c.updateStats(happinessDelta: -25, socialDelta: -20);
+      }
     }
   }
 }

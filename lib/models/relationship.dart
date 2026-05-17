@@ -35,6 +35,9 @@ class Relationship {
   @HiveField(9)
   final String id;
 
+  @HiveField(10)
+  String personality; // 'Strict', 'Supportive', 'Jealous', 'Toxic', 'Ambitious', 'Manipulative', 'Caring', 'Irresponsible'
+
   Relationship({
     required this.id,
     required this.name,
@@ -46,6 +49,7 @@ class Relationship {
     this.isRival = false,
     this.rivalCareer = '',
     this.rivalIntensity = 0,
+    this.personality = 'Caring',
   });
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +63,7 @@ class Relationship {
         'isRival': isRival,
         'rivalCareer': rivalCareer,
         'rivalIntensity': rivalIntensity,
+        'personality': personality,
       };
 
   factory Relationship.fromJson(Map<String, dynamic> json) => Relationship(
@@ -72,6 +77,7 @@ class Relationship {
         isRival: json['isRival'] as bool? ?? false,
         rivalCareer: json['rivalCareer'] as String? ?? '',
         rivalIntensity: json['rivalIntensity'] as int? ?? 0,
+        personality: json['personality'] as String? ?? 'Caring',
       );
 
   Relationship clone() => Relationship(
@@ -85,5 +91,6 @@ class Relationship {
         isRival: isRival,
         rivalCareer: rivalCareer,
         rivalIntensity: rivalIntensity,
+        personality: personality,
       );
 }

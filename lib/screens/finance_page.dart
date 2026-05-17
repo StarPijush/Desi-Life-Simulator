@@ -1,9 +1,12 @@
 // lib/screens/finance_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/design_system.dart';
 import '../core/engine.dart';
 import '../models/character.dart';
+import 'market_page.dart';
+import 'assets_page.dart';
 
 class FinancePage extends StatelessWidget {
   final Character character;
@@ -17,8 +20,9 @@ class FinancePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final netWorth = character.bankBalance + character.savingsBalance;
-    final annualCashflow = (character.annualIncome) - (character.annualExpenses);
+    final netWorth = character.totalNetWorth;
+    final healthScore = character.financialHealthScore;
+    final annualCashflow = character.annualIncome - character.annualExpenses;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FF),
@@ -35,7 +39,10 @@ class FinancePage extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
                     child: const Icon(Icons.arrow_back, color: Color(0xFF006D37), size: 24),
                   ),
                   const SizedBox(width: 16),
@@ -150,11 +157,15 @@ class FinancePage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${((netWorth / 1000000) * 100).clamp(0, 100).toInt()}%',
+                      '$healthScore%',
                       style: GoogleFonts.lexend(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF006D37),
+                        color: healthScore >= 60
+                            ? const Color(0xFF006D37)
+                            : healthScore >= 30
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFFDC2626),
                       ),
                     ),
                   ],
@@ -168,10 +179,14 @@ class FinancePage extends StatelessWidget {
                   ),
                   child: FractionallySizedBox(
                     alignment: Alignment.centerLeft,
-                    widthFactor: ((netWorth / 1000000)).clamp(0.01, 1.0),
+                    widthFactor: (healthScore / 100).clamp(0.01, 1.0),
                     child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF006D37),
+                      decoration: BoxDecoration(
+                        color: healthScore >= 60
+                            ? const Color(0xFF006D37)
+                            : healthScore >= 30
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFFDC2626),
                       ),
                     ),
                   ),
@@ -200,12 +215,12 @@ class FinancePage extends StatelessWidget {
           _FinanceRow(
             icon: '🏠',
             title: 'Assets',
-            onTap: () => _push(context, _AssetsSub(character: character, onGameAction: onGameAction)),
+            onTap: () => _push(context, AssetsPage(character: character, onGameAction: onGameAction)),
           ),
           _FinanceRow(
             icon: '🏙️',
             title: 'Properties',
-            onTap: () => _push(context, _AssetsSub(character: character, onGameAction: onGameAction)), // Reuse assets for now
+            onTap: () => _push(context, AssetsPage(character: character, onGameAction: onGameAction)),
           ),
           const SizedBox(height: 40),
         ],
@@ -364,34 +379,27 @@ class _InvestmentsSub extends StatelessWidget {
       body: ListView(
         children: [
           const _SectionHeader(title: 'MARKET'),
-          _FinanceRow(icon: '📈', title: 'Stocks', onTap: () {}),
-          _FinanceRow(icon: '📉', title: 'Crypto', onTap: () {}),
+          _FinanceRow(
+            icon: '📈',
+            title: 'Stocks',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => MarketPage(character: character, onGameAction: onGameAction, mode: 'stock'),
+            )),
+          ),
+          _FinanceRow(
+            icon: '📉',
+            title: 'Crypto',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => MarketPage(character: character, onGameAction: onGameAction, mode: 'crypto'),
+            )),
+          ),
         ],
       ),
     );
   }
 }
 
-class _AssetsSub extends StatelessWidget {
-  final Character character;
-  final void Function(GameAction) onGameAction;
-  const _AssetsSub({required this.character, required this.onGameAction});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: _subAppBar(context, 'ASSETS'),
-      body: ListView(
-        children: [
-          const _SectionHeader(title: 'PURCHASE'),
-          _FinanceRow(icon: '🚗', title: 'Vehicles', onTap: () {}),
-          _FinanceRow(icon: '🏠', title: 'Real Estate', onTap: () {}),
-        ],
-      ),
-    );
-  }
-}
 
 PreferredSizeWidget _subAppBar(BuildContext context, String title) {
   return PreferredSize(
@@ -407,7 +415,10 @@ PreferredSizeWidget _subAppBar(BuildContext context, String title) {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.of(context).pop();
+                },
                 child: const Icon(Icons.arrow_back, color: Color(0xFF006D37), size: 24),
               ),
               const SizedBox(width: 16),

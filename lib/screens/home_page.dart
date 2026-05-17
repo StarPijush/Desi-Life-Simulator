@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math';
 
 import '../core/design_system.dart';
 import '../core/engine.dart';
@@ -131,48 +132,58 @@ class _HomePageState extends State<HomePage> {
     final events = _normalizeAgeUpEvents(result);
     final currentEvents = List<LifeEvent>.from(_eventsNotifier.value);
 
-    // Process events in chronological order (NOT reversed)
-    // Inserting at index 0 ensures the newest event appears at the top
+    // Process events in chronological order
     for (final event in events) {
       if (!mounted || executionId != _latestExecutionId) return;
-      
+
+      // --- ELASTIC PACING CALCULATION ---
+      int delayMs = 60; // Default routine speed
+      if (event.priority == EventPriority.important) delayMs = 150;
+      if (event.type == LifeEventType.milestone) delayMs = 300;
+      if (event.priority == EventPriority.critical || event.priority == EventPriority.rare) delayMs = 500;
+
       if (event.choice != null) {
-        debugPrint('[DECISION] Event has choices: ${event.title}');
-        debugPrint('[DECISION] Opening modal for choice: ${event.choice?.title}');
-        
-        // 1. SHOW decision modal (await user input)
+        // --- DRAMATIC REVEAL ---
+        HapticFeedback.mediumImpact();
+        _showCriticalFlashNotifier.value = true;
+        await Future.delayed(const Duration(milliseconds: 200));
+        _showCriticalFlashNotifier.value = false;
+        await Future.delayed(const Duration(milliseconds: 300)); // Suspense pause
+
         final choiceResult = await _showDecisionPopup(event.choice!);
         
         if (choiceResult != null) {
-          debugPrint('[DECISION] Choice made, adding result to timeline');
-          // 2. ADD result event to timeline
           currentEvents.insert(0, choiceResult);
           _eventsNotifier.value = _sanitizeTimeline(currentEvents);
           _scrollToLatest();
           HapticFeedback.lightImpact();
+
+          // --- SUCCESSIVE CHOICE BUFFER ---
+          // Increase emotional processing gap (800ms) to allow timeline to settle
+          await Future.delayed(const Duration(milliseconds: 800));
         }
       } else {
-        // 3. Add normal event directly to timeline
         currentEvents.insert(0, event);
         _eventsNotifier.value = _sanitizeTimeline(currentEvents);
         _scrollToLatest();
 
-        if (event.type == LifeEventType.negative) {
+        if (event.type == LifeEventType.negative || event.priority == EventPriority.critical) {
           HapticFeedback.mediumImpact();
         } else {
           HapticFeedback.lightImpact();
         }
 
         if (event.priority == EventPriority.critical ||
-            event.type == LifeEventType.critical) {
+            event.type == LifeEventType.critical ||
+            event.priority == EventPriority.rare) {
           _showCriticalFlashNotifier.value = true;
-          await Future.delayed(const Duration(milliseconds: 90));
+          await Future.delayed(const Duration(milliseconds: 100));
           _showCriticalFlashNotifier.value = false;
         }
       }
 
       if (!_fastForward) {
-        await Future.delayed(const Duration(milliseconds: 70));
+        await Future.delayed(Duration(milliseconds: delayMs));
       }
     }
 
@@ -181,11 +192,22 @@ class _HomePageState extends State<HomePage> {
     _saveEvents();
 
     if (updatedCharacter.isDead && mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => LegacyPage(character: updatedCharacter),
-        ),
-      );
+      // --- FINAL DEATH FLOW ---
+      await Future.delayed(const Duration(milliseconds: 1000)); // Final pause
+      _showCriticalFlashNotifier.value = true;
+      await Future.delayed(const Duration(milliseconds: 500)); // Fade out start
+      
+      if (mounted) {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => FadeTransition(
+              opacity: animation,
+              child: LegacyPage(character: updatedCharacter),
+            ),
+            transitionDuration: const Duration(milliseconds: 1200),
+          ),
+        );
+      }
     }
   }
 
@@ -283,8 +305,24 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => _DecisionModal(
         choice: choice,
         onChosen: (isOptionA) {
-          final effect = isOptionA ? choice.effectA : choice.effectB;
-          final result = isOptionA ? choice.resultA : choice.resultB;
+          final double roll = Random().nextDouble();
+          final bool isSuccess = isOptionA 
+              ? roll < choice.successChanceA 
+              : roll < choice.successChanceB;
+
+          final effect = isOptionA 
+              ? (isSuccess ? choice.effectA : (choice.effectAFail ?? choice.effectA))
+              : (isSuccess ? choice.effectB : (choice.effectBFail ?? choice.effectB));
+          
+          final result = isOptionA 
+              ? (isSuccess ? choice.resultA : (choice.resultAFail ?? choice.resultA))
+              : (isSuccess ? choice.resultB : (choice.resultBFail ?? choice.resultB));
+
+          final memoryFlag = isOptionA
+              ? (isSuccess ? choice.memoryFlagA : choice.memoryFlagAFail)
+              : (isSuccess ? choice.memoryFlagB : choice.memoryFlagBFail);
+          
+          final traitShifts = isOptionA ? choice.traitShiftsA : choice.traitShiftsB;
           
           // Apply effects to character
           final current = _characterNotifier.value;
@@ -294,8 +332,21 @@ class _HomePageState extends State<HomePage> {
             smarts: (current.smarts + effect.smarts).clamp(0, 100).toInt(),
             social: (current.social + effect.social).clamp(0, 100).toInt(),
             karma: (current.karma + effect.karma).clamp(0, 100).toInt(),
+            stressLevel: (current.stressLevel + (isSuccess ? 0 : 15)).clamp(0, 100).toInt(),
             bankBalance: current.bankBalance + effect.money,
           );
+
+          if (memoryFlag != null) {
+            updated.memories[memoryFlag] = true;
+          }
+
+          if (traitShifts != null) {
+            traitShifts.forEach((trait, delta) {
+              updated.shiftPersonality(trait, delta);
+            });
+          }
+
+          updated.triggerMutation();
           _characterNotifier.value = updated;
           StorageService.saveCharacter(updated);
 
@@ -303,12 +354,16 @@ class _HomePageState extends State<HomePage> {
           String statHint = '';
           if (effect.happiness != 0) statHint += ' Happiness ${effect.happiness > 0 ? '+' : ''}${effect.happiness}';
           if (effect.money != 0) statHint += ' Money ${effect.money > 0 ? '+' : ''}${effect.money.toInt()}';
+          if (!isSuccess) statHint += ' (FAIL)';
 
           Navigator.of(context).pop(LifeEvent(
             title: isOptionA ? choice.optionA : choice.optionB,
             description: result + (statHint.isNotEmpty ? ' ($statHint)' : ''),
-            type: effect.happiness >= 0 && effect.health >= 0 ? LifeEventType.positive : LifeEventType.negative,
-            metadata: {'age': current.age},
+            type: isSuccess ? LifeEventType.positive : LifeEventType.negative,
+            metadata: {
+              'age': current.age,
+              'outcome': isSuccess ? 'success' : 'failure',
+            },
           ));
         },
       ),
@@ -339,7 +394,11 @@ class _HomePageState extends State<HomePage> {
         },
         onNewLife: () async {
           final navigator = Navigator.of(context);
-          await StorageService.clearAll();
+          try {
+            await StorageService.clearAll();
+          } catch (e) {
+            print("⚠️ Error during new life storage clear: $e");
+          }
           if (mounted) {
             navigator.pushReplacement(
               MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),
@@ -401,17 +460,19 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              ValueListenableBuilder<bool>(
-                valueListenable: _showCriticalFlashNotifier,
-                builder: (_, show, __) => show
-                    ? Positioned.fill(
-                        child: IgnorePointer(
-                          child: Container(
-                            color: AppColors.danger.withValues(alpha: 0.1),
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+              Positioned.fill(
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: _showCriticalFlashNotifier,
+                  builder: (_, show, __) => AnimatedOpacity(
+                    opacity: show ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 100),
+                    child: IgnorePointer(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ),
+                ),
               ),
               Positioned(
                 left: 0,
@@ -471,7 +532,7 @@ class _LifeStats extends StatelessWidget {
           StatBar(emoji: '😊', label: 'Happiness', value: character.happiness, color: AppColors.happiness),
           StatBar(emoji: '❤️', label: 'Health', value: character.health, color: AppColors.health),
           StatBar(emoji: '🧠', label: 'Smarts', value: character.smarts, color: AppColors.smarts),
-          StatBar(emoji: '✨', label: 'Looks', value: character.social, color: AppColors.looks, isLast: true),
+          StatBar(emoji: '✨', label: 'Looks', value: character.looks, color: AppColors.looks, isLast: true),
         ],
       ),
     );
@@ -576,29 +637,47 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final desc = cleanText(event.description);
     final title = cleanText(event.title);
+    final bool isImportant = event.priority == EventPriority.important || 
+                             event.priority == EventPriority.critical ||
+                             event.priority == EventPriority.rare ||
+                             event.type == LifeEventType.milestone;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 2, 16, 2),
+      padding: EdgeInsets.fromLTRB(
+        28, 
+        isImportant ? 6 : 2, 
+        16, 
+        isImportant ? 6 : 2
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 5),
-            width: 4,
-            height: 4,
+            margin: EdgeInsets.only(top: isImportant ? 7 : 5),
+            width: isImportant ? 6 : 4,
+            height: isImportant ? 6 : 4,
             decoration: BoxDecoration(
               color: _dotColor(event),
               shape: BoxShape.circle,
+              boxShadow: isImportant ? [
+                BoxShadow(
+                  color: _dotColor(event).withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                )
+              ] : null,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               desc.isNotEmpty ? desc : title,
               style: AppTextStyles.rowSubtitle.copyWith(
-                fontSize: 10,
-                color: AppColors.textPrimary,
-                height: 1.2,
-                fontWeight: FontWeight.w500,
+                fontSize: isImportant ? 11.5 : 10,
+                color: isImportant ? AppColors.textPrimary : AppColors.textPrimary,
+                height: 1.3,
+                fontWeight: isImportant ? FontWeight.w800 : FontWeight.w500,
+                letterSpacing: isImportant ? 0.1 : 0,
               ),
             ),
           ),
@@ -885,7 +964,10 @@ class _DecisionButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: TextButton(
-        onPressed: onTap,
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
         style: TextButton.styleFrom(
           backgroundColor: const Color(0xFFF2F2F7),
           padding: const EdgeInsets.symmetric(vertical: 12),

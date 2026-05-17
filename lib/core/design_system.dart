@@ -26,7 +26,7 @@ String shortMoney(num value) {
   } else {
     text = abs.round().toString();
   }
-  return '${negative ? '-' : ''}Rs $text';
+  return '${negative ? '-' : ''}₹$text';
 }
 
 String cleanText(String value) {
@@ -51,19 +51,19 @@ class AppMotion {
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 class AppColors {
-  static const Color scaffoldBg = Colors.white;
+  static const Color scaffoldBg = Color(0xFFFAFAFC);
   static const Color cardBg = Colors.white;
   static const Color rowBg = Colors.white;
-  static const Color rowPressed = Color(0xFFF2F2F7);
-  static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF8E8E93);
-  static const Color textMuted = Color(0xFFC7C7CC);
-  static const Color divider = Color(0xFFC6C6C8);
-  static const Color dividerLight = Color(0xFFE5E5EA);
-  static const Color success = Color(0xFF00B359);
-  static const Color danger = Color(0xFFFF3B30);
-  static const Color info = Color(0xFF00B359); // Stitch Green
-  static const Color warning = Color(0xFFFFCC00);
+  static const Color rowPressed = Color(0xFFF4F4F7);
+  static const Color textPrimary = Color(0xFF1C1C1E);
+  static const Color textSecondary = Color(0xFF7E7E82);
+  static const Color textMuted = Color(0xFFD1D1D6);
+  static const Color divider = Color(0xFFE5E5EA);
+  static const Color dividerLight = Color(0xFFF2F2F7);
+  static const Color success = Color(0xFF0E9F6E);
+  static const Color danger = Color(0xFFF05252);
+  static const Color info = Color(0xFF0E9F6E); // Stitch Green
+  static const Color warning = Color(0xFFFACA15);
   static const Color darkBg = Color(0xFF1C1C1E);
   static const Color iconBg = Color(0xFFF2F2F7);
 
@@ -611,8 +611,10 @@ class StatBar extends StatelessWidget {
               child: Stack(
                 children: [
                   Container(height: 5, color: const Color(0xFFE5E5EA)),
-                  FractionallySizedBox(
+                  AnimatedFractionallySizedBox(
                     widthFactor: clamped / 100,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOutCubic,
                     child: Container(height: 5, color: color),
                   ),
                 ],

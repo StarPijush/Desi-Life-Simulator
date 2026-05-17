@@ -6,7 +6,7 @@ import 'package:desilife/models/loan_model.dart';
 void main() {
   group('Simulation Integrity Tests', () {
     test('Character CopyWith maintains deep state integrity', () {
-      final char = Character(name: 'Test User', age: 20, city: 'Delhi')
+      final char = Character(name: 'Test User', age: 20, city: 'Delhi', gender: 'Male')
         ..bankBalance = 1000
         ..unlockedActivityIds = ['A', 'B']
         ..hiddenModifiers = {'X': 1.0};
@@ -27,7 +27,7 @@ void main() {
     });
 
     test('AgeUp cycle correctly updates age and syncs unlocks', () {
-      final char = Character(name: 'Sim User', age: 16, city: 'Mumbai')
+      final char = Character(name: 'Sim User', age: 16, city: 'Mumbai', gender: 'Female')
         ..unlockedActivityIds = [];
 
       final result = GameEngine.ageUp(char);
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('Financial Pressure System triggers stress on high EMI load', () {
-      final char = Character(name: 'Debt User', age: 30, city: 'Bangalore')
+      final char = Character(name: 'Debt User', age: 30, city: 'Bangalore', gender: 'Male')
         ..annualIncome = 100000
         ..stressLevel = 20
         ..bankName = 'HDFC'
@@ -75,7 +75,7 @@ void main() {
     });
 
     test('Job actions update performance and clamp it safely', () {
-      final char = Character(name: 'Worker User', age: 24, city: 'Pune')
+      final char = Character(name: 'Worker User', age: 24, city: 'Pune', gender: 'Female')
         ..careerGroup = 'Tech'
         ..jobTitle = 'Junior Developer'
         ..annualIncome = 360000
@@ -104,6 +104,7 @@ void main() {
         city: 'Hyderabad',
         educationLevel: 'Graduate',
         smarts: 90,
+        gender: 'Male',
       );
       final tech = CareerSystem.findGroup('Tech')!;
       CareerSystem.assignCareer(char, tech);
@@ -130,6 +131,7 @@ void main() {
         city: 'Bengaluru',
         bankBalance: 800000,
         smarts: 70,
+        gender: 'Male',
       );
 
       final started = GameEngine.performCareerAction(
@@ -161,6 +163,7 @@ void main() {
         city: 'Mumbai',
         smarts: 40,
         social: 80,
+        gender: 'Female',
       );
 
       final actor = GameEngine.performCareerAction(

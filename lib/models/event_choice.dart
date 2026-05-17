@@ -41,12 +41,32 @@ class EventChoice {
   final String description;
   final String optionA;
   final String optionB;
+  
+  // Success Outcomes
   final StatEffect effectA;
   final StatEffect effectB;
   final String resultA;
   final String resultB;
+
+  // Failure Outcomes (Optional)
+  final StatEffect? effectAFail;
+  final StatEffect? effectBFail;
+  final String? resultAFail;
+  final String? resultBFail;
+
+  // Probability and Flags
+  final double successChanceA; // 0.0 to 1.0
+  final double successChanceB; // 0.0 to 1.0
+  final bool hiddenRiskA;
+  final bool hiddenRiskB;
+  final bool isTemptation;
+
   final Map<String, int>? traitShiftsA;
   final Map<String, int>? traitShiftsB;
+  final String? memoryFlagA;
+  final String? memoryFlagB;
+  final String? memoryFlagAFail;
+  final String? memoryFlagBFail;
 
   const EventChoice({
     required this.title,
@@ -57,8 +77,21 @@ class EventChoice {
     required this.effectB,
     required this.resultA,
     required this.resultB,
+    this.effectAFail,
+    this.effectBFail,
+    this.resultAFail,
+    this.resultBFail,
+    this.successChanceA = 1.0,
+    this.successChanceB = 1.0,
+    this.hiddenRiskA = false,
+    this.hiddenRiskB = false,
+    this.isTemptation = false,
     this.traitShiftsA,
     this.traitShiftsB,
+    this.memoryFlagA,
+    this.memoryFlagB,
+    this.memoryFlagAFail,
+    this.memoryFlagBFail,
   });
 
   Map<String, dynamic> toMap() => {
@@ -70,8 +103,21 @@ class EventChoice {
         'effectB': effectB.toMap(),
         'resultA': resultA,
         'resultB': resultB,
+        'effectAFail': effectAFail?.toMap(),
+        'effectBFail': effectBFail?.toMap(),
+        'resultAFail': resultAFail,
+        'resultBFail': resultBFail,
+        'successChanceA': successChanceA,
+        'successChanceB': successChanceB,
+        'hiddenRiskA': hiddenRiskA,
+        'hiddenRiskB': hiddenRiskB,
+        'isTemptation': isTemptation,
         'traitShiftsA': traitShiftsA,
         'traitShiftsB': traitShiftsB,
+        'memoryFlagA': memoryFlagA,
+        'memoryFlagB': memoryFlagB,
+        'memoryFlagAFail': memoryFlagAFail,
+        'memoryFlagBFail': memoryFlagBFail,
       };
 
   factory EventChoice.fromMap(Map<String, dynamic> map) => EventChoice(
@@ -83,11 +129,20 @@ class EventChoice {
         effectB: StatEffect.fromMap(map['effectB'] ?? {}),
         resultA: map['resultA'] ?? '',
         resultB: map['resultB'] ?? '',
-        traitShiftsA: map['traitShiftsA'] != null
-            ? Map<String, int>.from(map['traitShiftsA'])
-            : null,
-        traitShiftsB: map['traitShiftsB'] != null
-            ? Map<String, int>.from(map['traitShiftsB'])
-            : null,
+        effectAFail: map['effectAFail'] != null ? StatEffect.fromMap(map['effectAFail']) : null,
+        effectBFail: map['effectBFail'] != null ? StatEffect.fromMap(map['effectBFail']) : null,
+        resultAFail: map['resultAFail'],
+        resultBFail: map['resultBFail'],
+        successChanceA: (map['successChanceA'] ?? 1.0).toDouble(),
+        successChanceB: (map['successChanceB'] ?? 1.0).toDouble(),
+        hiddenRiskA: map['hiddenRiskA'] ?? false,
+        hiddenRiskB: map['hiddenRiskB'] ?? false,
+        isTemptation: map['isTemptation'] ?? false,
+        traitShiftsA: map['traitShiftsA'] != null ? Map<String, int>.from(map['traitShiftsA']) : null,
+        traitShiftsB: map['traitShiftsB'] != null ? Map<String, int>.from(map['traitShiftsB']) : null,
+        memoryFlagA: map['memoryFlagA'],
+        memoryFlagB: map['memoryFlagB'],
+        memoryFlagAFail: map['memoryFlagAFail'],
+        memoryFlagBFail: map['memoryFlagBFail'],
       );
 }

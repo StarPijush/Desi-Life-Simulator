@@ -19,6 +19,28 @@ class LegacyPage extends StatelessWidget {
     return ('💀', 'Dark Legacy', 'A difficult journey has ended.');
   }
 
+  String _generateNarrativeSummary() {
+    final netWorth = character.bankBalance + character.savingsBalance;
+    final isBillionaire = netWorth > 1000000000;
+    final isWealthy = netWorth > 10000000;
+    final isPoor = netWorth < 50000;
+    final isSmart = character.smarts > 80;
+    final isKind = character.karma > 80;
+    final isAggressive = character.personality == 'Aggressive';
+
+    if (isBillionaire) return 'The Billionaire Who Built an Empire';
+    if (isSmart && isWealthy) return 'A Brilliant Mind Who Mastered the World';
+    if (isSmart && isPoor) return 'The Intellectual Who Refused to Play the Game';
+    if (isKind && isWealthy) return 'The Generous Philanthropist of the City';
+    if (isKind && isPoor) return 'The Saint Who Died with Nothing but Love';
+    if (isAggressive && isWealthy) return 'The Ruthless Titan Who Conquered Everything';
+    if (isAggressive && isPoor) return 'A Life of Friction and Hard Lessons';
+    if (character.age < 30) return 'A Young Soul Taken Too Soon';
+    if (character.fame > 70) return 'The Icon Who Left a Mark on Millions';
+
+    return 'A Life Lived on Their Own Terms';
+  }
+
   @override
   Widget build(BuildContext context) {
     final (emoji, title, subtitle) = _karmaVerdict(character.karma);
@@ -35,6 +57,20 @@ class LegacyPage extends StatelessWidget {
             Center(
               child: Text('REST IN PEACE',
                   style: AppTextStyles.sectionLabel.copyWith(letterSpacing: 3)),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(_generateNarrativeSummary().toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.rowTitle.copyWith(
+                      letterSpacing: 1.0,
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    )),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -132,7 +168,11 @@ class LegacyPage extends StatelessWidget {
             GestureDetector(
               onTap: () async {
                 HapticFeedback.heavyImpact();
-                await StorageService.clearAll();
+                try {
+                  await StorageService.clearAll();
+                } catch (e) {
+                  print("⚠️ Error clearing storage on legacy page: $e");
+                }
                 if (context.mounted) {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),

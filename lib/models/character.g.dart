@@ -73,30 +73,30 @@ class CharacterAdapter extends TypeAdapter<Character> {
       lastDemotionAge: fields[65] as int,
       hasCareerWarning: fields[66] as bool,
       freelanceEffort: fields[67] as int,
-      achievements: (fields[15] as List?)?.cast<String>(),
-      ownedAssets: (fields[22] as List?)?.cast<String>(),
-      relationships: (fields[23] as List?)?.cast<Relationship>(),
+      achievements: (fields[15] as List?)?.cast<String>() ?? <String>[],
+      ownedAssets: (fields[22] as List?)?.cast<String>() ?? <String>[],
+      relationships: (fields[23] as List?)?.cast<Relationship>() ?? <Relationship>[],
       stockPortfolio: (fields[33] as List?)
           ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
+          .toList() ?? <Map<dynamic, dynamic>>[],
       cryptoPortfolio: (fields[34] as List?)
           ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
+          .toList() ?? <Map<dynamic, dynamic>>[],
       bondPortfolio: (fields[35] as List?)
           ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList(),
-      marketPrices: (fields[36] as Map?)?.cast<dynamic, dynamic>(),
-      eventChains: (fields[37] as Map?)?.cast<String, int>(),
-      personalityScores: (fields[41] as Map?)?.cast<String, int>(),
-      hiddenModifiers: (fields[48] as Map?)?.cast<String, double>(),
+          .toList() ?? <Map<dynamic, dynamic>>[],
+      marketPrices: (fields[36] as Map?)?.cast<dynamic, dynamic>() ?? <dynamic, dynamic>{},
+      eventChains: (fields[37] as Map?)?.cast<String, int>() ?? <String, int>{},
+      personalityScores: (fields[41] as Map?)?.cast<String, int>() ?? <String, int>{},
+      hiddenModifiers: (fields[48] as Map?)?.cast<String, double>() ?? <String, double>{},
       majorDecisions: (fields[49] as List?)
           ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
-      tensionSignals: (fields[51] as List?)?.cast<String>(),
-      examResults: (fields[53] as Map?)?.cast<String, int>(),
-      unlockedActivityIds: (fields[68] as List?)?.cast<String>(),
-      unlockedCareerModuleIds: (fields[69] as List?)?.cast<String>(),
-      loans: (fields[70] as List?)?.cast<LoanModel>(),
+          .toList() ?? <Map<String, dynamic>>[],
+      tensionSignals: (fields[51] as List?)?.cast<String>() ?? <String>[],
+      examResults: (fields[53] as Map?)?.cast<String, int>() ?? <String, int>{},
+      unlockedActivityIds: (fields[68] as List?)?.cast<String>() ?? <String>[],
+      unlockedCareerModuleIds: (fields[69] as List?)?.cast<String>() ?? <String>[],
+      loans: (fields[70] as List?)?.cast<LoanModel>() ?? <LoanModel>[],
       jobPerformance: (fields[71] as num?)?.toDouble() ?? 50,
       yearsInJob: fields[72] as int? ?? 0,
       jobLevel: fields[73] as int? ?? 0,

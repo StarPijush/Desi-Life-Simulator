@@ -1,5 +1,6 @@
 // lib/screens/activities_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/design_system.dart';
 import '../core/engine.dart';
@@ -32,7 +33,10 @@ class ActivitiesPage extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
                     child: const Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
                   ),
                   const SizedBox(width: 16),
@@ -278,6 +282,7 @@ class _ActivityRowState extends State<_ActivityRow> {
           ? null
           : (_) {
               setState(() => _pressed = false);
+              HapticFeedback.selectionClick();
               widget.onTap();
             },
       onTapCancel: () => setState(() => _pressed = false),
@@ -324,7 +329,7 @@ class _ActivityRowState extends State<_ActivityRow> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: Text(
-                    '-${formatMoney(widget.cost!).replaceFirst('₹', '₹')}',
+                    '-${formatMoney(widget.cost!)}',
                     style: GoogleFonts.lexend(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
