@@ -1,11 +1,11 @@
-// lib/screens/exam_quiz_page.dart
+// lib/screens/education/exam_quiz_page.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/engine.dart';
-import '../core/exam_data.dart';
-import '../models/character.dart';
+import '../../core/engine.dart';
+import '../../core/exam_data.dart';
+import '../../models/character.dart';
 
 class ExamQuizPage extends StatefulWidget {
   final Character character;

@@ -549,7 +549,7 @@ class BondBar extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E5EA),
+          color: const Color(0xFFE5E5EA),
         borderRadius: BorderRadius.circular(2),
       ),
       child: FractionallySizedBox(

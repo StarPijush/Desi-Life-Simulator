@@ -1,11 +1,11 @@
-// lib/screens/assets_page.dart
+// lib/screens/finance/assets_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/design_system.dart';
-import '../core/engine.dart';
-import '../core/assets_data.dart';
-import '../models/character.dart';
+import '../../core/design_system.dart';
+import '../../core/engine.dart';
+import '../../core/assets_data.dart';
+import '../../models/character.dart';
 
 class AssetsPage extends StatefulWidget {
   final Character character;
@@ -89,7 +89,6 @@ class _AssetsPageState extends State<AssetsPage> {
           Container(
             height: 36,
             decoration: const BoxDecoration(
-              color: Color(0xFFF4F4F5),
               border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
             ),
             child: Row(
@@ -101,7 +100,7 @@ class _AssetsPageState extends State<AssetsPage> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: selected ? Colors.white : Colors.transparent,
+                        color: selected ? Colors.white : const Color(0xFFF4F4F5),
                         border: selected
                             ? const Border(bottom: BorderSide(color: Color(0xFF006D37), width: 2))
                             : null,
@@ -119,9 +118,7 @@ class _AssetsPageState extends State<AssetsPage> {
                 );
               }).toList(),
             ),
-          ),
-
-          // Owned count
+          ), // Owned count
           if (widget.character.ownedAssets.isNotEmpty)
             Container(
               width: double.infinity,

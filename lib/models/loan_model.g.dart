@@ -1,5 +1,4 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Manually maintained to avoid build_runner dependency.
 
 part of 'loan_model.dart';
 
@@ -18,12 +17,12 @@ class LoanModelAdapter extends TypeAdapter<LoanModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return LoanModel(
-      type: fields[0] as String? ?? 'Personal',
-      startAge: fields[1] as int? ?? 0,
-      durationYears: fields[2] as int? ?? 5,
-      amount: (fields[3] as num?)?.toDouble() ?? 0.0,
-      remainingAmount: (fields[4] as num?)?.toDouble() ?? 0.0,
-      interestRate: (fields[5] as num?)?.toDouble() ?? 0.12,
+      type: fields[0] as String,
+      startAge: fields[1] as int,
+      durationYears: fields[2] as int,
+      amount: fields[3] as double,
+      remainingAmount: fields[4] as double,
+      interestRate: fields[5] as double,
     );
   }
 

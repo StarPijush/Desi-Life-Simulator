@@ -27,13 +27,14 @@ class RelationshipAdapter extends TypeAdapter<Relationship> {
       isRival: fields[6] as bool,
       rivalCareer: fields[7] as String,
       rivalIntensity: fields[8] as int,
+      personality: fields[10] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Relationship obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -53,7 +54,9 @@ class RelationshipAdapter extends TypeAdapter<Relationship> {
       ..writeByte(8)
       ..write(obj.rivalIntensity)
       ..writeByte(9)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(10)
+      ..write(obj.personality);
   }
 
   @override

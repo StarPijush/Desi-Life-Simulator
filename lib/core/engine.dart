@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/character.dart';
 import '../models/loan_model.dart';
 import '../models/life_event.dart';
+import '../models/part_time_job.dart';
 import '../models/relationship.dart';
 import '../models/event_choice.dart';
 import 'assets_data.dart';
@@ -11,6 +12,7 @@ import 'event_data.dart';
 import 'enums.dart';
 import 'career_data.dart';
 import 'institute_data.dart';
+import 'part_time_jobs_data.dart';
 
 // Top-level worker for Isolate/Compute
 // Using Map for strict serializable data crossing the isolate boundary
@@ -101,7 +103,8 @@ class ActionResult {
                   : events,
           growable: true,
         ),
-        progressionHints = List<String>.from(progressionHints ?? [], growable: true);
+        progressionHints =
+            List<String>.from(progressionHints ?? [], growable: true);
 }
 
 class GameAction {
@@ -112,6 +115,14 @@ class GameAction {
 
   @override
   String toString() => 'GameAction(type: $type, payload: $payload)';
+}
+
+class _PartTimeFlavorEvent {
+  final String title;
+  final String description;
+  final LifeEventType type;
+
+  const _PartTimeFlavorEvent(this.title, this.description, this.type);
 }
 
 typedef GameActionHandler = ActionResult Function(GameAction action);
@@ -1170,8 +1181,9 @@ class CareerSystem {
       return null;
     }
 
-    double chanceScore =
-        (c.jobPerformance + (c.ambition / 5) + rng.nextInt(21)).clamp(0, 100).toDouble();
+    double chanceScore = (c.jobPerformance + (c.ambition / 5) + rng.nextInt(21))
+        .clamp(0, 100)
+        .toDouble();
     chanceScore *= (c.hiddenModifiers['promotionChance'] ?? 1.0);
     chanceScore = chanceScore.clamp(0, 100);
 
@@ -1236,7 +1248,8 @@ class CareerSystem {
 
     if (c.jobPerformance < 20) {
       final reputationPenalty = (100 - c.reputation) / 100.0;
-      final fireChance = 0.40 + ((20 - c.jobPerformance) / 100) + (reputationPenalty * 0.2);
+      final fireChance =
+          0.40 + ((20 - c.jobPerformance) / 100) + (reputationPenalty * 0.2);
       if (rng.nextDouble() < fireChance) {
         c.jobTitle = 'Unemployed';
         c.annualIncome = 0;
@@ -1535,19 +1548,21 @@ class GameEngine {
     // 4. Filter secondary events (Max 2)
     final List<LifeEvent> result = [dominant];
     final secondaryCandidates = scoredEvents.skip(1).map((e) => e.key).toList();
-    
+
     int added = 0;
     for (var e in secondaryCandidates) {
       if (added >= 2) break;
-      
+
       // Suppress lower-tier events if stronger events exist
       bool allowed = true;
-      if (dominant.priority == EventPriority.critical || dominant.priority == EventPriority.rare) {
+      if (dominant.priority == EventPriority.critical ||
+          dominant.priority == EventPriority.rare) {
         if (e.priority == EventPriority.normal) {
-          allowed = false; // Suppress normal events if we have a critical/rare focus
+          allowed =
+              false; // Suppress normal events if we have a critical/rare focus
         }
       }
-      
+
       if (allowed) {
         result.add(e);
         added++;
@@ -1688,7 +1703,8 @@ class GameEngine {
       case 'activity.find_love':
         return addPartner(character, generateDatingCandidate(character.age));
       case 'career.perform':
-        return performCareerAction(character, payload['actionId'] as String);
+        return performCareerAction(
+            character, payload['actionId'] as String, payload);
       case 'bank.open_account':
         return openBankAccount(
           character,
@@ -1756,7 +1772,9 @@ class GameEngine {
     );
   }
 
-  static void _updateProgression(Character char, List<String> hints, {
+  static void _updateProgression(
+    Character char,
+    List<String> hints, {
     int reputation = 0,
     int fame = 0,
     int ambition = 0,
@@ -1776,8 +1794,10 @@ class GameEngine {
       hints.add('Ambition ${ambition > 0 ? "↑" : "↓"}');
     }
     if (financialIntelligence != 0) {
-      char.financialIntelligence = (char.financialIntelligence + financialIntelligence).clamp(0, 100);
-      hints.add('Financial Intelligence ${financialIntelligence > 0 ? "↑" : "↓"}');
+      char.financialIntelligence =
+          (char.financialIntelligence + financialIntelligence).clamp(0, 100);
+      hints.add(
+          'Financial Intelligence ${financialIntelligence > 0 ? "↑" : "↓"}');
     }
     if (discipline != 0) {
       char.discipline = (char.discipline + discipline).clamp(0, 100);
@@ -1791,6 +1811,37 @@ class GameEngine {
     bool success = true;
     final List<String> hints = [];
 
+    // Prefix-based actions
+    if (activityId.startsWith('school_activity.join::')) {
+      final String id = activityId.substring('school_activity.join::'.length);
+      return _joinSchoolActivity(char, id);
+    } else if (activityId.startsWith('school_activity.practice::')) {
+      final String id =
+          activityId.substring('school_activity.practice::'.length);
+      return _practiceSchoolActivity(char, id);
+    } else if (activityId.startsWith('school_activity.leave::')) {
+      final String id = activityId.substring('school_activity.leave::'.length);
+      return _leaveSchoolActivity(char, id);
+    } else if (activityId.startsWith('scholarship.apply::')) {
+      final String id = activityId.substring('scholarship.apply::'.length);
+      return _applyScholarship(char, id);
+    } else if (activityId == 'library.study') {
+      return _studyLibrary(char);
+    } else if (activityId.startsWith('tutor.hire::')) {
+      final parts = activityId.substring('tutor.hire::'.length).split('::');
+      final subject = parts[0];
+      final type = parts[1];
+      return hireTutor(char, subject, type);
+    } else if (activityId.startsWith('tutor.fire::')) {
+      final subject = activityId.substring('tutor.fire::'.length);
+      return fireTutor(char, subject);
+    } else if (activityId.startsWith('tutor.lesson::')) {
+      final parts = activityId.substring('tutor.lesson::'.length).split('::');
+      final subject = parts[0];
+      final type = parts[1];
+      return _takeTutorLesson(char, subject, type);
+    }
+
     switch (activityId) {
       case 'Gym Workout':
         if (char.bankBalance < 500) {
@@ -1800,7 +1851,8 @@ class GameEngine {
           char.bankBalance -= 500;
           char.updateStats(healthDelta: 10, happinessDelta: 5);
           _updateProgression(char, hints, discipline: 3);
-          message = 'You crushed your workout! You feel stronger and more disciplined.';
+          message =
+              'You crushed your workout! You feel stronger and more disciplined.';
         }
         break;
       case 'Meditate for Focus':
@@ -1813,7 +1865,8 @@ class GameEngine {
       case 'Study Hard':
         char.updateStats(smartsDelta: 12, happinessDelta: -10, stressDelta: 15);
         _updateProgression(char, hints, ambition: 5, discipline: 5);
-        message = 'You pushed yourself to the limit studying. You\'re becoming a top-tier scholar.';
+        message =
+            'You pushed yourself to the limit studying. You\'re becoming a top-tier scholar.';
         break;
       case 'Socialize':
         char.updateStats(socialDelta: 10, happinessDelta: 10);
@@ -1827,16 +1880,24 @@ class GameEngine {
           success = false;
         } else {
           char.bankBalance -= 2000;
-          char.updateStats(socialDelta: 15, happinessDelta: 15, healthDelta: -5);
+          char.updateStats(
+              socialDelta: 15, happinessDelta: 15, healthDelta: -5);
           _updateProgression(char, hints, fame: 2, discipline: -2);
-          message = 'The party was legendary! People are starting to know your name.';
+          message =
+              'The party was legendary! People are starting to know your name.';
         }
         break;
       case 'Launch a Side Hustle':
       case 'Side Hustle':
-        char.updateStats(moneyDelta: 25000, happinessDelta: -12, stressDelta: 20, healthDelta: -5);
-        _updateProgression(char, hints, ambition: 8, financialIntelligence: 10, reputation: -2);
-        message = 'You worked tirelessly on your project. It\'s hard work, but you\'re building something.';
+        char.updateStats(
+            moneyDelta: 25000,
+            happinessDelta: -12,
+            stressDelta: 20,
+            healthDelta: -5);
+        _updateProgression(char, hints,
+            ambition: 8, financialIntelligence: 10, reputation: -2);
+        message =
+            'You worked tirelessly on your project. It\'s hard work, but you\'re building something.';
         break;
       case 'Visit the Temple':
         char.updateStats(karmaDelta: 8, happinessDelta: 5);
@@ -1847,10 +1908,537 @@ class GameEngine {
         message = 'Activity performed.';
     }
     return ActionResult(
-      message: message, 
-      character: char, 
+      message: message,
+      character: char,
       success: success,
       progressionHints: hints,
+    );
+  }
+
+  static ActionResult _joinSchoolActivity(Character c, String id) {
+    String reqMessage = '';
+    bool eligible = true;
+
+    if (id == 'Cricket') {
+      if (c.looks < 40 || c.health < 40) {
+        eligible = false;
+        reqMessage =
+            'The Cricket coach said you aren\'t in shape or handsome enough to join the squad. Need Looks 40+ and Health 40+!';
+      }
+    } else if (id == 'Football') {
+      if (c.health < 50) {
+        eligible = false;
+        reqMessage =
+            'You couldn\'t finish a single lap during trials. The football coach rejected you. Need Health 50+!';
+      }
+    } else if (id == 'Basketball') {
+      if (c.looks < 50 || c.health < 45) {
+        eligible = false;
+        reqMessage =
+            'You were rejected from the basketball team. Need Looks 50+ and Health 45+!';
+      }
+    } else if (id == 'Acting Club') {
+      if (c.looks < 60) {
+        eligible = false;
+        reqMessage =
+            'The Drama club coordinator said you lack screen presence. Need Looks 60+!';
+      }
+    } else if (id == 'Debate Club') {
+      if (c.smarts < 50) {
+        eligible = false;
+        reqMessage =
+            'You stumbled during the trial debate. The society rejected your application. Need Smarts 50+!';
+      }
+    } else if (id == 'Singing Club') {
+      if (c.looks < 50) {
+        eligible = false;
+        reqMessage =
+            'You sang off-key and were politely asked to leave the choir trials. Need Looks 50+!';
+      }
+    } else if (id == 'Dance Club') {
+      if (c.looks < 50 || c.health < 40) {
+        eligible = false;
+        reqMessage =
+            'The dance coordinator noted your coordination needs work. Need Looks 50+ and Health 40+!';
+      }
+    } else if (id == 'Coding Club') {
+      if (c.smarts < 60) {
+        eligible = false;
+        reqMessage =
+            'You couldn\'t solve the basic logic test. The Coding club rejected you. Need Smarts 60+!';
+      }
+    } else if (id == 'NCC Cadet') {
+      if (c.discipline < 60) {
+        eligible = false;
+        reqMessage =
+            'The NCC officer rejected you due to lack of basic discipline. Need Discipline 60+!';
+      }
+    } else if (id == 'Art Club') {
+      if (c.looks < 40) {
+        eligible = false;
+        reqMessage = 'You failed the basic sketching trial. Need Looks 40+!';
+      }
+    } else if (id == 'Teaching Volunteer') {
+      if (c.smarts < 50) {
+        eligible = false;
+        reqMessage =
+            'You need higher smarts to tutor junior students. Need Smarts 50+!';
+      }
+    } else if (id == 'Science Club') {
+      if (c.smarts < 55) {
+        eligible = false;
+        reqMessage = 'You failed the laboratory safety test. Need Smarts 55+!';
+      }
+    }
+
+    if (!eligible) {
+      return ActionResult(message: reqMessage, character: c, success: false);
+    }
+
+    final key = 'school_activity_$id';
+    c.hiddenModifiers[key] = 2.0; // Start at Average performance
+    c.joinedActivities = List<String>.from(c.joinedActivities);
+    c.activityPerformance = Map<String, int>.from(c.activityPerformance);
+    if (!c.joinedActivities.contains(id)) {
+      c.joinedActivities.add(id);
+    }
+    c.activityPerformance[id] = 2; // Level 2: Average
+    c.updateStats(socialDelta: 5, stressDelta: 5);
+
+    return ActionResult(
+      message:
+          '🎉 You successfully joined the $id! Practicing hard will improve your performance.',
+      character: c,
+      success: true,
+    );
+  }
+
+  static ActionResult _practiceSchoolActivity(Character c, String id) {
+    final key = 'school_activity_$id';
+    if (!c.hiddenModifiers.containsKey(key)) {
+      return ActionResult(
+          message: 'You are not in the $id!', character: c, success: false);
+    }
+
+    double currentVal = c.hiddenModifiers[key]!;
+    if (currentVal >= 5.0) {
+      return ActionResult(
+        message:
+            '🏆 Elite Level! You are already the absolute star performer of the $id. No more practice needed this year!',
+        character: c,
+        success: true,
+      );
+    }
+
+    double newVal = (currentVal + 0.5).clamp(1.0, 5.0);
+    c.hiddenModifiers[key] = newVal;
+
+    c.joinedActivities = List<String>.from(c.joinedActivities);
+    c.activityPerformance = Map<String, int>.from(c.activityPerformance);
+    c.activityPerformance[id] = newVal.round().clamp(1, 5);
+
+    String perfLabel = _getActivityPerformanceLabel(newVal);
+
+    int healthD = 0,
+        smartsD = 0,
+        looksD = 0,
+        socialD = 0,
+        disciplineD = 0,
+        fameD = 0;
+    if (id == 'Cricket' || id == 'Football' || id == 'Basketball') {
+      healthD = 12;
+      socialD = 5;
+      disciplineD = 3;
+    } else if (id == 'Acting Club') {
+      looksD = 8;
+      socialD = 8;
+      fameD = 5;
+    } else if (id == 'Debate Club') {
+      smartsD = 10;
+      socialD = 10;
+    } else if (id == 'Singing Club' || id == 'Dance Club') {
+      looksD = 5;
+      socialD = 8;
+    } else if (id == 'Coding Club') {
+      smartsD = 12;
+      disciplineD = 5;
+      socialD = -2;
+    } else if (id == 'NCC Cadet') {
+      disciplineD = 15;
+      healthD = 8;
+    } else if (id == 'Art Club') {
+      smartsD = 5;
+      looksD = 5;
+    } else if (id == 'Teaching Volunteer') {
+      c.updateStats(karmaDelta: 10);
+      smartsD = 6;
+    } else if (id == 'Science Club') {
+      smartsD = 10;
+      disciplineD = 4;
+    }
+
+    c.updateStats(
+      happinessDelta: -3,
+      stressDelta: 10,
+      healthDelta: healthD,
+      smartsDelta: smartsD,
+      socialDelta: socialD,
+    );
+
+    if (looksD != 0) c.looks = (c.looks + looksD).clamp(0, 100);
+    if (fameD != 0) c.fame = (c.fame + fameD).clamp(0, 100);
+    if (disciplineD != 0)
+      c.discipline = (c.discipline + disciplineD).clamp(0, 100);
+
+    if (newVal >= 5.0) {
+      c.memories['elite_activity_$id'] = true;
+      if (id == 'Cricket' || id == 'Football' || id == 'Basketball') {
+        c.memories['unlocked_athlete_career'] = true;
+      } else if (id == 'Acting Club') {
+        c.memories['unlocked_actor_career'] = true;
+      } else if (id == 'Singing Club' || id == 'Dance Club') {
+        c.memories['unlocked_musician_career'] = true;
+      }
+    }
+
+    return ActionResult(
+      message:
+          '🏏 You practiced hard for $id! You pushed your limits. Your performance level is now $perfLabel (${newVal.toInt()}/5).',
+      character: c,
+      success: true,
+    );
+  }
+
+  static ActionResult _leaveSchoolActivity(Character c, String id) {
+    final key = 'school_activity_$id';
+    c.hiddenModifiers.remove(key);
+    c.joinedActivities = List<String>.from(c.joinedActivities);
+    c.activityPerformance = Map<String, int>.from(c.activityPerformance);
+    c.joinedActivities.remove(id);
+    c.activityPerformance.remove(id);
+
+    c.updateStats(stressDelta: -10);
+    return ActionResult(
+      message: 'You have left the $id. Your schedule is lighter now.',
+      character: c,
+      success: true,
+    );
+  }
+
+  static ActionResult hireTutor(Character c, String subject, String type) {
+    c.activeTutors = Map<dynamic, dynamic>.from(c.activeTutors);
+    double monthlyFee = type == 'Strict' ? 12000.0 : 7000.0;
+    c.activeTutors[subject] = {
+      'name': type == 'Strict' ? 'Strict Tutor' : 'Friendly Tutor',
+      'monthlyFee': monthlyFee.toInt(),
+      'learningBoost': type == 'Strict' ? 18 : 9,
+      'stressImpact': type == 'Strict' ? 15 : -8,
+      'quality': type == 'Strict' ? 'Excellent' : 'Good',
+      'type': type,
+    };
+    c.updateStats(stressDelta: type == 'Strict' ? 5 : -5);
+    return ActionResult(
+      message:
+          '👨‍🏫 Hired a $type Tutor for $subject (₹${monthlyFee.toInt()}/month). They will boost your learning consistency yearly!',
+      character: c,
+      success: true,
+    );
+  }
+
+  static ActionResult fireTutor(Character c, String subject) {
+    c.activeTutors = Map<dynamic, dynamic>.from(c.activeTutors);
+    if (!c.activeTutors.containsKey(subject)) {
+      return ActionResult(
+          message: 'No tutor active for $subject!',
+          character: c,
+          success: false);
+    }
+    c.activeTutors.remove(subject);
+    return ActionResult(
+      message: '❌ Fired your tutor for $subject.',
+      character: c,
+      success: true,
+    );
+  }
+
+  static String _getActivityPerformanceLabel(double val) {
+    if (val >= 5.0) return 'Elite 👑';
+    if (val >= 4.0) return 'Excellent 🌟';
+    if (val >= 3.0) return 'Good 👍';
+    if (val >= 2.0) return 'Average 😐';
+    return 'Poor 📉';
+  }
+
+  static ActionResult _applyScholarship(Character c, String id) {
+    if (c.claimedScholarships.contains(id)) {
+      return ActionResult(
+          message: '❌ You have already claimed this scholarship!',
+          character: c,
+          success: false);
+    }
+
+    bool eligible = false;
+    double cashReward = 0;
+    String successMsg = '';
+
+    if (id == '10th_merit') {
+      final class10Score = c.hiddenModifiers['class10_score'] ?? 0;
+      if (class10Score >= 75) {
+        eligible = true;
+        cashReward = 10000;
+        successMsg =
+            '🏆 10th BOARD MERIT AID GRANTED! You scored ${class10Score.toInt()}% in Class 10 Boards. The Government awarded you a merit prize of ₹10,000! Your parents are distributing sweets to the entire neighborhood.';
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires 75%+ in Class 10 Boards. Your score: ${class10Score.toInt()}%',
+            character: c,
+            success: false);
+      }
+    } else if (id == '12th_excellence') {
+      if (c.smarts >= 80 && c.prepLevel >= 80) {
+        eligible = true;
+        cashReward = 25000;
+        successMsg =
+            '🏆 12th EXCELLENCE AWARD GRANTED! Due to your exceptional intelligence (Smarts ${c.smarts}) and peak preparation (Prep ${c.prepLevel}%), the Board awarded you a cash prize of ₹25,000! Your relatives are calling to congratulate you.';
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires both Smarts and Prep Level to be 80%+. Your stats: Smarts: ${c.smarts}%, Prep: ${c.prepLevel}%',
+            character: c,
+            success: false);
+      }
+    } else if (id == 'sports_talent') {
+      bool hasEliteSports =
+          (c.hiddenModifiers['school_activity_Cricket'] ?? 0) >= 5.0 ||
+              (c.hiddenModifiers['school_activity_Football'] ?? 0) >= 5.0 ||
+              (c.hiddenModifiers['school_activity_Basketball'] ?? 0) >= 5.0;
+      if (hasEliteSports) {
+        eligible = true;
+        cashReward = 15000;
+        successMsg =
+            '🏆 SPORTS TALENT SCHOLARSHIP GRANTED! Your outstanding Elite-level sports performance caught the attention of the state sports council. You received a scholarship of ₹15,000 and unlocked a professional Athlete pathway!';
+        c.memories['unlocked_athlete_career'] = true;
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires Elite performance in Cricket, Football, or Basketball.',
+            character: c,
+            success: false);
+      }
+    } else if (id == 'arts_talent') {
+      bool hasEliteArts =
+          (c.hiddenModifiers['school_activity_Acting Club'] ?? 0) >= 5.0 ||
+              (c.hiddenModifiers['school_activity_Singing Club'] ?? 0) >= 5.0 ||
+              (c.hiddenModifiers['school_activity_Dance Club'] ?? 0) >= 5.0;
+      if (hasEliteArts) {
+        eligible = true;
+        cashReward = 15000;
+        successMsg =
+            '🏆 CREATIVE ARTS SCHOLARSHIP GRANTED! Your Elite performance in the creative clubs won the National Arts Talent hunt! You received ₹15,000 and unlocked professional Actor/Musician career tracks!';
+        c.memories['unlocked_actor_career'] = true;
+        c.memories['unlocked_musician_career'] = true;
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires Elite performance in Acting, Singing, or Dance clubs.',
+            character: c,
+            success: false);
+      }
+    } else if (id == 'low_income') {
+      if (c.parentWealth == 'Low') {
+        eligible = true;
+        cashReward = 10000;
+        successMsg =
+            '🏆 FINANCIAL HELP GRANTED! Based on your family\'s economic profile, the education foundation granted you a need-based support stipend of ₹10,000 to cover fees and books. Your financial stress has dropped significantly.';
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: This scholarship is strictly for students from low-income families.',
+            character: c,
+            success: false);
+      }
+    } else if (id == 'coding_talent') {
+      bool hasGoodCoding =
+          (c.hiddenModifiers['school_activity_Coding Club'] ?? 0) >= 3.0;
+      if (hasGoodCoding && c.smarts >= 75) {
+        eligible = true;
+        cashReward = 15000;
+        successMsg =
+            '🏆 CODING TALENT GRANT GRANTED! Your superb software project won the junior Hackathon! You received ₹15,000 and your parents are proudly showing off your certificate to the neighbors.';
+        c.memories['unlocked_programmer_career'] = true;
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires at least Good performance in Coding Club and Smarts 75%+.',
+            character: c,
+            success: false);
+      }
+    } else if (id == 'debate_excellence') {
+      bool hasGoodDebate =
+          (c.hiddenModifiers['school_activity_Debate Club'] ?? 0) >= 3.0;
+      if (hasGoodDebate && c.smarts >= 70) {
+        eligible = true;
+        cashReward = 12000;
+        successMsg =
+            '🏆 DEBATE EXCELLENCE AWARD GRANTED! Your eloquent performance at the state mock parliament won first place! You received a cash prize of ₹12,000 and unlocked elite political and corporate tracks.';
+        c.memories['unlocked_politician_career'] = true;
+      } else {
+        return ActionResult(
+            message:
+                '❌ Rejected: Requires at least Good performance in Debate Club and Smarts 70%+.',
+            character: c,
+            success: false);
+      }
+    }
+
+    if (eligible) {
+      c.claimedScholarships = List<String>.from(c.claimedScholarships);
+      c.claimedScholarships.add(id);
+      c.memories['scholarship_applied_$id'] = true;
+      c.bankBalance += cashReward;
+      c.updateStats(happinessDelta: 15, stressDelta: -20);
+      return ActionResult(
+        message: successMsg,
+        character: c,
+        success: true,
+      );
+    }
+
+    return ActionResult(message: '❌ Ineligible.', character: c, success: false);
+  }
+
+  static ActionResult _studyLibrary(Character c) {
+    final double roll = _rng.nextDouble();
+    String msg = '';
+
+    if (roll < 0.30) {
+      c.updateStats(smartsDelta: 8, stressDelta: 2);
+      c.prepLevel = (c.prepLevel + 8).clamp(0, 100);
+      msg =
+          '📚 Hyper-Focus Zone: You found a quiet corner in the library and fell into deep concentration. You mastered complex organic chemistry equations in under an hour!';
+    } else if (roll < 0.50) {
+      final candidate = generateDatingCandidate(c.age);
+      final rel = Relationship(
+        id: 'rel_library_${DateTime.now().microsecondsSinceEpoch}',
+        name: candidate.name,
+        type: _rng.nextBool() ? 'Friend' : 'Partner',
+        age: candidate.age,
+        initial: candidate.initial,
+        bond: 50,
+        personality: 'Caring',
+      );
+      c.relationships.add(rel);
+      c.updateStats(happinessDelta: 10, socialDelta: 5);
+      msg =
+          '❤️ Library Spark: You shared a study desk with a quiet student named ${candidate.name}. After exchanging shy smiles, you discussed exam prep and added them to your contacts list!';
+    } else if (roll < 0.65) {
+      c.updateStats(smartsDelta: 10, stressDelta: 4);
+      c.prepLevel = (c.prepLevel + 12).clamp(0, 100);
+      msg =
+          '💡 Insider Info: You sat behind three board exam toppers and overheard them highlighting key formulas and predicting question patterns. You copied down their notes!';
+    } else if (roll < 0.85) {
+      c.updateStats(smartsDelta: 6, happinessDelta: 12);
+      msg =
+          '📖 Spark of Passion: While searching the shelves, you stumbled upon a fascinating book on programming logic and game design. The ideas completely energized your mind!';
+    } else {
+      c.updateStats(smartsDelta: 1, stressDelta: 6);
+      msg =
+          '❌ Loud Whispers: A group of juniors sat nearby and spent the entire session loudly gossiping about a school romance. You struggled to concentrate on your textbook.';
+    }
+
+    return ActionResult(
+      message: msg,
+      character: c,
+      success: true,
+    );
+  }
+
+  static ActionResult _takeTutorLesson(
+      Character c, String subject, String type) {
+    double fee = type == 'Strict' ? 12000.0 : 7000.0;
+    if (c.bankBalance < fee) {
+      return ActionResult(
+        message:
+            '❌ You don\'t have ₹${fee.toInt()} in your bank account to hire this tutor for $subject.',
+        character: c,
+        success: false,
+      );
+    }
+
+    c.bankBalance -= fee;
+
+    // Base boosts
+    int stressD = 0;
+    int happinessD = 0;
+    int prepD = 0;
+    int smartsD = 0;
+    int disciplineD = 0;
+
+    if (type == 'Strict') {
+      prepD = 18;
+      smartsD = 6;
+      stressD = 15;
+      disciplineD = 6;
+      happinessD = -3;
+    } else {
+      prepD = 9;
+      smartsD = 4;
+      stressD = -8;
+      disciplineD = 2;
+      happinessD = 8;
+    }
+
+    c.prepLevel = (c.prepLevel + prepD).clamp(0, 100);
+    c.discipline = (c.discipline + disciplineD).clamp(0, 100);
+    c.updateStats(
+        smartsDelta: smartsD, stressDelta: stressD, happinessDelta: happinessD);
+
+    // Random outcomes
+    final double roll = _rng.nextDouble();
+    String outcomeMsg = '';
+
+    if (roll < 0.15) {
+      c.updateStats(karmaDelta: 10);
+      outcomeMsg =
+          '\n\n🤝 Lifelong Mentor: The tutor was so impressed by your determination that they offered you additional out-of-class mentorship! (Karma +10)';
+    } else if (roll < 0.25) {
+      c.updateStats(stressDelta: 18, happinessDelta: -10);
+      outcomeMsg =
+          '\n\n🥵 Burnout Warning: The endless drills and constant pressure caused a minor mental burnout. You spent the weekend in bed. (Stress +18, Happiness -10)';
+    } else if (roll < 0.40) {
+      final candidate = generateDatingCandidate(c.age);
+      final rel = Relationship(
+        id: 'rel_tutor_${DateTime.now().microsecondsSinceEpoch}',
+        name: candidate.name,
+        type: _rng.nextBool() ? 'Friend' : 'Partner',
+        age: candidate.age,
+        initial: candidate.initial,
+        bond: 60,
+      );
+      c.relationships.add(rel);
+      c.updateStats(happinessDelta: 15);
+      outcomeMsg =
+          '\n\n❤️ Study Sparks: You met another student named ${candidate.name} in the tutoring batch. You clicked instantly, exchanged study notes, and became friends! (Happiness +15)';
+    } else if (roll < 0.50) {
+      c.prepLevel = (c.prepLevel + 10).clamp(0, 100);
+      outcomeMsg =
+          '\n\n💡 Secret Tactics: Your tutor shared exclusive shortcut tricks to crack advanced chemistry equations in seconds! (Prep Level +10%)';
+    }
+
+    String msg = '';
+    if (type == 'Strict') {
+      msg =
+          '📚 Strict $subject Lesson: You sat through an intense session with your expert strict tutor. They grilled you on advanced concepts, pushing your preparation limits!$outcomeMsg';
+    } else {
+      msg =
+          '😊 Friendly $subject Lesson: Your friendly mentor explained difficult topics through interesting stories and tea. You felt relaxed and learned easily!$outcomeMsg';
+    }
+
+    return ActionResult(
+      message: msg,
+      character: c,
+      success: true,
     );
   }
 
@@ -2066,7 +2654,8 @@ class GameEngine {
       case 'Talk':
         relation.bond = (relation.bond + (5 * bondMult).round()).clamp(0, 100);
         msg = 'You had a conversation with ${relation.name}.';
-        if (relation.personality == 'Strict') msg += " They seemed a bit uninterested.";
+        if (relation.personality == 'Strict')
+          msg += " They seemed a bit uninterested.";
         if (relation.personality == 'Caring') msg += " They listened intently.";
         break;
       case 'Spend Time':
@@ -2074,7 +2663,8 @@ class GameEngine {
         char.updateStats(happinessDelta: 5);
         msg = 'You spent some time with ${relation.name}.';
         if (relation.personality == 'Toxic') {
-          msg = 'You spent time with ${relation.name}, but they spent the whole time complaining.';
+          msg =
+              'You spent time with ${relation.name}, but they spent the whole time complaining.';
           char.updateStats(happinessDelta: -5);
         }
         break;
@@ -2086,11 +2676,15 @@ class GameEngine {
         } else {
           char.bankBalance -= cost;
           double giftMult = bondMult;
-          if (relation.personality == 'Jealous') giftMult = 0.5; // Harder to please
-          relation.bond = (relation.bond + (15 * giftMult).round()).clamp(0, 100);
+          if (relation.personality == 'Jealous')
+            giftMult = 0.5; // Harder to please
+          relation.bond =
+              (relation.bond + (15 * giftMult).round()).clamp(0, 100);
           char.updateStats(happinessDelta: 5);
           msg = 'You gave a gift to ${relation.name}.';
-          if (relation.personality == 'Jealous') msg += " They liked it, but mentioned someone else got a better one.";
+          if (relation.personality == 'Jealous')
+            msg +=
+                " They liked it, but mentioned someone else got a better one.";
         }
         break;
       case 'Go on Date':
@@ -2099,10 +2693,12 @@ class GameEngine {
           success = false;
         } else {
           char.bankBalance -= 3000;
-          relation.bond = (relation.bond + (20 * bondMult).round()).clamp(0, 100);
+          relation.bond =
+              (relation.bond + (20 * bondMult).round()).clamp(0, 100);
           char.updateStats(happinessDelta: 15);
           msg = 'You had a date with ${relation.name}.';
-          if (relation.personality == 'Ambitious') msg += " They spent most of the time talking about their career.";
+          if (relation.personality == 'Ambitious')
+            msg += " They spent most of the time talking about their career.";
         }
         break;
       case 'Argue':
@@ -2241,9 +2837,11 @@ class GameEngine {
 
     // ── NARRATIVE & SMART EVENTS ───────────────────────────────────────────
     // Clean Flow: Ensure life feels focused. 1-2 events per year + contextual additions
-    int narrativeCount = _rng.nextInt(2) + 1; 
-    if (character.social > 70) narrativeCount += 1; // Socially active people get more drama
-    if (character.reputation < 30) narrativeCount += 1; // Infamous people get more gossip
+    int narrativeCount = _rng.nextInt(2) + 1;
+    if (character.social > 70)
+      narrativeCount += 1; // Socially active people get more drama
+    if (character.reputation < 30)
+      narrativeCount += 1; // Infamous people get more gossip
 
     final smartPool = _pickSmartEvents(character, count: narrativeCount);
 
@@ -2666,10 +3264,15 @@ class GameEngine {
       feedback.add('💠 IDENTITY PHASE: You have entered $newPhase.');
     } else if (c.phaseYearsStored % 5 == 0) {
       // Periodic path progress feedback
-      if (c.ambition > 75) feedback.add('🔥 Your ambition is driving you toward high-stakes power.');
-      if (c.financialIntelligence > 75) feedback.add('📈 You are building a legacy of financial stability.');
-      if (c.fame > 75) feedback.add('🤳 Your name is becoming a household brand.');
-      if (c.reputation > 85) feedback.add('🏆 You are widely respected in your community.');
+      if (c.ambition > 75)
+        feedback
+            .add('🔥 Your ambition is driving you toward high-stakes power.');
+      if (c.financialIntelligence > 75)
+        feedback.add('📈 You are building a legacy of financial stability.');
+      if (c.fame > 75)
+        feedback.add('🤳 Your name is becoming a household brand.');
+      if (c.reputation > 85)
+        feedback.add('🏆 You are widely respected in your community.');
     }
   }
 
@@ -3245,7 +3848,8 @@ class GameEngine {
       if (rel.personality == 'Toxic') decay += 2;
       if (rel.personality == 'Strict' && c.happiness < 40) decay += 2;
       if (rel.personality == 'Jealous' && c.annualIncome > 500000) decay += 3;
-      if (rel.personality == 'Supportive') decay = _rng.nextInt(2); // Lower decay
+      if (rel.personality == 'Supportive')
+        decay = _rng.nextInt(2); // Lower decay
 
       rel.bond = (rel.bond - decay).clamp(0, 100);
 
@@ -3257,7 +3861,8 @@ class GameEngine {
       // Toxic/Jealous Drama Triggers
       if (rel.personality == 'Toxic' && _rng.nextDouble() < 0.05) {
         _addEvent(events, c.age, '🎭 Toxic Interaction',
-            description: '${rel.name} made a hurtful comment about your lifestyle.',
+            description:
+                '${rel.name} made a hurtful comment about your lifestyle.',
             type: LifeEventType.negative);
         c.happiness = (c.happiness - 10).clamp(0, 100);
       }
@@ -3311,13 +3916,13 @@ class GameEngine {
     // Logic for Regret System: Record High-Impact Decisions
     if ((effect.happiness.abs() > 15 || effect.karma.abs() > 10) &&
         character.age >= 13) {
-      final newDecisions = List<Map<String, dynamic>>.from(character.majorDecisions);
+      final newDecisions =
+          List<Map<String, dynamic>>.from(character.majorDecisions);
       newDecisions.add({
-              'age': character.age,
-              'choice': choseA ? choice.optionA : choice.optionB,
-              'regretPotential':
-                  (effect.happiness < 0 || effect.karma < 0) ? 70 : 15,
-            });
+        'age': character.age,
+        'choice': choseA ? choice.optionA : choice.optionB,
+        'regretPotential': (effect.happiness < 0 || effect.karma < 0) ? 70 : 15,
+      });
       character.majorDecisions = newDecisions;
     }
 
@@ -3333,7 +3938,8 @@ class GameEngine {
     return ActionResult(message: result, character: c);
   }
 
-  static ActionResult performCareerAction(Character input, String actionId) {
+  static ActionResult performCareerAction(Character input, String actionId,
+      [Map<String, dynamic> payload = const {}]) {
     final c = input.copyWith();
     final hasHigherSecondary = CareerSystem._eduLevel(c.educationLevel) >=
         CareerSystem._eduLevel('Higher Secondary');
@@ -3387,6 +3993,12 @@ class GameEngine {
     if (actionId.startsWith(specialActionPrefix)) {
       final careerName = actionId.substring(specialActionPrefix.length);
       return _performSpecialCareerAction(c, careerName);
+    }
+
+    const influencerPrefix = 'career.influencer.';
+    if (actionId.startsWith(influencerPrefix)) {
+      return _performInfluencerAction(
+          c, actionId.substring(influencerPrefix.length), payload);
     }
 
     const businessPrefix = 'career.business.';
@@ -3500,8 +4112,13 @@ class GameEngine {
           break;
       }
 
-      final candidateScore =
-          (smartsScore * 0.45) + (eduScore * 0.30) + (reputationScore * 0.15) + (_rng.nextDouble() * 0.1);
+      final candidateScore = (smartsScore * 0.45) +
+          (eduScore * 0.30) +
+          (reputationScore * 0.15) +
+          ((c.partTimeExperience + c.partTimeResponsibility + c.customerSkill) /
+              300 *
+              0.12) +
+          (_rng.nextDouble() * 0.1);
 
       if (candidateScore < difficulty) {
         return ActionResult(
@@ -3558,6 +4175,12 @@ class GameEngine {
         examType = 'CLAT';
       }
       return takeEntranceExam(c, examType, multiplier: multiplier);
+    }
+
+    const partTimePrefix = 'career.part_time.';
+    if (actionId.startsWith(partTimePrefix)) {
+      return _performPartTimeJobAction(
+          c, actionId.substring(partTimePrefix.length), payload);
     }
 
     switch (actionId) {
@@ -3710,17 +4333,27 @@ class GameEngine {
           );
         }
         String ceExamType = 'JEE';
-        if (c.memories.containsKey('track_pcb')) ceExamType = 'NEET';
-        else if (c.memories.containsKey('track_commerce')) ceExamType = 'CA Foundation';
+        if (c.memories.containsKey('track_pcb'))
+          ceExamType = 'NEET';
+        else if (c.memories.containsKey('track_commerce'))
+          ceExamType = 'CA Foundation';
         else if (c.memories.containsKey('track_arts')) ceExamType = 'CLAT';
         return takeEntranceExam(c, ceExamType, multiplier: 1.0);
 
       case 'career.prepare_upsc':
-        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
-          return ActionResult(message: '❌ UPSC requires a graduation degree first.', character: c, success: false);
+        if (c.educationLevel != 'Graduate' &&
+            c.educationLevel != 'Postgraduate') {
+          return ActionResult(
+              message: '❌ UPSC requires a graduation degree first.',
+              character: c,
+              success: false);
         }
         if (c.memories.containsKey('prepped_this_year')) {
-          return ActionResult(message: '❌ You have already done focused preparation this year. Age up to process the year.', character: c, success: false);
+          return ActionResult(
+              message:
+                  '❌ You have already done focused preparation this year. Age up to process the year.',
+              character: c,
+              success: false);
         }
         c.prepLevel = (c.prepLevel + 10).clamp(0, 100);
         c.smarts = (c.smarts + 2).clamp(0, 100);
@@ -3728,61 +4361,90 @@ class GameEngine {
         c.happiness = (c.happiness - 5).clamp(0, 100);
         c.memories['upsc_prep'] = true;
         c.memories['prepped_this_year'] = true;
-        return ActionResult(message: '📚 You dedicated this year entirely to UPSC prep. You isolated yourself in coaching libraries. Your social life faded during preparation.', character: c);
+        return ActionResult(
+            message:
+                '📚 You dedicated this year entirely to UPSC prep. You isolated yourself in coaching libraries. Your social life faded during preparation.',
+            character: c);
 
       case 'career.take_upsc':
         if (!c.memories.containsKey('upsc_prep') || c.prepLevel < 30) {
-          return ActionResult(message: '❌ You need dedicated UPSC preparation (Prep level 30+) before attempting.', character: c, success: false);
+          return ActionResult(
+              message:
+                  '❌ You need dedicated UPSC preparation (Prep level 30+) before attempting.',
+              character: c,
+              success: false);
         }
-        final upscScore = (c.smarts * 0.5 + c.prepLevel * 0.4 + c.discipline * 0.1);
-        
+        final upscScore =
+            (c.smarts * 0.5 + c.prepLevel * 0.4 + c.discipline * 0.1);
+
         c.examResults['pending_UPSC'] = upscScore.toInt();
         c.memories['attempted_UPSC'] = true; // For tracking
-        
+
         return ActionResult(
-          message: '📝 You have appeared for the UPSC Civil Services Examination. The results will be declared in the next year. The agonizing wait begins.',
+          message:
+              '📝 You have appeared for the UPSC Civil Services Examination. The results will be declared in the next year. The agonizing wait begins.',
           character: c,
           success: true,
         );
 
       case 'career.prepare_ssc':
-        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
-          return ActionResult(message: '❌ SSC requires graduation.', character: c, success: false);
+        if (c.educationLevel != 'Graduate' &&
+            c.educationLevel != 'Postgraduate') {
+          return ActionResult(
+              message: '❌ SSC requires graduation.',
+              character: c,
+              success: false);
         }
         if (c.memories.containsKey('prepped_this_year')) {
-          return ActionResult(message: '❌ You have already done focused preparation this year. Age up to process the year.', character: c, success: false);
+          return ActionResult(
+              message:
+                  '❌ You have already done focused preparation this year. Age up to process the year.',
+              character: c,
+              success: false);
         }
         c.prepLevel = (c.prepLevel + 12).clamp(0, 100);
         c.smarts = (c.smarts + 1).clamp(0, 100);
         c.stressLevel = (c.stressLevel + 6).clamp(0, 100);
         c.memories['ssc_prep'] = true;
         c.memories['prepped_this_year'] = true;
-        return ActionResult(message: '📖 You dedicated this year to SSC preparation. You spent hours solving mock tests and analyzing cutoffs.', character: c);
+        return ActionResult(
+            message:
+                '📖 You dedicated this year to SSC preparation. You spent hours solving mock tests and analyzing cutoffs.',
+            character: c);
 
       case 'career.take_ssc':
         if (!c.memories.containsKey('ssc_prep') || c.prepLevel < 20) {
-          return ActionResult(message: '❌ More preparation needed for SSC (Prep 20+ required).', character: c, success: false);
+          return ActionResult(
+              message: '❌ More preparation needed for SSC (Prep 20+ required).',
+              character: c,
+              success: false);
         }
         final sscScore = (c.smarts * 0.5 + c.prepLevel * 0.5);
-        
+
         c.examResults['pending_SSC'] = sscScore.toInt();
-        
+
         return ActionResult(
-          message: '📝 You have appeared for the SSC exam. The results will be declared in the next year.',
+          message:
+              '📝 You have appeared for the SSC exam. The results will be declared in the next year.',
           character: c,
           success: true,
         );
 
       case 'career.take_bank_po':
-        if (c.educationLevel != 'Graduate' && c.educationLevel != 'Postgraduate') {
-          return ActionResult(message: '❌ Bank PO requires graduation.', character: c, success: false);
+        if (c.educationLevel != 'Graduate' &&
+            c.educationLevel != 'Postgraduate') {
+          return ActionResult(
+              message: '❌ Bank PO requires graduation.',
+              character: c,
+              success: false);
         }
         final bankScore = (c.smarts * 0.5 + c.prepLevel * 0.4 + c.social * 0.1);
-        
+
         c.examResults['pending_BankPO'] = bankScore.toInt();
-        
+
         return ActionResult(
-          message: '📝 You have appeared for the Bank PO exam. The results will be declared in the next year.',
+          message:
+              '📝 You have appeared for the Bank PO exam. The results will be declared in the next year.',
           character: c,
           success: true,
         );
@@ -3881,6 +4543,111 @@ class GameEngine {
           message:
               'You learned a useful skill and widened your future options.',
           character: c,
+        );
+
+      case 'career.perform_freelance_gig':
+        final category = payload['category'] as String? ?? 'Gig';
+        final clientName = payload['clientName'] as String? ?? 'Client';
+        final workDescription =
+            payload['workDescription'] as String? ?? 'client work';
+        final payout = (payload['payout'] as num? ?? 0).toDouble();
+        final stressAdded = (payload['stress'] as num? ?? 10).toInt();
+        final skillAdded = (payload['skillXP'] as num? ?? 5).toInt();
+
+        if (c.age < 16) {
+          return ActionResult(
+            message: 'Freelance gigs unlock at age 16.',
+            character: c,
+            success: false,
+          );
+        }
+
+        c.bankBalance += payout;
+        c.totalEarned += payout;
+        c.stressLevel = (c.stressLevel + stressAdded).clamp(0, 100);
+        c.freelanceEffort = (c.freelanceEffort + skillAdded).clamp(0, 100);
+        c.happiness = (c.happiness + 1).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 1).clamp(0, 100).toDouble();
+
+        if (c.careerGroup == 'None' || c.careerGroup == 'Freelancing') {
+          final freelanceGroup = CareerSystem.findGroup('Freelancing');
+          if (freelanceGroup != null && c.careerGroup != 'Freelancing') {
+            CareerSystem.assignCareer(c, freelanceGroup);
+          }
+          c.jobTitle = 'Freelancer';
+        }
+
+        bool fameBoosted = false;
+        int fameAdded = 0;
+        int reputationAdded = 0;
+
+        if (Random().nextDouble() < 0.15) {
+          fameAdded = Random().nextInt(6) + 3;
+          c.fame = (c.fame + fameAdded).clamp(0, 100);
+          reputationAdded = Random().nextInt(4) + 2;
+          c.reputation = (c.reputation + reputationAdded).clamp(0, 100);
+          fameBoosted = true;
+        }
+
+        String randomEventMsg = "";
+        final roll = Random().nextDouble();
+        if (roll < 0.10) {
+          final bonus = (payout * 0.20).roundToDouble();
+          c.bankBalance += bonus;
+          c.totalEarned += bonus;
+          c.happiness = (c.happiness + 8).clamp(0, 100);
+          randomEventMsg =
+              "\n\n🎁 BONUS: The client was extremely thrilled with your speed and paid an extra ${formatMoney(bonus)} tip!";
+        } else if (roll < 0.18) {
+          c.happiness = (c.happiness - 10).clamp(0, 100);
+          randomEventMsg =
+              "\n\n⚠️ REVISION: The client requested 3 rounds of late-night changes, lowering your mood.";
+        }
+
+        String skillTier = 'Beginner';
+        if (c.freelanceEffort > 75) {
+          skillTier = 'Elite';
+        } else if (c.freelanceEffort > 50) {
+          skillTier = 'Advanced';
+        } else if (c.freelanceEffort > 25) {
+          skillTier = 'Skilled';
+        }
+
+        String message =
+            'You completed $workDescription for $clientName and earned ${formatMoney(payout)}. Stress +$stressAdded%, Freelance Skill +$skillAdded% ($skillTier).';
+        if (fameBoosted) {
+          message +=
+              '\n\n✨ REPUTATION: Your exceptional work got noticed! Fame +$fameAdded%.';
+        }
+        if (randomEventMsg.isNotEmpty) {
+          message += randomEventMsg;
+        }
+
+        return ActionResult(
+          message: message,
+          character: c,
+          success: true,
+          events: [
+            LifeEvent(
+              title: '$category gig complete',
+              description: message,
+              type: LifeEventType.positive,
+              priority: EventPriority.normal,
+              statChanges: {
+                'money': payout.round(),
+                'stress': stressAdded,
+                'freelanceSkill': skillAdded,
+                if (reputationAdded > 0) 'reputation': reputationAdded,
+                if (fameAdded > 0) 'fame': fameAdded,
+              },
+              metadata: {
+                'age': c.age,
+                'source': 'freelance',
+                'clientName': clientName,
+                'category': category,
+              },
+            ),
+          ],
         );
     }
 
@@ -4148,37 +4915,42 @@ class GameEngine {
 
     if (c.age == 16 && c.educationLevel == 'Secondary') {
       // Class 10 Board Results
-      final boardScore = (c.smarts * 0.8 + c.studyConsistency * 0.2 + _rng.nextInt(10)).clamp(0, 100);
+      final boardScore =
+          (c.smarts * 0.8 + c.studyConsistency * 0.2 + _rng.nextInt(10))
+              .clamp(0, 100);
       c.hiddenModifiers['class10_score'] = boardScore.toDouble();
-      
+
       String desc = '';
       LifeEventType type = LifeEventType.neutral;
       if (boardScore >= 90) {
-        desc = 'You topped the boards with ${boardScore.toInt()}%! Your parents are distributing sweets and telling everyone in the society.';
+        desc =
+            'You topped the boards with ${boardScore.toInt()}%! Your parents are distributing sweets and telling everyone in the society.';
         type = LifeEventType.positive;
         c.updateStats(happinessDelta: 20, karmaDelta: 10);
       } else if (boardScore >= 75) {
-        desc = 'You scored a solid ${boardScore.toInt()}%. Your family is pleased, but suggests you could have done better.';
+        desc =
+            'You scored a solid ${boardScore.toInt()}%. Your family is pleased, but suggests you could have done better.';
         type = LifeEventType.positive;
         c.updateStats(happinessDelta: 10);
       } else if (boardScore >= 50) {
-        desc = 'You scored ${boardScore.toInt()}%. "Average," says your father. The comparison with Sharma Ji\'s son begins.';
+        desc =
+            'You scored ${boardScore.toInt()}%. "Average," says your father. The comparison with Sharma Ji\'s son begins.';
         type = LifeEventType.neutral;
       } else {
-        desc = 'You scored only ${boardScore.toInt()}%. The disappointment at home is heavy. Silence speaks louder than words.';
+        desc =
+            'You scored only ${boardScore.toInt()}%. The disappointment at home is heavy. Silence speaks louder than words.';
         type = LifeEventType.negative;
         c.updateStats(happinessDelta: -20, socialDelta: -10);
       }
-      
+
       _addEvent(events, c.age, '📜 Class 10 Board Results',
-          description: desc,
-          type: type,
-          priority: EventPriority.critical);
-          
+          description: desc, type: type, priority: EventPriority.critical);
+
       // Stream Selection Popup (Part 1: Science vs Non-Science)
       events.add(LifeEvent(
         title: 'Choose Your Stream',
-        description: 'Your board results are in. What stream do you want to pursue?',
+        description:
+            'Your board results are in. What stream do you want to pursue?',
         type: LifeEventType.milestone,
         priority: EventPriority.critical,
         metadata: {'age': c.age},
@@ -4189,7 +4961,8 @@ class GameEngine {
           optionB: 'Commerce or Arts',
           effectA: StatEffect(happiness: -5, smarts: 5),
           effectB: StatEffect(happiness: 5, smarts: 0),
-          resultA: 'You chose the Science stream. Prepare for long nights of study.',
+          resultA:
+              'You chose the Science stream. Prepare for long nights of study.',
           resultB: 'You chose to pursue Commerce or Arts.',
           memoryFlagA: 'stream_science_pending',
           memoryFlagB: 'stream_non_science_pending',
@@ -4200,12 +4973,13 @@ class GameEngine {
     if (c.age == 17 && c.educationLevel == 'Secondary') {
       if (enableLogging)
         debugPrint("[EDUCATION] 🧪 Starting Higher Secondary (Board Years)");
-      
+
       // Check flags from age 16 choice
       if (c.memories.containsKey('stream_science_pending')) {
         events.add(LifeEvent(
           title: 'Science Branch Split',
-          description: 'You are in Science. Which track do you want to focus on?',
+          description:
+              'You are in Science. Which track do you want to focus on?',
           type: LifeEventType.milestone,
           priority: EventPriority.critical,
           metadata: {'age': c.age},
@@ -4226,7 +5000,8 @@ class GameEngine {
       } else if (c.memories.containsKey('stream_non_science_pending')) {
         events.add(LifeEvent(
           title: 'Commerce or Arts?',
-          description: 'You chose the non-science path. Which stream do you prefer?',
+          description:
+              'You chose the non-science path. Which stream do you prefer?',
           type: LifeEventType.milestone,
           priority: EventPriority.critical,
           metadata: {'age': c.age},
@@ -4238,7 +5013,8 @@ class GameEngine {
             effectA: StatEffect(karma: 5),
             effectB: StatEffect(happiness: 10),
             resultA: 'You chose Commerce. Accountancy and Economics await.',
-            resultB: 'You chose Arts. History, Literature, and Philosophy await.',
+            resultB:
+                'You chose Arts. History, Literature, and Philosophy await.',
             memoryFlagA: 'track_commerce',
             memoryFlagB: 'track_arts',
           ),
@@ -4248,7 +5024,8 @@ class GameEngine {
         // Fallback if no choice was made or flags missing
         c.educationLevel = 'Higher Secondary';
         _addEvent(events, c.age, '📚 11th & 12th Grade',
-            description: 'The critical board exam years. Your study consistency matters now more than ever.',
+            description:
+                'The critical board exam years. Your study consistency matters now more than ever.',
             type: LifeEventType.milestone);
       }
     }
@@ -4292,7 +5069,8 @@ class GameEngine {
 
       // Stream-specific preparation (Ages 16-18)
       if (c.age >= 16 && c.age <= 18) {
-        if (c.memories.containsKey('track_pcm') || c.memories.containsKey('track_pcb')) {
+        if (c.memories.containsKey('track_pcm') ||
+            c.memories.containsKey('track_pcb')) {
           // Science students get more stress but also more prep
           c.stressLevel = (c.stressLevel + 5).clamp(0, 100);
           if (c.studyConsistency > 70) {
@@ -4308,12 +5086,81 @@ class GameEngine {
           }
         }
       }
+
+      // --- SCHOOL ACTIVITIES PROGRESSION ---
+      if (c.age >= 5 && c.age <= 18) {
+        final List<String> activitiesToUpdate = [];
+        c.hiddenModifiers.forEach((key, val) {
+          if (key.startsWith('school_activity_')) {
+            activitiesToUpdate.add(key);
+          }
+        });
+
+        for (final key in activitiesToUpdate) {
+          final id = key.substring('school_activity_'.length);
+          double currentVal = c.hiddenModifiers[key]!;
+
+          // Yearly performance decay (40% chance of a minor decrease)
+          if (_rng.nextDouble() < 0.4) {
+            currentVal = (currentVal - 0.2).clamp(1.0, 5.0);
+          }
+
+          // Auto progression check based on stats
+          bool autoProgress = false;
+          if (c.discipline > 75 && _rng.nextDouble() < 0.15)
+            autoProgress = true;
+
+          if (id == 'Cricket' || id == 'Football' || id == 'Basketball') {
+            if (c.health > 80 && _rng.nextDouble() < 0.20) autoProgress = true;
+          } else if (id == 'Acting Club' ||
+              id == 'Singing Club' ||
+              id == 'Dance Club') {
+            if (c.looks > 80 && _rng.nextDouble() < 0.20) autoProgress = true;
+          } else if (id == 'Coding Club' || id == 'Science Club') {
+            if (c.smarts > 80 && _rng.nextDouble() < 0.20) autoProgress = true;
+          }
+
+          if (autoProgress) {
+            currentVal = (currentVal + 0.5).clamp(1.0, 5.0);
+          }
+
+          c.hiddenModifiers[key] = currentVal;
+
+          if (currentVal >= 5.0 &&
+              !c.memories.containsKey('elite_activity_$id')) {
+            c.memories['elite_activity_$id'] = true;
+            if (id == 'Cricket' || id == 'Football' || id == 'Basketball') {
+              c.memories['unlocked_athlete_career'] = true;
+            } else if (id == 'Acting Club') {
+              c.memories['unlocked_actor_career'] = true;
+            } else if (id == 'Singing Club' || id == 'Dance Club') {
+              c.memories['unlocked_musician_career'] = true;
+            }
+            _addEvent(events, c.age, '🏆 Star Performer',
+                description:
+                    'Your exceptional dedication has made you a Star Performer in the $id at school!',
+                type: LifeEventType.positive,
+                priority: EventPriority.important);
+          }
+        }
+      } else if (c.age > 18) {
+        // Clean up school activities when graduating
+        final List<String> activitiesToRemove = [];
+        c.hiddenModifiers.forEach((key, val) {
+          if (key.startsWith('school_activity_')) {
+            activitiesToRemove.add(key);
+          }
+        });
+        for (final key in activitiesToRemove) {
+          c.hiddenModifiers.remove(key);
+        }
+      }
     }
 
     if (c.age == 18 && c.educationLevel == 'Higher Secondary') {
       String examName = '';
       int examTypeId = 0; // 1: PCM/JEE, 2: PCB/NEET, 3: Commerce, 4: Arts
-      
+
       if (c.memories.containsKey('track_pcm')) {
         examName = 'JEE';
         examTypeId = 1;
@@ -4327,19 +5174,23 @@ class GameEngine {
         examName = 'CLAT';
         examTypeId = 4;
       }
-      
+
       if (examTypeId > 0) {
         final stressFactor = (120 - c.stressLevel).clamp(0, 100) / 100.0;
-        final score = ((c.smarts * 0.4 + c.discipline * 0.2 + c.prepLevel * 0.4) * stressFactor).clamp(0, 100);
-        
+        final score =
+            ((c.smarts * 0.4 + c.discipline * 0.2 + c.prepLevel * 0.4) *
+                    stressFactor)
+                .clamp(0, 100);
+
         c.examResults['pending_score'] = score.toInt();
         c.examResults['pending_type'] = examTypeId;
-        
+
         _addEvent(events, c.age, '📝 Attempted $examName',
-            description: 'You gave the exam. Now begins the agonizing wait for the results. Cutoff rumors are already spreading.',
+            description:
+                'You gave the exam. Now begins the agonizing wait for the results. Cutoff rumors are already spreading.',
             type: LifeEventType.neutral,
             priority: EventPriority.important);
-            
+
         c.stressLevel = (c.stressLevel + 15).clamp(0, 100);
       }
     }
@@ -4347,49 +5198,62 @@ class GameEngine {
     if (c.age == 19 && c.educationLevel == 'Higher Secondary') {
       final score = c.examResults['pending_score'];
       final typeId = c.examResults['pending_type'];
-      
+
       if (score != null && typeId != null) {
         String examName = 'JEE';
         String trackName = 'PCM';
-        if (typeId == 2) { examName = 'NEET'; trackName = 'PCB'; }
-        else if (typeId == 3) { examName = 'CA Foundation'; trackName = 'Commerce'; }
-        else if (typeId == 4) { examName = 'CLAT'; trackName = 'Arts'; }
-        
+        if (typeId == 2) {
+          examName = 'NEET';
+          trackName = 'PCB';
+        } else if (typeId == 3) {
+          examName = 'CA Foundation';
+          trackName = 'Commerce';
+        } else if (typeId == 4) {
+          examName = 'CLAT';
+          trackName = 'Arts';
+        }
+
         // Calculate rank based on score (simulated)
         int rank;
-        if (score >= 90) rank = _rng.nextInt(100) + 1;
-        else if (score >= 75) rank = _rng.nextInt(900) + 101;
-        else if (score >= 60) rank = _rng.nextInt(4000) + 1001;
-        else if (score >= 50) rank = _rng.nextInt(15000) + 5001;
-        else rank = _rng.nextInt(100000) + 20001;
-        
+        if (score >= 90)
+          rank = _rng.nextInt(100) + 1;
+        else if (score >= 75)
+          rank = _rng.nextInt(900) + 101;
+        else if (score >= 60)
+          rank = _rng.nextInt(4000) + 1001;
+        else if (score >= 50)
+          rank = _rng.nextInt(15000) + 5001;
+        else
+          rank = _rng.nextInt(100000) + 20001;
+
         c.examResults[examName] = rank; // Store final rank
-        
+
         String desc = '';
         LifeEventType type = LifeEventType.neutral;
-        
+
         if (score >= 75) {
-          desc = 'The results are OUT! You cleared $examName with AIR $rank! Your family is distributing sweets and celebrating.';
+          desc =
+              'The results are OUT! You cleared $examName with AIR $rank! Your family is distributing sweets and celebrating.';
           type = LifeEventType.positive;
           c.updateStats(happinessDelta: 25, socialDelta: 15);
           c.memories['cleared_$trackName'] = true;
         } else if (score >= 50) {
-          desc = 'The results are OUT. You cleared $examName with AIR $rank. You can get a decent college.';
+          desc =
+              'The results are OUT. You cleared $examName with AIR $rank. You can get a decent college.';
           type = LifeEventType.positive;
           c.updateStats(happinessDelta: 10);
           c.memories['cleared_$trackName'] = true;
         } else {
-          desc = 'The results are OUT. You failed to clear $examName (Rank $rank). The disappointment at home is heavy. Your father is silent.';
+          desc =
+              'The results are OUT. You failed to clear $examName (Rank $rank). The disappointment at home is heavy. Your father is silent.';
           type = LifeEventType.negative;
           c.updateStats(happinessDelta: -20, healthDelta: -5);
           c.memories['failed_$trackName'] = true;
         }
-        
+
         _addEvent(events, c.age, '📜 $examName Results',
-            description: desc,
-            type: type,
-            priority: EventPriority.critical);
-            
+            description: desc, type: type, priority: EventPriority.critical);
+
         // Clear pending
         c.examResults.remove('pending_score');
         c.examResults.remove('pending_type');
@@ -4400,79 +5264,80 @@ class GameEngine {
     if (c.examResults.containsKey('pending_UPSC')) {
       final score = c.examResults['pending_UPSC']!;
       c.examResults.remove('pending_UPSC');
-      
+
       String desc = '';
       LifeEventType type = LifeEventType.neutral;
-      
+
       if (score >= 75 && _rng.nextDouble() < 0.3) {
         c.memories['passed_UPSC'] = true;
-        desc = '🏛️ THE RESULTS ARE OUT! You have cleared UPSC! Your family is crying tears of joy. You are now an officer of India.';
+        desc =
+            '🏛️ THE RESULTS ARE OUT! You have cleared UPSC! Your family is crying tears of joy. You are now an officer of India.';
         type = LifeEventType.positive;
         c.updateStats(happinessDelta: 30, socialDelta: 20);
       } else if (score >= 60) {
-        desc = '😔 So close. You missed the UPSC cutoff this attempt by a narrow margin. You feel emotionally crushed. The silence at home speaks louder than any lecture. You avoid making eye contact with your father.';
+        desc =
+            '😔 So close. You missed the UPSC cutoff this attempt by a narrow margin. You feel emotionally crushed. The silence at home speaks louder than any lecture. You avoid making eye contact with your father.';
         type = LifeEventType.negative;
         c.updateStats(happinessDelta: -15, healthDelta: -5);
       } else {
-        desc = '❌ UPSC Results: You failed to clear the exam. The competition was too brutal. You feel a sense of failure settling in. Your parents don\'t say anything, but their silence hurts more.';
+        desc =
+            '❌ UPSC Results: You failed to clear the exam. The competition was too brutal. You feel a sense of failure settling in. Your parents don\'t say anything, but their silence hurts more.';
         type = LifeEventType.negative;
         c.updateStats(happinessDelta: -20, healthDelta: -10);
       }
-      
+
       _addEvent(events, c.age, '📜 UPSC Results',
-          description: desc,
-          type: type,
-          priority: EventPriority.critical);
+          description: desc, type: type, priority: EventPriority.critical);
     }
 
     // --- SSC REVEAL ---
     if (c.examResults.containsKey('pending_SSC')) {
       final score = c.examResults['pending_SSC']!;
       c.examResults.remove('pending_SSC');
-      
+
       String desc = '';
       LifeEventType type = LifeEventType.neutral;
-      
+
       if (score >= 55 && _rng.nextDouble() < 0.5) {
         c.memories['passed_SSC'] = true;
-        desc = '✅ SSC CLEARED! Government job secured. Your parents finally stop asking when you\'ll get a job.';
+        desc =
+            '✅ SSC CLEARED! Government job secured. Your parents finally stop asking when you\'ll get a job.';
         type = LifeEventType.positive;
         c.updateStats(happinessDelta: 20, socialDelta: 10);
       } else {
-        desc = '❌ SSC attempt failed this time. You can try again after more preparation.';
+        desc =
+            '❌ SSC attempt failed this time. You can try again after more preparation.';
         type = LifeEventType.negative;
         c.updateStats(happinessDelta: -10);
       }
-      
+
       _addEvent(events, c.age, '📜 SSC Results',
-          description: desc,
-          type: type,
-          priority: EventPriority.critical);
+          description: desc, type: type, priority: EventPriority.critical);
     }
 
     // --- BANK PO REVEAL ---
     if (c.examResults.containsKey('pending_BankPO')) {
       final score = c.examResults['pending_BankPO']!;
       c.examResults.remove('pending_BankPO');
-      
+
       String desc = '';
       LifeEventType type = LifeEventType.neutral;
-      
+
       if (score >= 60 && _rng.nextDouble() < 0.45) {
         c.memories['passed_BankPO'] = true;
-        desc = '🏦 BANK PO CLEARED! Your relatives are already calling to congratulate. Stable job, good salary, government benefits.';
+        desc =
+            '🏦 BANK PO CLEARED! Your relatives are already calling to congratulate. Stable job, good salary, government benefits.';
         type = LifeEventType.positive;
         c.updateStats(happinessDelta: 25, socialDelta: 15);
       } else {
-        desc = '❌ Bank PO exam not cleared this time. The cutoff was tough. Prepare harder next time.';
+        desc =
+            '❌ Bank PO exam not cleared this time. The cutoff was tough. Prepare harder next time.';
         type = LifeEventType.negative;
         c.updateStats(happinessDelta: -10);
       }
-      
+
       _addEvent(events, c.age, '📜 Bank PO Results',
-          description: desc,
-          type: type,
-          priority: EventPriority.critical);
+          description: desc, type: type, priority: EventPriority.critical);
     }
 
     if (c.age == 19 &&
@@ -4486,7 +5351,9 @@ class GameEngine {
     }
 
     // Traditional post-school milestones (for NPC/Auto-progression or Legacy)
-    if (c.age == 22 && c.educationLevel == 'Undergraduate' && c.degree != 'None') {
+    if (c.age == 22 &&
+        c.educationLevel == 'Undergraduate' &&
+        c.degree != 'None') {
       c.educationLevel = 'Graduate';
       _addEvent(events, c.age, '🎓 Graduated University',
           description: 'Congratulations! You earned your ${c.degree} degree!',
@@ -4593,7 +5460,8 @@ class GameEngine {
     }
 
     // Store as pending instead of final result
-    c.examResults = Map<String, int>.from(c.examResults)..['pending_$examType'] = rank;
+    c.examResults = Map<String, int>.from(c.examResults)
+      ..['pending_$examType'] = rank;
 
     // Track attempt history
     c.majorDecisions.add({
@@ -4608,7 +5476,8 @@ class GameEngine {
     c.updateStats(happinessDelta: -10, healthDelta: -5);
     c.stressLevel = (c.stressLevel + 40).clamp(0, 100);
 
-    final String msg = '📝 You have completed the $examType exam! Now begins the agonizing wait for the results. Cutoff rumors are already spreading online.';
+    final String msg =
+        '📝 You have completed the $examType exam! Now begins the agonizing wait for the results. Cutoff rumors are already spreading online.';
 
     return ActionResult(
       message: msg,
@@ -4632,7 +5501,8 @@ class GameEngine {
     final relevant = all.where((j) {
       // --- EDUCATION LEVEL GATE (Hard) ---
       final edu = j.eduReq;
-      if (edu == 'Postgraduate' && c.educationLevel != 'Postgraduate') return false;
+      if (edu == 'Postgraduate' && c.educationLevel != 'Postgraduate')
+        return false;
       if (edu == 'Graduate' &&
           c.educationLevel != 'Graduate' &&
           c.educationLevel != 'Postgraduate') return false;
@@ -4903,6 +5773,328 @@ class GameEngine {
     );
   }
 
+  static ActionResult _performPartTimeJobAction(
+      Character c, String action, Map<String, dynamic> payload) {
+    PartTimeJob? currentJob() =>
+        PartTimeJobsData.findById(c.currentPartTimeJob);
+
+    void applyFutureSignals(List<String> hints) {
+      c.hiddenModifiers['partTimeInterviewBoost'] =
+          (c.partTimeExperience * 0.003) +
+              (c.partTimeResponsibility * 0.004) +
+              (c.customerSkill * 0.002);
+      c.hiddenModifiers['scholarshipWorkEthic'] =
+          (c.partTimeResponsibility / 100).clamp(0.0, 1.0);
+      if (c.partTimeJobPerformance >= 80) {
+        c.memories['high_performer'] = true;
+        hints.add('High Performer');
+      }
+    }
+
+    LifeEvent eventFor(String title, String description, LifeEventType type) {
+      final alreadyHadDominant =
+          c.eventHistory['part_time_dominant_event_age'] == c.age;
+      if (!alreadyHadDominant) {
+        c.eventHistory['part_time_dominant_event_age'] = c.age;
+        return LifeEvent(
+          title: title,
+          description: description,
+          type: type,
+          metadata: {'age': c.age, 'source': 'part_time_job'},
+        );
+      }
+      return LifeEvent(
+        title: 'Part-Time Shift',
+        description: description,
+        type: type,
+        metadata: {'age': c.age, 'source': 'part_time_job'},
+      );
+    }
+
+    switch (action) {
+      case 'apply':
+        final jobId = payload['jobId'] as String? ?? '';
+        final job = PartTimeJobsData.findById(jobId);
+        if (job == null) {
+          return ActionResult(
+            message: 'That part-time job is no longer available.',
+            character: c,
+            success: false,
+          );
+        }
+        final lockReason = PartTimeJobsData.lockReason(job, c);
+        if (lockReason != null) {
+          return ActionResult(
+            message: '${job.name} is locked: $lockReason.',
+            character: c,
+            success: false,
+          );
+        }
+        c.currentPartTimeJob = job.id;
+        c.partTimeJobPerformance = c.partTimeJobPerformance.clamp(45, 100);
+        c.partTimeMonthsWorked = 0;
+        c.jobTitle = job.name;
+        c.memories['worked_part_time'] = true;
+        c.memories['first_job'] = true;
+        c.happiness = (c.happiness + 6).clamp(0, 100);
+        final hints = <String>['Part-Time Job Started'];
+        applyFutureSignals(hints);
+        return ActionResult(
+          message:
+              'Accepted: you started as ${job.name} for ${formatMoney(job.salary)}/mo.',
+          character: c,
+          progressionHints: hints,
+          events: [
+            eventFor(
+              'First Shift Scheduled',
+              'You accepted the ${job.name} role and planned your first shift.',
+              LifeEventType.milestone,
+            ),
+          ],
+        );
+
+      case 'work_shift':
+      case 'help_customer':
+      case 'extra_shift':
+      case 'ask_raise':
+      case 'quit':
+        break;
+      default:
+        return ActionResult(
+          message: 'That part-time action is not available yet.',
+          character: c,
+          success: false,
+        );
+    }
+
+    final job = currentJob();
+    if (job == null) {
+      return ActionResult(
+        message: 'You need a part-time job before doing that.',
+        character: c,
+        success: false,
+      );
+    }
+
+    if (action == 'quit') {
+      final oldName = job.name;
+      c.currentPartTimeJob = 'None';
+      c.partTimeJobPerformance = 50;
+      c.partTimeMonthsWorked = 0;
+      if (c.jobTitle == oldName) c.jobTitle = 'Unemployed';
+      c.memories['job_fired'] = false;
+      c.happiness = (c.happiness + 3).clamp(0, 100);
+      return ActionResult(
+        message: 'You quit your part-time job at $oldName.',
+        character: c,
+        events: [
+          eventFor(
+            'Part-Time Job Quit',
+            'You left $oldName. The experience stays with you.',
+            LifeEventType.neutral,
+          ),
+        ],
+      );
+    }
+
+    final hints = <String>[];
+    String title = 'Part-Time Shift';
+    String message = 'You completed a shift at ${job.name}.';
+    LifeEventType type = LifeEventType.neutral;
+
+    if (action == 'work_shift') {
+      final pay = job.salary;
+      c.bankBalance += pay;
+      c.totalEarned += pay;
+      c.partTimeExperience =
+          (c.partTimeExperience + job.experienceGain).clamp(0, 100);
+      c.partTimeResponsibility = (c.partTimeResponsibility + 3).clamp(0, 100);
+      c.partTimeJobPerformance = (c.partTimeJobPerformance + 4).clamp(0, 100);
+      c.partTimeMonthsWorked += 1;
+      c.stressLevel = (c.stressLevel + job.stressGain).clamp(0, 100);
+      c.discipline = (c.discipline + 2).clamp(0, 100);
+      c.memories['worked_part_time'] = true;
+      final flavor =
+          _partTimeFlavorEvents[_rng.nextInt(_partTimeFlavorEvents.length)];
+      title = flavor.title;
+      message = '${flavor.description} You earned ${formatMoney(pay)}.';
+      type = flavor.type;
+      hints.add('Experience Up');
+    } else if (action == 'help_customer') {
+      c.customerSkill =
+          (c.customerSkill + job.customerSkillGain + 3).clamp(0, 100);
+      c.happiness = (c.happiness + 3).clamp(0, 100);
+      c.partTimeJobPerformance = (c.partTimeJobPerformance + 5).clamp(0, 100);
+      if (_rng.nextDouble() < 0.18) {
+        final bonus = (job.salary * 0.20).roundToDouble();
+        c.bankBalance += bonus;
+        message =
+            'A customer complimented you and your manager added a ${formatMoney(bonus)} bonus.';
+        title = 'Customer Compliment';
+        type = LifeEventType.positive;
+      } else {
+        message =
+            'You helped a difficult customer and got better at people work.';
+        title = 'Helpful Service';
+        type = LifeEventType.positive;
+      }
+      hints.add('Customer Skill Up');
+    } else if (action == 'extra_shift') {
+      final pay = (job.salary * 1.5).roundToDouble();
+      c.bankBalance += pay;
+      c.totalEarned += pay;
+      c.partTimeExperience =
+          (c.partTimeExperience + job.experienceGain + 2).clamp(0, 100);
+      c.partTimeResponsibility = (c.partTimeResponsibility + 4).clamp(0, 100);
+      c.partTimeJobPerformance = (c.partTimeJobPerformance + 3).clamp(0, 100);
+      c.partTimeMonthsWorked += 1;
+      c.stressLevel = (c.stressLevel + job.stressGain + 8).clamp(0, 100);
+      if (c.stressLevel > 82 && _rng.nextDouble() < 0.30) {
+        c.happiness = (c.happiness - 8).clamp(0, 100);
+        c.partTimeJobPerformance = (c.partTimeJobPerformance - 6).clamp(0, 100);
+        title = 'Burnout Warning';
+        message =
+            'The extra shift paid ${formatMoney(pay)}, but you came home exhausted.';
+        type = LifeEventType.negative;
+      } else {
+        title = 'Extra Shift';
+        message = 'You covered extra hours and earned ${formatMoney(pay)}.';
+        type = LifeEventType.positive;
+      }
+      hints.add('Extra Income');
+    } else if (action == 'ask_raise') {
+      final raiseScore = (c.partTimeJobPerformance * 0.5) +
+          (c.partTimeExperience * 0.25) +
+          (c.partTimeResponsibility * 0.25) +
+          (_rng.nextDouble() * 20);
+      if (raiseScore >= 72) {
+        c.partTimeJobPerformance = (c.partTimeJobPerformance + 5).clamp(0, 100);
+        c.partTimeResponsibility = (c.partTimeResponsibility + 3).clamp(0, 100);
+        c.memories['job_promoted'] = true;
+        c.memories['high_performer'] = true;
+        title = 'Raise Accepted';
+        message = 'Your manager approved the raise and marked you as reliable.';
+        type = LifeEventType.positive;
+      } else {
+        c.partTimeJobPerformance = (c.partTimeJobPerformance - 3).clamp(0, 100);
+        title = 'Raise Rejected';
+        message =
+            'Your manager said you need a stronger record before a raise.';
+        type = LifeEventType.negative;
+      }
+    }
+
+    switch (job.id) {
+      case 'library_assistant':
+      case 'bookstore_worker':
+        c.smarts = (c.smarts + 1).clamp(0, 100);
+        c.studyConsistency = (c.studyConsistency + 2).clamp(0, 100);
+        break;
+      case 'sports_shop_assistant':
+        c.activityPerformance['sports'] =
+            ((c.activityPerformance['sports'] ?? 0) + 2).clamp(0, 100);
+        break;
+      case 'computer_shop_assistant':
+      case 'it_lab_monitor':
+        c.hiddenModifiers['codingBonus'] =
+            (c.hiddenModifiers['codingBonus'] ?? 0) + 0.05;
+        c.smarts = (c.smarts + 1).clamp(0, 100);
+        break;
+      case 'tuition_helper':
+        c.studyConsistency = (c.studyConsistency + 3).clamp(0, 100);
+        break;
+    }
+
+    if (c.partTimeJobPerformance >= 85) {
+      c.memories['high_performer'] = true;
+    }
+    applyFutureSignals(hints);
+
+    return ActionResult(
+      message: message,
+      character: c,
+      progressionHints: hints,
+      events: [eventFor(title, message, type)],
+    );
+  }
+
+  static const List<_PartTimeFlavorEvent> _partTimeFlavorEvents = [
+    _PartTimeFlavorEvent('Customer Compliment',
+        'A customer thanked you for being patient.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Late Salary',
+        'Payroll was delayed and everyone complained.', LifeEventType.negative),
+    _PartTimeFlavorEvent(
+        'Strict Manager',
+        'Your manager watched every tiny mistake today.',
+        LifeEventType.negative),
+    _PartTimeFlavorEvent('Employee of the Month',
+        'Your name went on the staff notice board.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Holiday Rush',
+        'The shop was packed for the holiday rush.', LifeEventType.neutral),
+    _PartTimeFlavorEvent('Shop Theft Incident',
+        'You spotted a suspicious customer near the exit.', LifeEventType.rare),
+    _PartTimeFlavorEvent('Cafe Spill Disaster',
+        'A tray slipped and coffee went everywhere.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Kind Regular',
+        'A regular customer remembered your name.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Inventory Marathon',
+        'You counted stock until your feet hurt.', LifeEventType.neutral),
+    _PartTimeFlavorEvent('Manager Praised You',
+        'Your manager praised your punctuality.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Wrong Order',
+        'You mixed up an order during a busy moment.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Overtime Call',
+        'Someone skipped work and you covered the gap.', LifeEventType.neutral),
+    _PartTimeFlavorEvent('Rainy Commute',
+        'Heavy rain made the commute miserable.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Team Snack', 'The team shared snacks after closing.',
+        LifeEventType.positive),
+    _PartTimeFlavorEvent(
+        'Broken Scanner',
+        'The billing scanner stopped working mid-shift.',
+        LifeEventType.neutral),
+    _PartTimeFlavorEvent(
+        'Polite Complaint',
+        'A customer complained, but you handled it calmly.',
+        LifeEventType.positive),
+    _PartTimeFlavorEvent('Lost Wallet',
+        'You returned a lost wallet from the counter.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Closing Duty',
+        'You stayed late to help close the store.', LifeEventType.neutral),
+    _PartTimeFlavorEvent('Busy Saturday',
+        'Saturday crowds tested your patience.', LifeEventType.neutral),
+    _PartTimeFlavorEvent(
+        'Surprise Tip',
+        'A customer left a small tip for good service.',
+        LifeEventType.positive),
+    _PartTimeFlavorEvent('Uniform Trouble',
+        'Your uniform was uncomfortable all day.', LifeEventType.negative),
+    _PartTimeFlavorEvent('New Trainee',
+        'You helped a new trainee learn the routine.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Stockroom Mess',
+        'The stockroom was a mess before your shift.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Exam Week Shift',
+        'Balancing work and studies felt difficult.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Friendly Supervisor',
+        'A supervisor gave you useful career advice.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Cash Counter Nerves',
+        'Handling cash made you nervous at first.', LifeEventType.neutral),
+    _PartTimeFlavorEvent(
+        'Festival Sale',
+        'Festival discounts brought a wave of customers.',
+        LifeEventType.neutral),
+    _PartTimeFlavorEvent('Small Mistake',
+        'You made a mistake and fixed it quickly.', LifeEventType.neutral),
+    _PartTimeFlavorEvent('Early Opening',
+        'You arrived early and opened on time.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Rude Customer',
+        'A rude customer tested your patience.', LifeEventType.negative),
+    _PartTimeFlavorEvent('Clean Sweep',
+        'You cleaned the workspace before leaving.', LifeEventType.positive),
+    _PartTimeFlavorEvent('Shift Swap', 'You swapped shifts to help a coworker.',
+        LifeEventType.positive),
+  ];
+
   static ActionResult _performSpecialCareerAction(
     Character c,
     String careerName,
@@ -4956,6 +6148,371 @@ class GameEngine {
       character: c,
       success: false,
     );
+  }
+
+  static ActionResult _performInfluencerAction(Character c, String action, Map<String, dynamic> payload) {
+    final influencer = CareerSystem.findSpecial('Influencer');
+    if (influencer == null) {
+      return ActionResult(
+        message: 'Influencer career is not available right now.',
+        character: c,
+        success: false,
+      );
+    }
+
+    if (action == 'start') {
+      if (!CareerSystem.canEnterSpecial(influencer, c)) {
+        return ActionResult(
+          message:
+              'Influencer needs Age ${influencer.minAge}+, Smarts ${influencer.smartsReq}+, Social ${influencer.socialReq}+, and ${influencer.eduReq} education.',
+          character: c,
+          success: false,
+        );
+      }
+      if (c.careerGroup != 'Influencer' || c.annualIncome <= 0) {
+        final group = CareerSystem.findGroup('Influencer');
+        if (group != null) {
+          CareerSystem.assignCareer(c, group);
+        }
+        c.careerGroup = 'Influencer';
+        c.jobTitle = influencer.entryTitle;
+        c.annualIncome = influencer.startingSalary;
+        c.jobPerformance = 45;
+      }
+      c.followers = max(c.followers, 500);
+      c.engagement = max(c.engagement, 20);
+      c.fame = max(c.fame, 5);
+      c.contentType = 'Gaming';
+      c.platform = 'Instagram';
+      c.totalPosts = 0;
+      c.happiness = (c.happiness + 8).clamp(0, 100);
+      return ActionResult(
+        message:
+            'You launched your influencer career. First followers are watching.',
+        character: c,
+      );
+    }
+
+    if (c.careerGroup != 'Influencer' || c.annualIncome <= 0) {
+      return ActionResult(
+        message: 'Start your Influencer career before doing this.',
+        character: c,
+        success: false,
+      );
+    }
+
+    // Get Platform Multipliers
+    double followerMult = 1.0;
+    double engagementMult = 1.0;
+    double viralBaseChance = 0.05;
+
+    switch (c.platform) {
+      case 'Instagram':
+        followerMult = 1.0;
+        engagementMult = 1.0;
+        viralBaseChance = 0.05;
+        break;
+      case 'YouTube':
+        followerMult = 1.3;
+        engagementMult = 0.9;
+        viralBaseChance = 0.07;
+        break;
+      case 'TikTok':
+        followerMult = 1.6;
+        engagementMult = 0.8;
+        viralBaseChance = 0.12;
+        break;
+      case 'Podcast':
+        followerMult = 0.7;
+        engagementMult = 1.4;
+        viralBaseChance = 0.04;
+        break;
+    }
+
+    switch (action) {
+      case 'set_platform':
+        final newPlatform = payload['platform'] as String? ?? 'Instagram';
+        c.platform = newPlatform;
+        return ActionResult(
+          message: 'You switched your active platform to $newPlatform.',
+          character: c,
+        );
+
+      case 'set_niche':
+        final newNiche = payload['niche'] as String? ?? 'Gaming';
+        c.contentType = newNiche;
+        return ActionResult(
+          message: 'You changed your niche to $newNiche.',
+          character: c,
+        );
+
+      case 'sponsorship_accept':
+        final double money = (payload['money'] as num? ?? 0).toDouble();
+        final int fameGain = payload['fame'] as int? ?? 0;
+        final company = payload['company'] as String? ?? 'Brand';
+        c.bankBalance += money;
+        c.totalEarned += money;
+        c.fame = (c.fame + fameGain).clamp(0, 100);
+        c.brandDealsCompleted++;
+        
+        return ActionResult(
+          message: '🎉 Sponsorship accepted! You promoted $company and earned ₹${formatMoney(money)}.',
+          character: c,
+          events: [
+            LifeEvent(
+              title: 'Sponsorship Signed',
+              description: 'You completed a sponsored post for $company, earning ₹${formatMoney(money)}.',
+              type: LifeEventType.positive,
+              metadata: {'age': c.age},
+            )
+          ],
+        );
+
+      case 'post_photo':
+        c.totalPosts++;
+        final baseGain = 200 + _rng.nextInt(300) + c.social * 2;
+        final followersGained = (baseGain * followerMult).round();
+        c.followers += followersGained;
+
+        final double engGain = (1.5 + _rng.nextDouble() * 1.5) * engagementMult;
+        c.engagement = (c.engagement + engGain.round()).clamp(0, 100);
+
+        c.fame = (c.fame + 1).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 4).clamp(0, 100);
+        c.happiness = (c.happiness + 2).clamp(0, 100);
+
+        final isViral = _rng.nextDouble() < viralBaseChance;
+        if (isViral) {
+          final viralFollowers = (15000 + _rng.nextInt(15000) * followerMult).round();
+          final viralFame = 15 + _rng.nextInt(10);
+          c.followers += viralFollowers;
+          c.fame = (c.fame + viralFame).clamp(0, 100);
+          c.engagement = (c.engagement + 10).clamp(0, 100);
+
+          return ActionResult(
+            message: '🔥 A celebrity shared your post! You went viral, gaining $viralFollowers followers and +$viralFame% Fame!',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Celebrity Repost!',
+                description: 'A celebrity shared your post, causing your follower count to surge.',
+                type: LifeEventType.rare,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        }
+
+        return ActionResult(
+          message: 'You posted a photo on ${c.platform} and gained $followersGained followers!',
+          character: c,
+        );
+
+      case 'upload_video':
+        c.totalPosts++;
+        final baseGain = 500 + _rng.nextInt(800) + c.social * 5;
+        final followersGained = (baseGain * followerMult).round();
+        c.followers += followersGained;
+
+        final double engGain = (2.5 + _rng.nextDouble() * 3.5) * engagementMult;
+        c.engagement = (c.engagement + engGain.round()).clamp(0, 100);
+
+        c.fame = (c.fame + (_rng.nextBool() ? 2 : 1)).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 6).clamp(0, 100);
+        c.happiness = (c.happiness + 3).clamp(0, 100);
+
+        final isViral = _rng.nextDouble() < (viralBaseChance * 1.2);
+        if (isViral) {
+          final viralFollowers = (25000 + _rng.nextInt(25000) * followerMult).round();
+          final viralFame = 20 + _rng.nextInt(10);
+          c.followers += viralFollowers;
+          c.fame = (c.fame + viralFame).clamp(0, 100);
+          c.engagement = (c.engagement + 15).clamp(0, 100);
+
+          return ActionResult(
+            message: '🔥 Your video went viral! You gained $viralFollowers followers and +$viralFame% Fame!',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Video Went Viral!',
+                description: 'Your uploaded video took off and reached a massive audience.',
+                type: LifeEventType.rare,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        }
+
+        return ActionResult(
+          message: 'You uploaded a video on ${c.platform} and gained $followersGained followers!',
+          character: c,
+        );
+
+      case 'create_short':
+        c.totalPosts++;
+        final baseGain = 400 + _rng.nextInt(600) + c.social * 4;
+        final followersGained = (baseGain * followerMult).round();
+        c.followers += followersGained;
+
+        final double engGain = (1.8 + _rng.nextDouble() * 2.8) * engagementMult;
+        c.engagement = (c.engagement + engGain.round()).clamp(0, 100);
+
+        c.fame = (c.fame + 1).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 5).clamp(0, 100);
+        c.happiness = (c.happiness + 2).clamp(0, 100);
+
+        final isViral = _rng.nextDouble() < (viralBaseChance * 1.8);
+        if (isViral) {
+          final viralFollowers = (30000 + _rng.nextInt(30000) * followerMult).round();
+          final viralFame = 18 + _rng.nextInt(12);
+          c.followers += viralFollowers;
+          c.fame = (c.fame + viralFame).clamp(0, 100);
+          c.engagement = (c.engagement + 12).clamp(0, 100);
+
+          return ActionResult(
+            message: '🔥 Your short video exploded! You gained $viralFollowers followers and +$viralFame% Fame!',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Algorithm Boom!',
+                description: 'Your short video hit the recommendation page and exploded in views.',
+                type: LifeEventType.rare,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        }
+
+        return ActionResult(
+          message: 'You posted a short video on ${c.platform} and gained $followersGained followers!',
+          character: c,
+        );
+
+      case 'go_live':
+        c.totalPosts++;
+        final baseGain = 100 + _rng.nextInt(200) + c.social;
+        final followersGained = (baseGain * followerMult).round();
+        c.followers += followersGained;
+
+        final double engGain = (4.0 + _rng.nextDouble() * 6.0) * engagementMult;
+        c.engagement = (c.engagement + engGain.round()).clamp(0, 100);
+
+        c.fame = (c.fame + (_rng.nextDouble() < 0.3 ? 1 : 0)).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 4).clamp(0, 100);
+        c.happiness = (c.happiness + 3).clamp(0, 100);
+
+        final isViral = _rng.nextDouble() < (viralBaseChance * 0.8);
+        if (isViral) {
+          final viralFollowers = (20000 + _rng.nextInt(20000) * followerMult).round();
+          final viralFame = 15 + _rng.nextInt(10);
+          c.followers += viralFollowers;
+          c.fame = (c.fame + viralFame).clamp(0, 100);
+          c.engagement = (c.engagement + 20).clamp(0, 100);
+
+          return ActionResult(
+            message: '🔥 Your livestream exploded overnight! You gained $viralFollowers followers and +$viralFame% Fame!',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Livestream Explosion!',
+                description: 'Your live session was shared by major streamers and blew up.',
+                type: LifeEventType.rare,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        }
+
+        return ActionResult(
+          message: 'You completed a livestream on ${c.platform} and gained $followersGained followers!',
+          character: c,
+        );
+
+      case 'share_story':
+        c.totalPosts++;
+        final double engGain = (0.5 + _rng.nextDouble() * 1.5) * engagementMult;
+        c.engagement = (c.engagement + engGain.round()).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 2).clamp(0, 100);
+        c.happiness = (c.happiness + 1).clamp(0, 100);
+
+        final isViral = _rng.nextDouble() < (viralBaseChance * 0.4);
+        if (isViral) {
+          final viralFollowers = (5000 + _rng.nextInt(10000) * followerMult).round();
+          final viralFame = 8 + _rng.nextInt(7);
+          c.followers += viralFollowers;
+          c.fame = (c.fame + viralFame).clamp(0, 100);
+          c.engagement = (c.engagement + 8).clamp(0, 100);
+
+          return ActionResult(
+            message: '🔥 Your story went viral on a meme page! Gained $viralFollowers followers and +$viralFame% Fame!',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Story Went Viral!',
+                description: 'Your daily story was reposted and went viral.',
+                type: LifeEventType.rare,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        }
+
+        return ActionResult(
+          message: 'You shared a daily story on ${c.platform}.',
+          character: c,
+        );
+
+      case 'apply_verification':
+        if (c.isVerified) {
+          return ActionResult(
+            message: 'You are already verified.',
+            character: c,
+            success: false,
+          );
+        }
+        if (c.followers < 100000) {
+          return ActionResult(
+            message: 'Verification needs 100,000 followers.',
+            character: c,
+            success: false,
+          );
+        }
+        final followersScore = (c.followers / 1000000.0).clamp(0.0, 1.0);
+        final fameScore = c.fame / 100.0;
+        final engScore = c.engagement / 100.0;
+        final verificationChance = (0.2 + (followersScore * 0.3) + (fameScore * 0.3) + (engScore * 0.2)).clamp(0.1, 0.95);
+
+        final isApproved = _rng.nextDouble() < verificationChance;
+        if (isApproved) {
+          c.isVerified = true;
+          c.fame = (c.fame + 15).clamp(0, 100);
+          return ActionResult(
+            message: '🎉 Congratulations! Your verification request was approved! You are now VERIFIED.',
+            character: c,
+            events: [
+              LifeEvent(
+                title: 'Verified Creator!',
+                description: 'You applied for verification and received the official blue badge.',
+                type: LifeEventType.milestone,
+                metadata: {'age': c.age},
+              )
+            ],
+          );
+        } else {
+          return ActionResult(
+            message: '❌ Your verification application was rejected. Try growing your fame and engagement first.',
+            character: c,
+            success: false,
+          );
+        }
+
+      default:
+        return ActionResult(
+          message: 'Unknown influencer action.',
+          character: c,
+          success: false,
+        );
+    }
   }
 
   static void _applyBusinessProgression(Character c, List<LifeEvent> events) {
@@ -5073,7 +6630,10 @@ class GameEngine {
     // First job assignment at 22 (or when school done at 18 without college)
     final isFirstJob = c.careerGroup == 'None' &&
         c.annualIncome == 0 &&
-        (c.age == 22 || (c.age == 18 && c.educationLevel != 'Undergraduate' && c.educationLevel != 'Graduate'));
+        (c.age == 22 ||
+            (c.age == 18 &&
+                c.educationLevel != 'Undergraduate' &&
+                c.educationLevel != 'Graduate'));
     if (isFirstJob) {
       final group = CareerSystem.bestMatchGroup(c);
       if (enableLogging)
@@ -5363,13 +6923,19 @@ class GameEngine {
       if (requiredTier != null && c.lifestyleTier != requiredTier) return false;
 
       // 1. Wealth Filtering (Rich people don't get minor money stress)
-      if (c.bankBalance > 2000000 && e['type'] == 'Financial' && (e['money'] ?? 0) > -50000 && (e['money'] ?? 0) < 0) return false;
-      
+      if (c.bankBalance > 2000000 &&
+          e['type'] == 'Financial' &&
+          (e['money'] ?? 0) > -50000 &&
+          (e['money'] ?? 0) < 0) return false;
+
       // 2. Fame Filtering (Famous people get more drama, less generic neutral events)
-      if (c.fame > 75 && e['type'] == 'Neutral' && _rng.nextDouble() < 0.5) return false;
+      if (c.fame > 75 && e['type'] == 'Neutral' && _rng.nextDouble() < 0.5)
+        return false;
 
       // 3. Identity Insecurity (High-fame/Wealthy characters don't get "Sharma Ji" type insecurity)
-      if ((c.bankBalance > 5000000 || c.fame > 80) && e['title'] != null && e['title'].contains('Sharma')) return false;
+      if ((c.bankBalance > 5000000 || c.fame > 80) &&
+          e['title'] != null &&
+          e['title'].contains('Sharma')) return false;
 
       try {
         final dynamic cond = e['cond'];
@@ -5461,12 +7027,12 @@ class GameEngine {
       }
 
       final selected = eligible[selectedIdx];
-      
+
       // Update Event History (Deduplication)
       if (selected['title'] != null) {
         c.eventHistory[selected['title']] = c.age;
       }
-      
+
       EventChoice? choice;
       if (selected['choice'] != null) {
         final cMap = selected['choice'];
@@ -5491,7 +7057,9 @@ class GameEngine {
         choice: choice,
         priority: selected['type'] == 'Rare'
             ? EventPriority.rare
-            : (selected['choice'] != null ? EventPriority.important : EventPriority.normal),
+            : (selected['choice'] != null
+                ? EventPriority.important
+                : EventPriority.normal),
         statChanges: {
           if (selected['happiness'] != null)
             'happiness': selected['happiness'] as int,
@@ -5862,54 +7430,61 @@ class GameEngine {
 
   static void _generateTensionSignals(Character c, List<LifeEvent> events) {
     final roll = _rng.nextDouble();
-    
+
     // --- VARIABLE OUTCOME TENSION ---
     // Instead of guaranteed signals, they are now probabilistic
-    
+
     // Health Dread (Hidden Risk)
     if (c.health < 45 && roll < 0.25) {
       _addEvent(events, c.age, '⌛ A lingering fatigue...',
-          description: 'Your body hasn\'t felt right lately. You feel a constant, dull ache.',
+          description:
+              'Your body hasn\'t felt right lately. You feel a constant, dull ache.',
           type: LifeEventType.negative);
-      c.hiddenModifiers['health_decay'] = (c.hiddenModifiers['health_decay'] ?? 0) + 1.0;
+      c.hiddenModifiers['health_decay'] =
+          (c.hiddenModifiers['health_decay'] ?? 0) + 1.0;
     }
-    
+
     // Career Dread (Contextual)
     if (c.jobPerformance < 40 && c.annualIncome > 0 && roll < 0.2) {
       _addEvent(events, c.age, '🏢 Office whispers...',
-          description: 'You noticed your boss becoming distant. The atmosphere at work is chilly.',
+          description:
+              'You noticed your boss becoming distant. The atmosphere at work is chilly.',
           type: LifeEventType.negative);
       c.reputation = (c.reputation - 5).clamp(0, 100);
     }
 
     // Relationship Dread (Echoes)
-    if (c.relationships.any((r) => r.type == 'Partner' && r.bond < 50) && roll < 0.15) {
+    if (c.relationships.any((r) => r.type == 'Partner' && r.bond < 50) &&
+        roll < 0.15) {
       _addEvent(events, c.age, '🥀 Emotional distance...',
-          description: 'Your partner seems emotionally withdrawn. Conversations are brief and forced.',
+          description:
+              'Your partner seems emotionally withdrawn. Conversations are brief and forced.',
           type: LifeEventType.negative);
     }
-    
+
     // --- NARRATIVE ECHOES (LATE LIFE) ---
     if (c.age > 50 && roll < 0.2) {
       if (c.memories.containsKey('school_fighter') && _rng.nextBool()) {
         _addEvent(events, c.age, '🦴 A ghostly ache...',
-            description: 'That old injury from the school fight at age 14 is hurting again. Time is catching up.',
+            description:
+                'That old injury from the school fight at age 14 is hurting again. Time is catching up.',
             type: LifeEventType.negative);
         c.health -= 5;
       }
-      
+
       if (c.memories.containsKey('corrupt_worker') && _rng.nextDouble() < 0.1) {
-         _addEvent(events, c.age, '⚖️ A restless night...',
-            description: 'You woke up sweating, thinking about the sales you inflated decades ago. Will anyone ever find out?',
+        _addEvent(events, c.age, '⚖️ A restless night...',
+            description:
+                'You woke up sweating, thinking about the sales you inflated decades ago. Will anyone ever find out?',
             type: LifeEventType.neutral);
-         c.happiness -= 10;
+        c.happiness -= 10;
       }
     }
   }
 
   static Map<String, String> _getQuietReflection(Character c) {
     final trait = c.activeDominantTrait;
-    
+
     if (c.age < 12) {
       return {
         'title': 'A year of play',
@@ -5920,12 +7495,14 @@ class GameEngine {
     if (trait == 'Disciplined') {
       return {
         'title': 'The Architect of Life',
-        'desc': 'You continued building your future quietly, one brick at a time.'
+        'desc':
+            'You continued building your future quietly, one brick at a time.'
       };
     } else if (trait == 'Risk-taker') {
       return {
         'title': 'Quiet before the storm',
-        'desc': 'You spent the year waiting for the next big opportunity to strike.'
+        'desc':
+            'You spent the year waiting for the next big opportunity to strike.'
       };
     } else if (trait == 'Lazy') {
       return {
@@ -5935,12 +7512,14 @@ class GameEngine {
     } else if (trait == 'Aggressive') {
       return {
         'title': 'Controlled energy',
-        'desc': 'You focused your intensity on routine tasks, keeping your edge sharp.'
+        'desc':
+            'You focused your intensity on routine tasks, keeping your edge sharp.'
       };
     } else if (trait == 'Kind') {
       return {
         'title': 'A year of harmony',
-        'desc': 'You maintained peace in your circle and enjoyed simple connections.'
+        'desc':
+            'You maintained peace in your circle and enjoyed simple connections.'
       };
     } else if (c.age > 60) {
       return {
@@ -5948,7 +7527,7 @@ class GameEngine {
         'desc': 'You enjoyed a quiet year of reflection and rest.'
       };
     }
-    
+
     return {
       'title': 'Steady momentum',
       'desc': 'A year of routine and steady progress in ${c.city}.'
@@ -5957,21 +7536,23 @@ class GameEngine {
 
   static void _applyRandomYearlyEvents(Character c, List<LifeEvent> events) {
     final roll = _rng.nextDouble();
-    
+
     // 1. Career Bonuses & Setbacks
     if (c.annualIncome > 0 && c.careerGroup != 'None') {
       if (roll < 0.08 && c.jobPerformance > 70) {
         final bonus = c.annualIncome * 0.15;
         c.bankBalance += bonus;
         _addEvent(events, c.age, '💰 PERFORMANCE BONUS',
-            description: 'Your hard work paid off! You received a ₹${formatMoney(bonus)} bonus.',
+            description:
+                'Your hard work paid off! You received a ₹${formatMoney(bonus)} bonus.',
             type: LifeEventType.positive,
             priority: EventPriority.important);
       } else if (roll < 0.12 && c.jobPerformance < 40) {
         final cut = c.annualIncome * 0.05;
         c.bankBalance -= cut;
         _addEvent(events, c.age, '💸 REVENUE LOSS',
-            description: 'Due to poor performance, you were fined ₹${formatMoney(cut)}.',
+            description:
+                'Due to poor performance, you were fined ₹${formatMoney(cut)}.',
             type: LifeEventType.negative,
             priority: EventPriority.normal);
       }
@@ -5981,7 +7562,8 @@ class GameEngine {
     if (c.age > 40 && roll > 0.90 && c.health < 60) {
       c.health -= 15;
       _addEvent(events, c.age, '🏥 HEALTH SCARE',
-          description: 'You had a sudden health complication. Time to take care of yourself.',
+          description:
+              'You had a sudden health complication. Time to take care of yourself.',
           type: LifeEventType.negative,
           priority: EventPriority.important);
     }
@@ -5994,7 +7576,12 @@ class GameEngine {
     if (c.age > 18 && roll > expenseRisk && roll < 0.95) {
       final expense = (c.bankBalance * 0.05).clamp(2000.0, 50000.0);
       c.bankBalance -= expense;
-      final reasons = ['Car broke down', 'Home repair needed', 'Lost your wallet', 'Gadget failure'];
+      final reasons = [
+        'Car broke down',
+        'Home repair needed',
+        'Lost your wallet',
+        'Gadget failure'
+      ];
       final reason = reasons[_rng.nextInt(reasons.length)];
       _addEvent(events, c.age, '💸 UNEXPECTED EXPENSE',
           description: '$reason cost you ${formatMoney(expense)}.',
@@ -6006,14 +7593,15 @@ class GameEngine {
       final reward = (c.fame * 1000).toDouble();
       c.bankBalance += reward;
       _addEvent(events, c.age, '🤳 BRAND COLLAB',
-          description: 'A brand reached out for a collab! You earned ₹${formatMoney(reward)}.',
+          description:
+              'A brand reached out for a collab! You earned ₹${formatMoney(reward)}.',
           type: LifeEventType.positive,
           priority: EventPriority.important);
     }
 
     // 5. Asset Appreciation/Depreciation
     if (c.ownedAssets.isNotEmpty && roll < 0.15) {
-       _addEvent(events, c.age, '📈 ASSET UPDATE',
+      _addEvent(events, c.age, '📈 ASSET UPDATE',
           description: 'The market value of your property changed slightly.',
           type: LifeEventType.neutral);
     }
@@ -6022,7 +7610,8 @@ class GameEngine {
     if (c.age > 18 && roll < 0.5 && !events.any((e) => e.choice != null)) {
       events.add(LifeEvent(
         title: 'Workplace Opportunity',
-        description: 'Your boss asks if you can stay late for a month to help with a critical project.',
+        description:
+            'Your boss asks if you can stay late for a month to help with a critical project.',
         type: LifeEventType.neutral,
         metadata: {'age': c.age},
         choice: const EventChoice(
@@ -6030,14 +7619,18 @@ class GameEngine {
           description: 'This will be exhausting but might pay off.',
           optionA: 'Accept',
           optionB: 'Refuse',
-          effectA: StatEffect(happiness: -10, health: -5, smarts: 5, karma: 5, money: 50000),
+          effectA: StatEffect(
+              happiness: -10, health: -5, smarts: 5, karma: 5, money: 50000),
           effectB: StatEffect(happiness: 5, health: 5, karma: -5),
-          resultA: 'You stayed late every night. The project was a success! You earned a bonus.',
-          resultB: 'You chose your health over work. You feel refreshed, but your boss looks disappointed.',
+          resultA:
+              'You stayed late every night. The project was a success! You earned a bonus.',
+          resultB:
+              'You chose your health over work. You feel refreshed, but your boss looks disappointed.',
         ),
       ));
     }
   }
+
   static void _applyConsequenceDrama(Character c, List<LifeEvent> events) {
     // 1. Rejected Marriage Consequence (Echoes)
     if (c.memories.containsKey('rejected_arranged_marriage') &&
@@ -6065,22 +7658,29 @@ class GameEngine {
     }
 
     // --- NEW RIVAL SYSTEM ---
-    if (c.memories.containsKey('school_fighter') && c.age > 25 && c.age < 45 && _rng.nextDouble() < 0.08) {
-       _addEvent(events, c.age, '⚔️ THE RETURN OF THE RIVAL',
-          description: 'You bumped into that kid you fought in school. He is now a senior executive at your competitor\'s firm.',
+    if (c.memories.containsKey('school_fighter') &&
+        c.age > 25 &&
+        c.age < 45 &&
+        _rng.nextDouble() < 0.08) {
+      _addEvent(events, c.age, '⚔️ THE RETURN OF THE RIVAL',
+          description:
+              'You bumped into that kid you fought in school. He is now a senior executive at your competitor\'s firm.',
           type: LifeEventType.negative,
           priority: EventPriority.important);
-       c.memories['active_rival'] = true;
-       c.updateStats(stressDelta: 20);
+      c.memories['active_rival'] = true;
+      c.updateStats(stressDelta: 20);
     }
 
-    if (c.memories.containsKey('active_rival') && c.age % 6 == 0 && _rng.nextDouble() < 0.5) {
-       _addEvent(events, c.age, '📉 RIVAL SABOTAGE',
-          description: 'Your industry rival blocked a major deal your company was chasing.',
+    if (c.memories.containsKey('active_rival') &&
+        c.age % 6 == 0 &&
+        _rng.nextDouble() < 0.5) {
+      _addEvent(events, c.age, '📉 RIVAL SABOTAGE',
+          description:
+              'Your industry rival blocked a major deal your company was chasing.',
           type: LifeEventType.negative);
-       c.updateStats(jobPerformanceDelta: -15, happinessDelta: -5);
+      c.updateStats(jobPerformanceDelta: -15, happinessDelta: -5);
     }
-    
+
     // --- REPUTATION GOSSIP ---
     if (c.reputation < 35 && _rng.nextDouble() < 0.3) {
       final gossips = [
@@ -6098,12 +7698,14 @@ class GameEngine {
     if (c.age > 65 && _rng.nextDouble() < 0.1) {
       if (c.karma > 80) {
         _addEvent(events, c.age, '🕊️ A Peaceful Legacy',
-            description: 'Your life of kindness has come full circle. People speak of you with genuine respect.',
+            description:
+                'Your life of kindness has come full circle. People speak of you with genuine respect.',
             type: LifeEventType.positive);
         c.updateStats(happinessDelta: 20);
       } else if (c.karma < 30) {
         _addEvent(events, c.age, '🏚️ A Lonely Winter',
-            description: 'The bridges you burnt in your youth have left you isolated in your old age.',
+            description:
+                'The bridges you burnt in your youth have left you isolated in your old age.',
             type: LifeEventType.negative);
         c.updateStats(happinessDelta: -25, socialDelta: -20);
       }

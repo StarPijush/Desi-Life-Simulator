@@ -1,5 +1,4 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Manually maintained - updated to include job fields (71-73).
 
 part of 'character.dart';
 
@@ -33,12 +32,15 @@ class CharacterAdapter extends TypeAdapter<Character> {
       educationLevel: fields[12] as String,
       degree: fields[13] as String,
       totalEarned: fields[14] as double,
+      achievements: (fields[15] as List).cast<String>(),
       gender: fields[16] as String,
       annualIncome: fields[17] as double,
       annualExpenses: fields[18] as double,
       careerGroup: fields[19] as String,
       careerStep: fields[20] as int,
       yearsInRole: fields[21] as int,
+      ownedAssets: (fields[22] as List).cast<String>(),
+      relationships: (fields[23] as List).cast<Relationship>(),
       cibilScore: fields[24] as int,
       bankName: fields[25] as String,
       accountType: fields[26] as String,
@@ -48,17 +50,35 @@ class CharacterAdapter extends TypeAdapter<Character> {
       loanType: fields[30] as String,
       creditUsed: fields[31] as double,
       lastActivityAge: fields[32] as int,
+      stockPortfolio: (fields[33] as List)
+          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      cryptoPortfolio: (fields[34] as List)
+          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      bondPortfolio: (fields[35] as List)
+          .map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
+      marketPrices: (fields[36] as Map).cast<dynamic, dynamic>(),
+      eventChains: (fields[37] as Map).cast<String, int>(),
       momentumStreak: fields[38] as int,
       version: fields[39] as int,
       lastSavedAt: fields[40] as int,
+      personalityScores: (fields[41] as Map).cast<String, int>(),
       activeDominantTrait: fields[42] as String,
       lastTraitShiftAge: fields[43] as int,
       lastAutoDecisionAge: fields[44] as int,
       momentumState: fields[45] as String,
       identityPhase: fields[46] as String,
       phaseYearsStored: fields[47] as int,
+      hiddenModifiers: (fields[48] as Map).cast<String, double>(),
+      majorDecisions: (fields[49] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
       legacyPoints: fields[50] as int,
+      tensionSignals: (fields[51] as List).cast<String>(),
       universityType: fields[52] as String,
+      examResults: (fields[53] as Map).cast<String, int>(),
       isDroppedYear: fields[54] as bool,
       stateVersion: fields[55] as int,
       parentWealth: fields[56] as String,
@@ -73,40 +93,58 @@ class CharacterAdapter extends TypeAdapter<Character> {
       lastDemotionAge: fields[65] as int,
       hasCareerWarning: fields[66] as bool,
       freelanceEffort: fields[67] as int,
-      achievements: (fields[15] as List?)?.cast<String>() ?? <String>[],
-      ownedAssets: (fields[22] as List?)?.cast<String>() ?? <String>[],
-      relationships: (fields[23] as List?)?.cast<Relationship>() ?? <Relationship>[],
-      stockPortfolio: (fields[33] as List?)
-          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList() ?? <Map<dynamic, dynamic>>[],
-      cryptoPortfolio: (fields[34] as List?)
-          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList() ?? <Map<dynamic, dynamic>>[],
-      bondPortfolio: (fields[35] as List?)
-          ?.map((dynamic e) => (e as Map).cast<dynamic, dynamic>())
-          .toList() ?? <Map<dynamic, dynamic>>[],
-      marketPrices: (fields[36] as Map?)?.cast<dynamic, dynamic>() ?? <dynamic, dynamic>{},
-      eventChains: (fields[37] as Map?)?.cast<String, int>() ?? <String, int>{},
-      personalityScores: (fields[41] as Map?)?.cast<String, int>() ?? <String, int>{},
-      hiddenModifiers: (fields[48] as Map?)?.cast<String, double>() ?? <String, double>{},
-      majorDecisions: (fields[49] as List?)
-          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList() ?? <Map<String, dynamic>>[],
-      tensionSignals: (fields[51] as List?)?.cast<String>() ?? <String>[],
-      examResults: (fields[53] as Map?)?.cast<String, int>() ?? <String, int>{},
-      unlockedActivityIds: (fields[68] as List?)?.cast<String>() ?? <String>[],
-      unlockedCareerModuleIds: (fields[69] as List?)?.cast<String>() ?? <String>[],
-      loans: (fields[70] as List?)?.cast<LoanModel>() ?? <LoanModel>[],
-      jobPerformance: (fields[71] as num?)?.toDouble() ?? 50,
-      yearsInJob: fields[72] as int? ?? 0,
-      jobLevel: fields[73] as int? ?? 0,
+      unlockedActivityIds: (fields[68] as List).cast<String>(),
+      unlockedCareerModuleIds: (fields[69] as List).cast<String>(),
+      loans: (fields[70] as List).cast<LoanModel>(),
+      jobPerformance: fields[71] as double,
+      yearsInJob: fields[72] as int,
+      jobLevel: fields[73] as int,
+      reputation: fields[74] as int,
+      fame: fields[75] as int,
+      ambition: fields[76] as int,
+      financialIntelligence: fields[77] as int,
+      looks: fields[78] as int,
+      memories: (fields[79] as Map).cast<String, bool>(),
+      eventHistory: (fields[80] as Map).cast<String, int>(),
+      joinedActivities: (fields[81] as List).cast<String>(),
+      activityPerformance: (fields[82] as Map).cast<String, int>(),
+      claimedScholarships: (fields[83] as List).cast<String>(),
+      activeTutors: (fields[84] as Map).cast<dynamic, dynamic>(),
+      currentPartTimeJob: fields[85] as String,
+      partTimeExperience: fields[86] as int,
+      partTimeResponsibility: fields[87] as int,
+      customerSkill: fields[88] as int,
+      partTimeJobPerformance: fields[89] as int,
+      partTimeMonthsWorked: fields[90] as int,
+      followers: fields[91] as int,
+      engagement: fields[92] as int,
+      isVerified: fields[93] as bool,
+      brandDealsCompleted: fields[94] as int,
+      contentType: fields[95] as String,
+      platform: fields[96] as String,
+      totalPosts: fields[97] as int,
+      currentPosition: fields[98] as String,
+      partyName: fields[99] as String,
+      popularity: fields[100] as int,
+      publicTrust: fields[101] as int,
+      politicalExperience: fields[102] as int,
+      partyInfluence: fields[103] as int,
+      campaignFunds: fields[104] as double,
+      publicApproval: fields[105] as int,
+      nationalReputation: fields[106] as int,
+      scandalLevel: fields[107] as int,
+      electionsWon: fields[108] as int,
+      electionsLost: fields[109] as int,
+      connections: (fields[110] as List).cast<String>(),
+      isPartyMember: fields[111] as bool,
+      isStudentLeader: fields[112] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Character obj) {
     writer
-      ..writeByte(74)
+      ..writeByte(113)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -254,7 +292,85 @@ class CharacterAdapter extends TypeAdapter<Character> {
       ..writeByte(72)
       ..write(obj.yearsInJob)
       ..writeByte(73)
-      ..write(obj.jobLevel);
+      ..write(obj.jobLevel)
+      ..writeByte(74)
+      ..write(obj.reputation)
+      ..writeByte(75)
+      ..write(obj.fame)
+      ..writeByte(76)
+      ..write(obj.ambition)
+      ..writeByte(77)
+      ..write(obj.financialIntelligence)
+      ..writeByte(78)
+      ..write(obj.looks)
+      ..writeByte(79)
+      ..write(obj.memories)
+      ..writeByte(80)
+      ..write(obj.eventHistory)
+      ..writeByte(81)
+      ..write(obj.joinedActivities)
+      ..writeByte(82)
+      ..write(obj.activityPerformance)
+      ..writeByte(83)
+      ..write(obj.claimedScholarships)
+      ..writeByte(84)
+      ..write(obj.activeTutors)
+      ..writeByte(85)
+      ..write(obj.currentPartTimeJob)
+      ..writeByte(86)
+      ..write(obj.partTimeExperience)
+      ..writeByte(87)
+      ..write(obj.partTimeResponsibility)
+      ..writeByte(88)
+      ..write(obj.customerSkill)
+      ..writeByte(89)
+      ..write(obj.partTimeJobPerformance)
+      ..writeByte(90)
+      ..write(obj.partTimeMonthsWorked)
+      ..writeByte(91)
+      ..write(obj.followers)
+      ..writeByte(92)
+      ..write(obj.engagement)
+      ..writeByte(93)
+      ..write(obj.isVerified)
+      ..writeByte(94)
+      ..write(obj.brandDealsCompleted)
+      ..writeByte(95)
+      ..write(obj.contentType)
+      ..writeByte(96)
+      ..write(obj.platform)
+      ..writeByte(97)
+      ..write(obj.totalPosts)
+      ..writeByte(98)
+      ..write(obj.currentPosition)
+      ..writeByte(99)
+      ..write(obj.partyName)
+      ..writeByte(100)
+      ..write(obj.popularity)
+      ..writeByte(101)
+      ..write(obj.publicTrust)
+      ..writeByte(102)
+      ..write(obj.politicalExperience)
+      ..writeByte(103)
+      ..write(obj.partyInfluence)
+      ..writeByte(104)
+      ..write(obj.campaignFunds)
+      ..writeByte(105)
+      ..write(obj.publicApproval)
+      ..writeByte(106)
+      ..write(obj.nationalReputation)
+      ..writeByte(107)
+      ..write(obj.scandalLevel)
+      ..writeByte(108)
+      ..write(obj.electionsWon)
+      ..writeByte(109)
+      ..write(obj.electionsLost)
+      ..writeByte(110)
+      ..write(obj.connections)
+      ..writeByte(111)
+      ..write(obj.isPartyMember)
+      ..writeByte(112)
+      ..write(obj.isStudentLeader);
   }
 
   @override

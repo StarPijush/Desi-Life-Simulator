@@ -1,11 +1,12 @@
-// lib/screens/people_page.dart
+// lib/screens/people/people_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/design_system.dart';
-import '../core/engine.dart';
-import '../models/character.dart';
-import '../models/relationship.dart';
+import '../../core/design_system.dart';
+import '../../core/engine.dart';
+import '../../models/character.dart';
+import '../../models/relationship.dart';
+import '../../widgets/common_widgets.dart';
 
 class PeoplePage extends StatelessWidget {
   final Character character;
@@ -125,16 +126,16 @@ class PeoplePage extends StatelessWidget {
           // FAMILY SECTION
           if (family.isNotEmpty) ...[
             const SizedBox(height: 8),
-            const _SectionHeader(title: 'FAMILY'),
-            _FlatRowGroup(
+            const AppSectionHeader.band('FAMILY'),
+            AppFlatRowGroup(showBorder: false, 
               rows: family.map((r) => _RelationRow(relationship: r, onGameAction: onGameAction)).toList(),
             ),
           ],
 
           // RELATIONSHIPS SECTION
           const SizedBox(height: 8),
-          const _SectionHeader(title: 'RELATIONSHIPS'),
-          _FlatRowGroup(
+          const AppSectionHeader.band('RELATIONSHIPS'),
+          AppFlatRowGroup(showBorder: false, 
             rows: [
               if (character.age >= 16)
                 _ActionRow(
@@ -192,11 +193,11 @@ class PeoplePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _VitalBar(label: 'Happiness', value: character.happiness, color: const Color(0xFF10B981)),
+                LinearStatBar(label: 'Happiness', value: character.happiness, color: const Color(0xFF10B981)),
                 const SizedBox(height: 16),
-                _VitalBar(label: 'Health', value: character.health, color: const Color(0xFF10B981)),
+                LinearStatBar(label: 'Health', value: character.health, color: const Color(0xFF10B981)),
                 const SizedBox(height: 16),
-                _VitalBar(label: 'Karma', value: character.karma, color: const Color(0xFF006D37)),
+                LinearStatBar(label: 'Karma', value: character.karma, color: const Color(0xFF006D37)),
               ],
             ),
           ),
@@ -255,58 +256,9 @@ class _FriendsListScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         children: [
           const SizedBox(height: 16),
-          _FlatRowGroup(
+          AppFlatRowGroup(showBorder: false, 
             rows: friends.map((r) => _RelationRow(relationship: r, onGameAction: onGameAction)).toList(),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF1F3FF),
-        border: Border(bottom: BorderSide(color: Color(0xFFF4F4F5), width: 1)),
-      ),
-      child: Text(
-        title,
-        style: GoogleFonts.lexend(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF5C5E62),
-          letterSpacing: 1.5,
-        ),
-      ),
-    );
-  }
-}
-
-class _FlatRowGroup extends StatelessWidget {
-  final List<Widget> rows;
-  const _FlatRowGroup({required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < rows.length; i++) ...[
-            rows[i],
-            if (i < rows.length - 1)
-              const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6), indent: 0),
-          ],
         ],
       ),
     );
@@ -422,7 +374,7 @@ class _RelationRowState extends State<_RelationRow> {
   }
 }
 
-class _ActionRow extends StatefulWidget {
+class _ActionRow extends StatelessWidget {
   final Color iconBgColor;
   final Widget icon;
   final String title;
@@ -438,86 +390,34 @@ class _ActionRow extends StatefulWidget {
   });
 
   @override
-  State<_ActionRow> createState() => _ActionRowState();
-}
-
-class _ActionRowState extends State<_ActionRow> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: _pressed ? const Color(0xFFFAFAFA) : Colors.white,
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              color: widget.iconBgColor,
-              alignment: Alignment.center,
-              child: widget.icon,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                widget.title,
-                style: GoogleFonts.lexend(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF161C28),
-                ),
+    return PressableRow(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            color: iconBgColor,
+            alignment: Alignment.center,
+            child: icon,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.lexend(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF161C28),
               ),
             ),
-            widget.trailing,
-          ],
-        ),
+          ),
+          trailing,
+        ],
       ),
     );
   }
 }
 
-class _VitalBar extends StatelessWidget {
-  final String label;
-  final int value;
-  final Color color;
 
-  const _VitalBar({required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 72,
-          child: Text(
-            label.toUpperCase(),
-            style: GoogleFonts.lexend(
-               fontSize: 10,
-               fontWeight: FontWeight.w700,
-               color: const Color(0xFF5C5E62),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 12,
-            color: const Color(0xFFE4E4E7),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: (value / 100).clamp(0.01, 1.0),
-              child: Container(color: color),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

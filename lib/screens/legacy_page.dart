@@ -165,31 +165,35 @@ class LegacyPage extends StatelessWidget {
             const SizedBox(height: 32),
 
             // New Life button
-            GestureDetector(
-              onTap: () async {
-                HapticFeedback.heavyImpact();
-                try {
-                  await StorageService.clearAll();
-                } catch (e) {
-                  print("⚠️ Error clearing storage on legacy page: $e");
-                }
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),
-                  );
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 14),
-                height: 50,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Material(
                 color: AppColors.info,
-                alignment: Alignment.center,
-                child: Text(
-                  'BEGIN A NEW JOURNEY',
-                  style: AppTextStyles.rowTitle.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
+                child: InkWell(
+                  onTap: () async {
+                    HapticFeedback.heavyImpact();
+                    try {
+                      await StorageService.clearAll();
+                    } catch (e) {
+                      print("⚠️ Error clearing storage on legacy page: $e");
+                    }
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),
+                      );
+                    }
+                  },
+                  child: Container(
+                    height: 50,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'BEGIN A NEW JOURNEY',
+                      style: AppTextStyles.rowTitle.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),

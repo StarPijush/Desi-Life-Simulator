@@ -257,6 +257,102 @@ class Character extends HiveObject {
   @HiveField(80)
   Map<String, int> eventHistory; // title -> age triggered for deduplication
 
+  @HiveField(81)
+  List<String> joinedActivities;
+
+  @HiveField(82)
+  Map<String, int> activityPerformance;
+
+  @HiveField(83)
+  List<String> claimedScholarships;
+
+  @HiveField(84)
+  Map<dynamic, dynamic> activeTutors;
+
+  @HiveField(85)
+  String currentPartTimeJob;
+
+  @HiveField(86)
+  int partTimeExperience;
+
+  @HiveField(87)
+  int partTimeResponsibility;
+
+  @HiveField(88)
+  int customerSkill;
+
+  @HiveField(89)
+  int partTimeJobPerformance;
+
+  @HiveField(90)
+  int partTimeMonthsWorked;
+
+  @HiveField(91)
+  int followers;
+
+  @HiveField(92)
+  int engagement;
+
+  @HiveField(93)
+  bool isVerified;
+
+  @HiveField(94)
+  int brandDealsCompleted;
+
+  @HiveField(95)
+  String contentType;
+
+  @HiveField(96)
+  String platform;
+
+  @HiveField(97)
+  int totalPosts;
+
+  @HiveField(98)
+  String currentPosition;
+
+  @HiveField(99)
+  String partyName;
+
+  @HiveField(100)
+  int popularity;
+
+  @HiveField(101)
+  int publicTrust;
+
+  @HiveField(102)
+  int politicalExperience;
+
+  @HiveField(103)
+  int partyInfluence;
+
+  @HiveField(104)
+  double campaignFunds;
+
+  @HiveField(105)
+  int publicApproval;
+
+  @HiveField(106)
+  int nationalReputation;
+
+  @HiveField(107)
+  int scandalLevel;
+
+  @HiveField(108)
+  int electionsWon;
+
+  @HiveField(109)
+  int electionsLost;
+
+  @HiveField(110)
+  List<String> connections;
+
+  @HiveField(111)
+  bool isPartyMember;
+
+  @HiveField(112)
+  bool isStudentLeader;
+
   Character({
     required this.name,
     this.age = 0,
@@ -349,25 +445,63 @@ class Character extends HiveObject {
     this.looks = 50,
     Map<String, bool> memories = const {},
     Map<String, int> eventHistory = const {},
-  }) : 
-    achievements = List<String>.from(achievements),
-    ownedAssets = List<String>.from(ownedAssets),
-    relationships = List<Relationship>.from(relationships),
-    stockPortfolio = List<Map<dynamic, dynamic>>.from(stockPortfolio),
-    cryptoPortfolio = List<Map<dynamic, dynamic>>.from(cryptoPortfolio),
-    bondPortfolio = List<Map<dynamic, dynamic>>.from(bondPortfolio),
-    marketPrices = Map<dynamic, dynamic>.from(marketPrices),
-    eventChains = Map<String, int>.from(eventChains),
-    personalityScores = Map<String, int>.from(personalityScores),
-    hiddenModifiers = Map<String, double>.from(hiddenModifiers),
-    majorDecisions = List<Map<String, dynamic>>.from(majorDecisions),
-    tensionSignals = List<String>.from(tensionSignals),
-    examResults = Map<String, int>.from(examResults),
-    unlockedActivityIds = List<String>.from(unlockedActivityIds),
-    unlockedCareerModuleIds = List<String>.from(unlockedCareerModuleIds),
-    loans = List<LoanModel>.from(loans),
-    memories = Map<String, bool>.from(memories),
-    eventHistory = Map<String, int>.from(eventHistory);
+    List<String> joinedActivities = const [],
+    Map<String, int> activityPerformance = const {},
+    List<String> claimedScholarships = const [],
+    Map<dynamic, dynamic> activeTutors = const {},
+    this.currentPartTimeJob = 'None',
+    this.partTimeExperience = 0,
+    this.partTimeResponsibility = 0,
+    this.customerSkill = 0,
+    this.partTimeJobPerformance = 50,
+    this.partTimeMonthsWorked = 0,
+    this.followers = 0,
+    this.engagement = 0,
+    this.isVerified = false,
+    this.brandDealsCompleted = 0,
+    this.contentType = 'Gaming',
+    this.platform = 'Instagram',
+    this.totalPosts = 0,
+    this.currentPosition = 'Citizen',
+    this.partyName = 'None',
+    this.popularity = 0,
+    this.publicTrust = 0,
+    this.politicalExperience = 0,
+    this.partyInfluence = 0,
+    this.campaignFunds = 0.0,
+    this.publicApproval = 0,
+    this.nationalReputation = 0,
+    this.scandalLevel = 0,
+    this.electionsWon = 0,
+    this.electionsLost = 0,
+    List<String> connections = const [],
+    this.isPartyMember = false,
+    this.isStudentLeader = false,
+  })  : achievements = List<String>.from(achievements),
+        ownedAssets = List<String>.from(ownedAssets),
+        relationships = List<Relationship>.from(relationships),
+        stockPortfolio = List<Map<dynamic, dynamic>>.from(stockPortfolio),
+        cryptoPortfolio = List<Map<dynamic, dynamic>>.from(cryptoPortfolio),
+        bondPortfolio = List<Map<dynamic, dynamic>>.from(bondPortfolio),
+        marketPrices = Map<dynamic, dynamic>.from(marketPrices),
+        eventChains = Map<String, int>.from(eventChains),
+        personalityScores = Map<String, int>.from(personalityScores),
+        hiddenModifiers = Map<String, double>.from(hiddenModifiers),
+        majorDecisions = List<Map<String, dynamic>>.from(majorDecisions),
+        tensionSignals = List<String>.from(tensionSignals),
+        examResults = Map<String, int>.from(examResults),
+        unlockedActivityIds = List<String>.from(unlockedActivityIds),
+        unlockedCareerModuleIds = List<String>.from(unlockedCareerModuleIds),
+        loans = List<LoanModel>.from(loans),
+        memories = Map<String, bool>.from(memories),
+        eventHistory = Map<String, int>.from(eventHistory),
+        joinedActivities = List<String>.from(joinedActivities),
+        activityPerformance = Map<String, int>.from(activityPerformance),
+        claimedScholarships = List<String>.from(claimedScholarships),
+        connections = List<String>.from(connections),
+        activeTutors = Map<dynamic, dynamic>.from(activeTutors);
+
+  bool get hasPartTimeJob => currentPartTimeJob != 'None';
 
   String get dominantTrait {
     if (personalityScores.isEmpty) return personality;
@@ -543,7 +677,8 @@ class Character extends HiveObject {
     karma = _clamp(karma + karmaDelta);
     stressLevel = _clamp(stressLevel + stressDelta);
     reputation = _clamp(reputation + adjustedReputationDelta);
-    jobPerformance = (jobPerformance + jobPerformanceDelta).clamp(0, 100).toDouble();
+    jobPerformance =
+        (jobPerformance + jobPerformanceDelta).clamp(0, 100).toDouble();
     bankBalance = (bankBalance + moneyDelta).clamp(0, double.infinity);
     if (moneyDelta > 0) totalEarned += moneyDelta;
     if (health <= 0) isDead = true;
@@ -642,6 +777,51 @@ class Character extends HiveObject {
     jobPerformance = jobPerformance.clamp(0.0, 100.0);
     yearsInJob = yearsInJob.clamp(0, 100);
     jobLevel = jobLevel.clamp(0, 100);
+    joinedActivities = List<String>.from(joinedActivities);
+    activityPerformance = Map<String, int>.from(activityPerformance);
+    claimedScholarships = List<String>.from(claimedScholarships);
+    activeTutors = Map<dynamic, dynamic>.from(activeTutors);
+    currentPartTimeJob =
+        currentPartTimeJob.isEmpty ? 'None' : currentPartTimeJob;
+    partTimeExperience = partTimeExperience.clamp(0, 100);
+    partTimeResponsibility = partTimeResponsibility.clamp(0, 100);
+    customerSkill = customerSkill.clamp(0, 100);
+    partTimeJobPerformance = partTimeJobPerformance.clamp(0, 100);
+    followers = followers.clamp(0, 1000000000);
+    engagement = engagement.clamp(0, 100);
+    brandDealsCompleted = brandDealsCompleted.clamp(0, 1000000);
+    if (isVerified && fame < 35) fame = 35;
+    partTimeMonthsWorked = partTimeMonthsWorked.clamp(0, 1200);
+    contentType = contentType.isEmpty ? 'Gaming' : contentType;
+    platform = platform.isEmpty ? 'Instagram' : platform;
+    totalPosts = totalPosts.clamp(0, 10000000);
+
+    // Auto-repair/migration for legacy activity states
+    hiddenModifiers.forEach((key, value) {
+      if (key.startsWith('school_activity_')) {
+        final activityId = key.substring('school_activity_'.length);
+        if (!joinedActivities.contains(activityId)) {
+          joinedActivities.add(activityId);
+          activityPerformance[activityId] = value.round().clamp(1, 5);
+        }
+      }
+      if (key.startsWith('scholarship_applied_')) {
+        final scholarshipId = key.substring('scholarship_applied_'.length);
+        if (!claimedScholarships.contains(scholarshipId)) {
+          claimedScholarships.add(scholarshipId);
+        }
+      }
+    });
+
+    memories.forEach((key, value) {
+      if (key.startsWith('scholarship_applied_') && value == true) {
+        final scholarshipId = key.substring('scholarship_applied_'.length);
+        if (!claimedScholarships.contains(scholarshipId)) {
+          claimedScholarships.add(scholarshipId);
+        }
+      }
+    });
+
     // Migrate legacy single-loan fields into loans list
     if (loans.isEmpty && loanAmount > 0 && loanType != 'None') {
       loans = [
@@ -731,11 +911,12 @@ class Character extends HiveObject {
     for (final item in stockPortfolio) {
       final name = item['name'] as String? ?? '';
       final qty = (item['qty'] as num?)?.toDouble() ??
-          (item['quantity'] as num?)?.toDouble() ?? 0;
-      final currentPrice =
-          (marketPrices[name] as num?)?.toDouble() ??
+          (item['quantity'] as num?)?.toDouble() ??
+          0;
+      final currentPrice = (marketPrices[name] as num?)?.toDouble() ??
           (item['price'] as num?)?.toDouble() ??
-          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+          (item['buyPrice'] as num?)?.toDouble() ??
+          0;
       total += currentPrice * qty;
     }
 
@@ -743,27 +924,29 @@ class Character extends HiveObject {
     for (final item in cryptoPortfolio) {
       final name = item['name'] as String? ?? '';
       final qty = (item['qty'] as num?)?.toDouble() ??
-          (item['quantity'] as num?)?.toDouble() ?? 0;
-      final currentPrice =
-          (marketPrices[name] as num?)?.toDouble() ??
+          (item['quantity'] as num?)?.toDouble() ??
+          0;
+      final currentPrice = (marketPrices[name] as num?)?.toDouble() ??
           (item['price'] as num?)?.toDouble() ??
-          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+          (item['buyPrice'] as num?)?.toDouble() ??
+          0;
       total += currentPrice * qty;
     }
 
     // Bond portfolio
     for (final item in bondPortfolio) {
       final qty = (item['qty'] as num?)?.toDouble() ??
-          (item['quantity'] as num?)?.toDouble() ?? 0;
+          (item['quantity'] as num?)?.toDouble() ??
+          0;
       final price = (item['price'] as num?)?.toDouble() ??
-          (item['buyPrice'] as num?)?.toDouble() ?? 0;
+          (item['buyPrice'] as num?)?.toDouble() ??
+          0;
       total += price * qty;
     }
 
     // Owned real assets — engine stores current value as 'asset_<id>'
     for (final assetId in ownedAssets) {
-      final savedVal =
-          (marketPrices['asset_$assetId'] as num?)?.toDouble();
+      final savedVal = (marketPrices['asset_$assetId'] as num?)?.toDouble();
       if (savedVal != null && savedVal > 0) total += savedVal;
     }
 
@@ -783,13 +966,15 @@ class Character extends HiveObject {
 
     // 1. Savings ratio (30 pts): savings vs annual expenses
     if (annualExpenses > 0) {
-      final ratio = savingsBalance / (annualExpenses * 3).clamp(1, double.infinity);
+      final ratio =
+          savingsBalance / (annualExpenses * 3).clamp(1, double.infinity);
       score += (ratio * 30).clamp(0, 30);
     }
 
     // 2. Debt ratio (30 pts): low debt = high score
     final totalDebt = loans.fold(0.0, (s, l) => s + l.remainingAmount) +
-        (loans.isEmpty ? loanAmount : 0) + creditUsed;
+        (loans.isEmpty ? loanAmount : 0) +
+        creditUsed;
     final income = annualIncome > 0 ? annualIncome : 1;
     final debtRatio = totalDebt / income;
     if (debtRatio <= 0) {
@@ -884,6 +1069,38 @@ class Character extends HiveObject {
         'unlockedCareerModuleIds': unlockedCareerModuleIds,
         'relationships': relationships.map((r) => r.toJson()).toList(),
         'loans': loans.map((l) => l.toJson()).toList(),
+        'joinedActivities': joinedActivities,
+        'activityPerformance': activityPerformance,
+        'claimedScholarships': claimedScholarships,
+        'activeTutors': activeTutors,
+        'currentPartTimeJob': currentPartTimeJob,
+        'partTimeExperience': partTimeExperience,
+        'partTimeResponsibility': partTimeResponsibility,
+        'customerSkill': customerSkill,
+        'partTimeJobPerformance': partTimeJobPerformance,
+        'partTimeMonthsWorked': partTimeMonthsWorked,
+        'followers': followers,
+        'engagement': engagement,
+        'isVerified': isVerified,
+        'brandDealsCompleted': brandDealsCompleted,
+        'contentType': contentType,
+        'platform': platform,
+        'totalPosts': totalPosts,
+        'currentPosition': currentPosition,
+        'partyName': partyName,
+        'popularity': popularity,
+        'publicTrust': publicTrust,
+        'politicalExperience': politicalExperience,
+        'partyInfluence': partyInfluence,
+        'campaignFunds': campaignFunds,
+        'publicApproval': publicApproval,
+        'nationalReputation': nationalReputation,
+        'scandalLevel': scandalLevel,
+        'electionsWon': electionsWon,
+        'electionsLost': electionsLost,
+        'connections': connections,
+        'isPartyMember': isPartyMember,
+        'isStudentLeader': isStudentLeader,
       };
 
   factory Character.fromJson(Map<String, dynamic> json) => Character(
@@ -968,6 +1185,42 @@ class Character extends HiveObject {
             .toList(growable: true),
         memories: Map<String, bool>.from(json['memories'] as Map? ?? {}),
         looks: json['looks'] as int? ?? 50,
+        joinedActivities:
+            List<String>.from(json['joinedActivities'] as List? ?? []),
+        activityPerformance:
+            Map<String, int>.from(json['activityPerformance'] as Map? ?? {}),
+        claimedScholarships:
+            List<String>.from(json['claimedScholarships'] as List? ?? []),
+        activeTutors:
+            Map<dynamic, dynamic>.from(json['activeTutors'] as Map? ?? {}),
+        currentPartTimeJob: json['currentPartTimeJob'] as String? ?? 'None',
+        partTimeExperience: json['partTimeExperience'] as int? ?? 0,
+        partTimeResponsibility: json['partTimeResponsibility'] as int? ?? 0,
+        customerSkill: json['customerSkill'] as int? ?? 0,
+        partTimeJobPerformance: json['partTimeJobPerformance'] as int? ?? 50,
+        partTimeMonthsWorked: json['partTimeMonthsWorked'] as int? ?? 0,
+        followers: json['followers'] as int? ?? 0,
+        engagement: json['engagement'] as int? ?? 0,
+        isVerified: json['isVerified'] as bool? ?? false,
+        brandDealsCompleted: json['brandDealsCompleted'] as int? ?? 0,
+        contentType: json['contentType'] as String? ?? 'Gaming',
+        platform: json['platform'] as String? ?? 'Instagram',
+        totalPosts: json['totalPosts'] as int? ?? 0,
+        currentPosition: json['currentPosition'] as String? ?? 'Citizen',
+        partyName: json['partyName'] as String? ?? 'None',
+        popularity: json['popularity'] as int? ?? 0,
+        publicTrust: json['publicTrust'] as int? ?? 0,
+        politicalExperience: json['politicalExperience'] as int? ?? 0,
+        partyInfluence: json['partyInfluence'] as int? ?? 0,
+        campaignFunds: (json['campaignFunds'] as num?)?.toDouble() ?? 0.0,
+        publicApproval: json['publicApproval'] as int? ?? 0,
+        nationalReputation: json['nationalReputation'] as int? ?? 0,
+        scandalLevel: json['scandalLevel'] as int? ?? 0,
+        electionsWon: json['electionsWon'] as int? ?? 0,
+        electionsLost: json['electionsLost'] as int? ?? 0,
+        connections: List<String>.from(json['connections'] as List? ?? []),
+        isPartyMember: json['isPartyMember'] as bool? ?? false,
+        isStudentLeader: json['isStudentLeader'] as bool? ?? false,
       );
 
   Character copyWith({
@@ -1046,6 +1299,38 @@ class Character extends HiveObject {
     List<LoanModel>? loans,
     Map<String, bool>? memories,
     int? looks,
+    List<String>? joinedActivities,
+    Map<String, int>? activityPerformance,
+    List<String>? claimedScholarships,
+    Map<dynamic, dynamic>? activeTutors,
+    String? currentPartTimeJob,
+    int? partTimeExperience,
+    int? partTimeResponsibility,
+    int? customerSkill,
+    int? partTimeJobPerformance,
+    int? partTimeMonthsWorked,
+    int? followers,
+    int? engagement,
+    bool? isVerified,
+    int? brandDealsCompleted,
+    String? contentType,
+    String? platform,
+    int? totalPosts,
+    String? currentPosition,
+    String? partyName,
+    int? popularity,
+    int? publicTrust,
+    int? politicalExperience,
+    int? partyInfluence,
+    double? campaignFunds,
+    int? publicApproval,
+    int? nationalReputation,
+    int? scandalLevel,
+    int? electionsWon,
+    int? electionsLost,
+    List<String>? connections,
+    bool? isPartyMember,
+    bool? isStudentLeader,
   }) =>
       Character(
         name: name ?? this.name,
@@ -1144,5 +1429,45 @@ class Character extends HiveObject {
             (loans ?? this.loans).map((l) => l.clone()).toList(growable: true),
         memories: Map<String, bool>.from(memories ?? this.memories),
         looks: looks ?? this.looks,
+        joinedActivities: List<String>.from(
+            joinedActivities ?? this.joinedActivities,
+            growable: true),
+        activityPerformance: Map<String, int>.from(
+            activityPerformance ?? this.activityPerformance),
+        claimedScholarships: List<String>.from(
+            claimedScholarships ?? this.claimedScholarships,
+            growable: true),
+        activeTutors:
+            Map<dynamic, dynamic>.from(activeTutors ?? this.activeTutors),
+        currentPartTimeJob: currentPartTimeJob ?? this.currentPartTimeJob,
+        partTimeExperience: partTimeExperience ?? this.partTimeExperience,
+        partTimeResponsibility:
+            partTimeResponsibility ?? this.partTimeResponsibility,
+        customerSkill: customerSkill ?? this.customerSkill,
+        partTimeJobPerformance:
+            partTimeJobPerformance ?? this.partTimeJobPerformance,
+        partTimeMonthsWorked: partTimeMonthsWorked ?? this.partTimeMonthsWorked,
+        followers: followers ?? this.followers,
+        engagement: engagement ?? this.engagement,
+        isVerified: isVerified ?? this.isVerified,
+        brandDealsCompleted: brandDealsCompleted ?? this.brandDealsCompleted,
+        contentType: contentType ?? this.contentType,
+        platform: platform ?? this.platform,
+        totalPosts: totalPosts ?? this.totalPosts,
+        currentPosition: currentPosition ?? this.currentPosition,
+        partyName: partyName ?? this.partyName,
+        popularity: popularity ?? this.popularity,
+        publicTrust: publicTrust ?? this.publicTrust,
+        politicalExperience: politicalExperience ?? this.politicalExperience,
+        partyInfluence: partyInfluence ?? this.partyInfluence,
+        campaignFunds: campaignFunds ?? this.campaignFunds,
+        publicApproval: publicApproval ?? this.publicApproval,
+        nationalReputation: nationalReputation ?? this.nationalReputation,
+        scandalLevel: scandalLevel ?? this.scandalLevel,
+        electionsWon: electionsWon ?? this.electionsWon,
+        electionsLost: electionsLost ?? this.electionsLost,
+        connections: List<String>.from(connections ?? this.connections, growable: true),
+        isPartyMember: isPartyMember ?? this.isPartyMember,
+        isStudentLeader: isStudentLeader ?? this.isStudentLeader,
       );
 }

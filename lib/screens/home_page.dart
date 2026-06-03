@@ -13,8 +13,8 @@ import 'create_character_screen.dart';
 import 'legacy_page.dart';
 import 'career_page.dart';
 import 'activities_page.dart';
-import 'finance_page.dart';
-import 'people_page.dart';
+import 'finance/finance_page.dart';
+import 'people/people_page.dart';
 import '../models/event_choice.dart';
 
 typedef LifeAction = ActionResult Function(Character character);
@@ -140,7 +140,8 @@ class _HomePageState extends State<HomePage> {
       int delayMs = 60; // Default routine speed
       if (event.priority == EventPriority.important) delayMs = 150;
       if (event.type == LifeEventType.milestone) delayMs = 300;
-      if (event.priority == EventPriority.critical || event.priority == EventPriority.rare) delayMs = 500;
+      if (event.priority == EventPriority.critical ||
+          event.priority == EventPriority.rare) delayMs = 500;
 
       if (event.choice != null) {
         // --- DRAMATIC REVEAL ---
@@ -148,10 +149,11 @@ class _HomePageState extends State<HomePage> {
         _showCriticalFlashNotifier.value = true;
         await Future.delayed(const Duration(milliseconds: 200));
         _showCriticalFlashNotifier.value = false;
-        await Future.delayed(const Duration(milliseconds: 300)); // Suspense pause
+        await Future.delayed(
+            const Duration(milliseconds: 300)); // Suspense pause
 
         final choiceResult = await _showDecisionPopup(event.choice!);
-        
+
         if (choiceResult != null) {
           currentEvents.insert(0, choiceResult);
           _eventsNotifier.value = _sanitizeTimeline(currentEvents);
@@ -167,7 +169,8 @@ class _HomePageState extends State<HomePage> {
         _eventsNotifier.value = _sanitizeTimeline(currentEvents);
         _scrollToLatest();
 
-        if (event.type == LifeEventType.negative || event.priority == EventPriority.critical) {
+        if (event.type == LifeEventType.negative ||
+            event.priority == EventPriority.critical) {
           HapticFeedback.mediumImpact();
         } else {
           HapticFeedback.lightImpact();
@@ -196,11 +199,12 @@ class _HomePageState extends State<HomePage> {
       await Future.delayed(const Duration(milliseconds: 1000)); // Final pause
       _showCriticalFlashNotifier.value = true;
       await Future.delayed(const Duration(milliseconds: 500)); // Fade out start
-      
+
       if (mounted) {
         Navigator.of(context).push(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => FadeTransition(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                FadeTransition(
               opacity: animation,
               child: LegacyPage(character: updatedCharacter),
             ),
@@ -243,6 +247,7 @@ class _HomePageState extends State<HomePage> {
   void _runGameAction(GameAction action) {
     _applyActionResult(
       GameEngine.processAction(_characterNotifier.value, action),
+      popToRoot: action.payload['stayInFlow'] != true,
     );
   }
 
@@ -250,7 +255,7 @@ class _HomePageState extends State<HomePage> {
     _applyActionResult(action(_characterNotifier.value));
   }
 
-  void _applyActionResult(ActionResult result) {
+  void _applyActionResult(ActionResult result, {bool popToRoot = true}) {
     final currentVersion = _characterNotifier.value.stateVersion;
     final updatedCharacter = result.character.copyWith(
       stateVersion: result.character.stateVersion <= currentVersion
@@ -284,7 +289,9 @@ class _HomePageState extends State<HomePage> {
     StorageService.saveCharacter(updatedCharacter);
     _saveEvents();
 
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (popToRoot) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   void _scrollToLatest() {
@@ -306,33 +313,45 @@ class _HomePageState extends State<HomePage> {
         choice: choice,
         onChosen: (isOptionA) {
           final double roll = Random().nextDouble();
-          final bool isSuccess = isOptionA 
-              ? roll < choice.successChanceA 
+          final bool isSuccess = isOptionA
+              ? roll < choice.successChanceA
               : roll < choice.successChanceB;
 
-          final effect = isOptionA 
-              ? (isSuccess ? choice.effectA : (choice.effectAFail ?? choice.effectA))
-              : (isSuccess ? choice.effectB : (choice.effectBFail ?? choice.effectB));
-          
-          final result = isOptionA 
-              ? (isSuccess ? choice.resultA : (choice.resultAFail ?? choice.resultA))
-              : (isSuccess ? choice.resultB : (choice.resultBFail ?? choice.resultB));
+          final effect = isOptionA
+              ? (isSuccess
+                  ? choice.effectA
+                  : (choice.effectAFail ?? choice.effectA))
+              : (isSuccess
+                  ? choice.effectB
+                  : (choice.effectBFail ?? choice.effectB));
+
+          final result = isOptionA
+              ? (isSuccess
+                  ? choice.resultA
+                  : (choice.resultAFail ?? choice.resultA))
+              : (isSuccess
+                  ? choice.resultB
+                  : (choice.resultBFail ?? choice.resultB));
 
           final memoryFlag = isOptionA
               ? (isSuccess ? choice.memoryFlagA : choice.memoryFlagAFail)
               : (isSuccess ? choice.memoryFlagB : choice.memoryFlagBFail);
-          
-          final traitShifts = isOptionA ? choice.traitShiftsA : choice.traitShiftsB;
-          
+
+          final traitShifts =
+              isOptionA ? choice.traitShiftsA : choice.traitShiftsB;
+
           // Apply effects to character
           final current = _characterNotifier.value;
           final updated = current.copyWith(
-            happiness: (current.happiness + effect.happiness).clamp(0, 100).toInt(),
+            happiness:
+                (current.happiness + effect.happiness).clamp(0, 100).toInt(),
             health: (current.health + effect.health).clamp(0, 100).toInt(),
             smarts: (current.smarts + effect.smarts).clamp(0, 100).toInt(),
             social: (current.social + effect.social).clamp(0, 100).toInt(),
             karma: (current.karma + effect.karma).clamp(0, 100).toInt(),
-            stressLevel: (current.stressLevel + (isSuccess ? 0 : 15)).clamp(0, 100).toInt(),
+            stressLevel: (current.stressLevel + (isSuccess ? 0 : 15))
+                .clamp(0, 100)
+                .toInt(),
             bankBalance: current.bankBalance + effect.money,
           );
 
@@ -352,8 +371,12 @@ class _HomePageState extends State<HomePage> {
 
           // Create result event
           String statHint = '';
-          if (effect.happiness != 0) statHint += ' Happiness ${effect.happiness > 0 ? '+' : ''}${effect.happiness}';
-          if (effect.money != 0) statHint += ' Money ${effect.money > 0 ? '+' : ''}${effect.money.toInt()}';
+          if (effect.happiness != 0)
+            statHint +=
+                ' Happiness ${effect.happiness > 0 ? '+' : ''}${effect.happiness}';
+          if (effect.money != 0)
+            statHint +=
+                ' Money ${effect.money > 0 ? '+' : ''}${effect.money.toInt()}';
           if (!isSuccess) statHint += ' (FAIL)';
 
           Navigator.of(context).pop(LifeEvent(
@@ -374,8 +397,6 @@ class _HomePageState extends State<HomePage> {
     if (events.isEmpty) return _loadInitialEvents();
     return List<LifeEvent>.from(events.take(_eventCap));
   }
-
-
 
   void _openProfileSheet() {
     HapticFeedback.lightImpact();
@@ -434,23 +455,24 @@ class _HomePageState extends State<HomePage> {
                               physics: const BouncingScrollPhysics(),
                               padding: EdgeInsets.zero,
                               children: [
-                                  SafeArea(
-                                    bottom: false,
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: _openProfileSheet,
-                                      child: IdentityHeader(
-                                        name: character.name,
-                                        occupation: character.jobTitle,
-                                        balance: character.bankBalance,
-                                      ),
+                                SafeArea(
+                                  bottom: false,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _openProfileSheet,
+                                    child: IdentityHeader(
+                                      name: character.name,
+                                      occupation: character.jobTitle,
+                                      balance: character.bankBalance,
                                     ),
                                   ),
+                                ),
                                 _TimelineList(
                                   events: events,
                                   character: character,
                                 ),
-                                const SizedBox(height: 200), // Space for bottom controls
+                                const SizedBox(
+                                    height: 200), // Space for bottom controls
                               ],
                             );
                           },
@@ -484,23 +506,27 @@ class _HomePageState extends State<HomePage> {
                     return _BottomLifeControls(
                       character: character,
                       onLife: _scrollToLatest,
-                      onActivities: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => ActivitiesPage(
-                              character: character,
-                              onGameAction: _runGameAction))),
-                      onCareer: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => CareerPage(
-                              character: character,
-                              onGameAction: _runGameAction,
-                              onLifeAction: _runLifeAction))),
-                      onFinance: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => FinancePage(
-                              character: character,
-                              onGameAction: _runGameAction))),
-                      onPeople: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => PeoplePage(
-                              character: character,
-                              onGameAction: _runGameAction))),
+                      onActivities: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => ActivitiesPage(
+                                  character: character,
+                                  onGameAction: _runGameAction))),
+                      onCareer: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => CareerPage(
+                                  character: character,
+                                  onGameAction: _runGameAction,
+                                  onLifeAction: _runLifeAction))),
+                      onFinance: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => FinancePage(
+                                  character: character,
+                                  onGameAction: _runGameAction))),
+                      onPeople: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => PeoplePage(
+                                  character: character,
+                                  onGameAction: _runGameAction))),
                       onAge: _handleAgeUp,
                       isAgingListenable: _isAgingNotifier,
                     );
@@ -515,8 +541,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-
-
 class _LifeStats extends StatelessWidget {
   final Character character;
 
@@ -529,10 +553,27 @@ class _LifeStats extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Column(
         children: [
-          StatBar(emoji: '😊', label: 'Happiness', value: character.happiness, color: AppColors.happiness),
-          StatBar(emoji: '❤️', label: 'Health', value: character.health, color: AppColors.health),
-          StatBar(emoji: '🧠', label: 'Smarts', value: character.smarts, color: AppColors.smarts),
-          StatBar(emoji: '✨', label: 'Looks', value: character.looks, color: AppColors.looks, isLast: true),
+          StatBar(
+              emoji: '😊',
+              label: 'Happiness',
+              value: character.happiness,
+              color: AppColors.happiness),
+          StatBar(
+              emoji: '❤️',
+              label: 'Health',
+              value: character.health,
+              color: AppColors.health),
+          StatBar(
+              emoji: '🧠',
+              label: 'Smarts',
+              value: character.smarts,
+              color: AppColors.smarts),
+          StatBar(
+              emoji: '✨',
+              label: 'Looks',
+              value: character.looks,
+              color: AppColors.looks,
+              isLast: true),
         ],
       ),
     );
@@ -571,7 +612,7 @@ class _TimelineList extends StatelessWidget {
       }
       groupedEvents[age]!.add(event);
     }
-    
+
     // Sort ages descending to match chronological reversed order (newest first)
     sortedAges.sort((a, b) => b.compareTo(a));
 
@@ -582,8 +623,7 @@ class _TimelineList extends StatelessWidget {
         children: [
           for (final age in sortedAges) ...[
             _AgeGroupHeader(age: age),
-            for (final event in groupedEvents[age]!)
-              _TimelineRow(event: event),
+            for (final event in groupedEvents[age]!) _TimelineRow(event: event),
             const SizedBox(height: 8),
           ],
         ],
@@ -637,18 +677,14 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final desc = cleanText(event.description);
     final title = cleanText(event.title);
-    final bool isImportant = event.priority == EventPriority.important || 
-                             event.priority == EventPriority.critical ||
-                             event.priority == EventPriority.rare ||
-                             event.type == LifeEventType.milestone;
+    final bool isImportant = event.priority == EventPriority.important ||
+        event.priority == EventPriority.critical ||
+        event.priority == EventPriority.rare ||
+        event.type == LifeEventType.milestone;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        28, 
-        isImportant ? 6 : 2, 
-        16, 
-        isImportant ? 6 : 2
-      ),
+      padding:
+          EdgeInsets.fromLTRB(28, isImportant ? 6 : 2, 16, isImportant ? 6 : 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -659,13 +695,15 @@ class _TimelineRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: _dotColor(event),
               shape: BoxShape.circle,
-              boxShadow: isImportant ? [
-                BoxShadow(
-                  color: _dotColor(event).withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                )
-              ] : null,
+              boxShadow: isImportant
+                  ? [
+                      BoxShadow(
+                        color: _dotColor(event).withValues(alpha: 0.3),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
             ),
           ),
           const SizedBox(width: 10),
@@ -674,7 +712,8 @@ class _TimelineRow extends StatelessWidget {
               desc.isNotEmpty ? desc : title,
               style: AppTextStyles.rowSubtitle.copyWith(
                 fontSize: isImportant ? 11.5 : 10,
-                color: isImportant ? AppColors.textPrimary : AppColors.textPrimary,
+                color:
+                    isImportant ? AppColors.textPrimary : AppColors.textPrimary,
                 height: 1.3,
                 fontWeight: isImportant ? FontWeight.w800 : FontWeight.w500,
                 letterSpacing: isImportant ? 0.1 : 0,
@@ -713,7 +752,8 @@ class _BottomLifeControls extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
+        border:
+            Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -722,7 +762,8 @@ class _BottomLifeControls extends StatelessWidget {
           // Age Up button
           ValueListenableBuilder<bool>(
             valueListenable: isAgingListenable,
-            builder: (_, isAging, __) => _AgeUpButton(isAging: isAging, onTap: onAge),
+            builder: (_, isAging, __) =>
+                _AgeUpButton(isAging: isAging, onTap: onAge),
           ),
           // Nav bar
           SafeArea(
@@ -732,10 +773,22 @@ class _BottomLifeControls extends StatelessWidget {
               color: Colors.white,
               child: Row(
                 children: [
-                  _NavTab(icon: Icons.work_outline_rounded, label: 'Career', onTap: onCareer),
-                  _NavTab(icon: Icons.account_balance_wallet_outlined, label: 'Finance', onTap: onFinance),
-                  _NavTab(icon: Icons.touch_app_outlined, label: 'Activities', onTap: onActivities),
-                  _NavTab(icon: Icons.people_outline_rounded, label: 'People', onTap: onPeople),
+                  _NavTab(
+                      icon: Icons.work_outline_rounded,
+                      label: 'Career',
+                      onTap: onCareer),
+                  _NavTab(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: 'Finance',
+                      onTap: onFinance),
+                  _NavTab(
+                      icon: Icons.touch_app_outlined,
+                      label: 'Activities',
+                      onTap: onActivities),
+                  _NavTab(
+                      icon: Icons.people_outline_rounded,
+                      label: 'People',
+                      onTap: onPeople),
                 ],
               ),
             ),
@@ -906,7 +959,6 @@ class _ProfileSheet extends StatelessWidget {
     );
   }
 }
-
 
 class _DecisionModal extends StatelessWidget {
   final EventChoice choice;

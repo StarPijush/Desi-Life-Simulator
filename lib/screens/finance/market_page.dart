@@ -1,11 +1,11 @@
-// lib/screens/market_page.dart
+// lib/screens/finance/market_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/design_system.dart';
-import '../core/engine.dart';
-import '../core/investments_data.dart';
-import '../models/character.dart';
+import '../../core/design_system.dart';
+import '../../core/engine.dart';
+import '../../core/investments_data.dart';
+import '../../models/character.dart';
 
 // ── Market Page (Stocks or Crypto) ──────────────────────────────────────────
 class MarketPage extends StatefulWidget {

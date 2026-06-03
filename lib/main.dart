@@ -28,6 +28,18 @@ class DesiLifeApp extends StatelessWidget {
     return MaterialApp(
       title: 'DesiLife',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final data = MediaQuery.of(context);
+        final bottomInset = data.viewInsets.bottom.clamp(0.0, 9999.0);
+        return MediaQuery(
+          data: data.copyWith(
+            viewInsets: data.viewInsets.copyWith(
+              bottom: bottomInset > 0 ? bottomInset : 0.0,
+            ),
+          ),
+          child: child!,
+        );
+      },
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.scaffoldBg,
