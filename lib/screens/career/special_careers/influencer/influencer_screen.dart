@@ -55,7 +55,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
           title: Text(
             event.title,
             style: GoogleFonts.lexend(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
               color: const Color(0xFF161C28),
             ),
@@ -93,7 +93,9 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            backgroundColor: result.success ? const Color(0xFF006D37) : const Color(0xFFBA1A1A),
+            backgroundColor: result.success
+                ? const Color(0xFF006D37)
+                : const Color(0xFFBA1A1A),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
           ),
@@ -193,7 +195,8 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                       child: const SizedBox(
                         width: 24,
                         height: 40,
-                        child: Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
+                        child: Icon(Icons.arrow_back,
+                            color: Color(0xFF10B981), size: 24),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -220,7 +223,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
           // Top Status Section
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -234,7 +237,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                         Text(
                           'CURRENT STATUS',
                           style: GoogleFonts.lexend(
-                            fontSize: 11,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF5C5E62),
                             letterSpacing: 0.05,
@@ -248,7 +251,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                             Text(
                               '${_character.followers}',
                               style: GoogleFonts.lexend(
-                                fontSize: 24,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF161C28),
                                 letterSpacing: -0.02,
@@ -258,7 +261,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                             Text(
                               'Followers',
                               style: GoogleFonts.lexend(
-                                fontSize: 15,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF5C5E62),
                               ),
@@ -275,7 +278,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                           Text(
                             'VERIFIED',
                             style: GoogleFonts.lexend(
-                              fontSize: 18,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF2563EB),
                             ),
@@ -284,15 +287,17 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                           GestureDetector(
                             onTap: () => _runAction('apply_verification'),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                border: Border.all(color: const Color(0xFF006D37), width: 1.5),
+                                border: Border.all(
+                                    color: const Color(0xFF006D37), width: 1.5),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                               child: Text(
                                 'APPLY FOR VERIFICATION',
                                 style: GoogleFonts.lexend(
-                                  fontSize: 11,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF006D37),
                                   letterSpacing: 0.05,
@@ -304,7 +309,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                           Text(
                             'NO',
                             style: GoogleFonts.lexend(
-                              fontSize: 18,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFFBA1A1A),
                             ),
@@ -313,7 +318,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 // Platform Selection Tabs
                 Container(
                   decoration: const BoxDecoration(
@@ -321,7 +326,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                       bottom: BorderSide(color: Color(0xFFF1F3FF), width: 1),
                     ),
                   ),
-                  padding: const EdgeInsets.only(bottom: 8.0),
+                  padding: const EdgeInsets.only(bottom: 4.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -332,7 +337,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 // Content Type Selector Row
                 GestureDetector(
                   onTap: _changeNiche,
@@ -341,7 +346,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                       color: const Color(0xFFF1F3FF),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -351,7 +356,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                             Text(
                               'NICHE / CONTENT TYPE',
                               style: GoogleFonts.lexend(
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF5C5E62),
                                 letterSpacing: 0.05,
@@ -361,7 +366,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                             Text(
                               _character.contentType,
                               style: GoogleFonts.lexend(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF006D37),
                               ),
@@ -373,14 +378,14 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 // Fame and Engagement bars
                 _ProgressBar(
                   label: 'FAME',
                   percentage: _character.fame,
                   fillColor: const Color(0xFFFF9875),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
                 _ProgressBar(
                   label: 'ENGAGEMENT',
                   percentage: _character.engagement,
@@ -395,7 +400,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
             child: Text(
               'CONTENT CREATION',
               style: GoogleFonts.lexend(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF606366),
                 letterSpacing: 1.5,
@@ -438,7 +443,8 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
               _FlatRow(
                 emoji: '🎤',
                 title: 'STUDIO',
-                subtitle: 'Manage your audience, monetization, and career risks',
+                subtitle:
+                    'Manage your audience, monetization, and career risks',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -447,7 +453,8 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                         onGameAction: (action) {
                           widget.onGameAction(action);
                           // Refresh status when returning or updating
-                          final result = GameEngine.processAction(_character, action);
+                          final result =
+                              GameEngine.processAction(_character, action);
                           setState(() => _character = result.character);
                         },
                       ),
@@ -473,7 +480,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           border: isActive
               ? const Border(
@@ -483,7 +490,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
         ),
         child: Icon(
           icon,
-          size: 24,
+          size: 20,
           color: isActive ? const Color(0xFF006D37) : const Color(0xFF9CA3AF),
         ),
       ),
@@ -513,7 +520,7 @@ class _ProgressBar extends StatelessWidget {
             Text(
               label,
               style: GoogleFonts.lexend(
-                fontSize: 11,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF5C5E62),
                 letterSpacing: 0.05,
@@ -522,7 +529,7 @@ class _ProgressBar extends StatelessWidget {
             Text(
               '$percentage%',
               style: GoogleFonts.lexend(
-                fontSize: 11,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF5C5E62),
               ),
@@ -531,7 +538,7 @@ class _ProgressBar extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Container(
-          height: 8,
+          height: 5,
           width: double.infinity,
           decoration: const BoxDecoration(
             color: Color(0xFFE8EEFF),
@@ -580,7 +587,7 @@ class _FlatRowState extends State<_FlatRow> {
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: Container(
-        height: 72,
+        height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: _pressed ? const Color(0xFFF1F3FF) : Colors.white,
@@ -594,7 +601,7 @@ class _FlatRowState extends State<_FlatRow> {
               widget.emoji,
               style: const TextStyle(fontSize: 24),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -603,16 +610,16 @@ class _FlatRowState extends State<_FlatRow> {
                   Text(
                     widget.title,
                     style: GoogleFonts.lexend(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: const Color(0xFF161C28),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     widget.subtitle,
                     style: GoogleFonts.lexend(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF5C5E62),
                     ),

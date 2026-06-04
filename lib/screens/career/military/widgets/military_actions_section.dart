@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class MilitaryActionsSection extends StatelessWidget {
   final int promotionScore;
+  final bool isEnlisted;
   final VoidCallback onTrainPhysically;
   final VoidCallback onWeaponsPractice;
   final VoidCallback onLeadershipTraining;
@@ -13,6 +14,7 @@ class MilitaryActionsSection extends StatelessWidget {
   const MilitaryActionsSection({
     super.key,
     required this.promotionScore,
+    required this.isEnlisted,
     required this.onTrainPhysically,
     required this.onWeaponsPractice,
     required this.onLeadershipTraining,
@@ -35,8 +37,10 @@ class MilitaryActionsSection extends StatelessWidget {
             children: [
               _ActionRow(
                 emoji: '🏋️',
-                title: 'Train Physically',
-                subtitle: 'Boost your fitness levels',
+                title: isEnlisted ? 'Training' : 'Join Military',
+                subtitle: isEnlisted
+                    ? 'Build discipline and fitness'
+                    : 'Enlist as a Recruit',
                 onTap: onTrainPhysically,
               ),
               const _Divider(),
@@ -121,7 +125,7 @@ class _ActionRowState extends State<_ActionRow> {
         opacity: widget.locked ? 0.8 : 1,
         child: Container(
           color: background,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               SizedBox(
@@ -131,7 +135,7 @@ class _ActionRowState extends State<_ActionRow> {
                   style: const TextStyle(fontSize: 24, height: 1.0),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,9 +145,9 @@ class _ActionRowState extends State<_ActionRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lexend(
-                        fontSize: 16,
-                        height: 1.4,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        height: 1.1,
+                        fontWeight: FontWeight.w600,
                         color: const Color(0xFF18181B),
                       ),
                     ),
@@ -152,9 +156,9 @@ class _ActionRowState extends State<_ActionRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lexend(
-                        fontSize: 14,
-                        height: 1.2,
-                        fontWeight: FontWeight.w400,
+                        fontSize: 10,
+                        height: 1.1,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF71717A),
                       ),
                     ),
@@ -187,7 +191,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.lexend(
-          fontSize: 13,
+          fontSize: 12,
           height: 1.0,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF71717A),

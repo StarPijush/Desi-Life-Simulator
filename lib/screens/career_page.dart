@@ -13,6 +13,7 @@ import 'career/jobs_page.dart';
 import 'career/military_page.dart';
 import 'career/part_time_jobs/part_time_jobs_screen.dart';
 import 'career/special_careers/influencer/influencer_screen.dart';
+import 'career/special_careers/politician/politician_screen.dart';
 import 'education/exam_quiz_page.dart';
 import 'education/school_activities_screen.dart';
 import 'education/scholarships_screen.dart';
@@ -70,6 +71,45 @@ class CareerPage extends StatelessWidget {
                   title: 'Study Harder',
                   onTap: () => onGameAction(const GameAction(
                       'career.perform', {'actionId': 'career.study_hard'})),
+                ),
+              if (character.annualIncome > 0)
+                AppFlatRow(
+                  icon: const Icon(Icons.exit_to_app,
+                      color: AppColors.danger, size: 24),
+                  title: 'Resign / Career Break',
+                  titleStyle:
+                      AppTextStyles.rowTitle.copyWith(color: AppColors.danger),
+                  onTap: () {
+                    // Using our global dialog system for a confirmation popup
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: AppColors.cardBg,
+                        title: Text('Resign?', style: AppTextStyles.h3),
+                        content: const Text(
+                          'Are you sure you want to quit your current career? You will lose your salary and position, but you can explore new opportunities.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text('Cancel',
+                                style: AppTextStyles.rowTitle
+                                    .copyWith(color: AppColors.textMuted)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              onGameAction(const GameAction('career.perform',
+                                  {'actionId': 'career.resign'}));
+                            },
+                            child: Text('Resign',
+                                style: AppTextStyles.rowTitle
+                                    .copyWith(color: AppColors.danger)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
             ],
           ),
@@ -357,8 +397,22 @@ class _SpecialListScreen extends StatelessWidget {
             title: 'Politician',
             subtitle: 'Reputation: 0% • Education: University',
             locked: _isLocked('Politician'),
-            onTap: () => onGameAction(const GameAction('career.perform',
-                {'actionId': 'career.special.apply::Politician'})),
+            allowLockedTap: character.careerGroup == 'Politician',
+            onTap: () {
+              if (character.careerGroup == 'Politician') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PoliticianScreen(
+                      character: character,
+                      onGameAction: onGameAction,
+                    ),
+                  ),
+                );
+                return;
+              }
+              onGameAction(const GameAction('career.perform',
+                  {'actionId': 'career.special.apply::Politician'}));
+            },
           ),
           const SizedBox(height: 48),
         ],
@@ -586,8 +640,35 @@ class _EducationListScreen extends StatelessWidget {
                     title: 'Attempt UPSC',
                     subtitle:
                         'Very low pass rate \u2022 High preparation needed',
-                    onTap: () => onGameAction(const GameAction(
-                        'career.perform', {'actionId': 'career.take_upsc'})),
+                    onTap: () => showDialog(
+                      context: context,
+                      useRootNavigator: true,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        title: const Text('Attempt UPSC Exam'),
+                        content: Text(
+                            'This is a highly competitive exam.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: const Text('Cancel',
+                                style: TextStyle(color: Colors.grey)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              onGameAction(const GameAction('career.perform',
+                                  {'actionId': 'career.take_upsc'}));
+                            },
+                            child: const Text('Attempt',
+                                style: TextStyle(
+                                    color: Color(0xFF006D37),
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 AppFlatRow(
                   icon: const Text('\ud83d\udccb',
@@ -610,8 +691,35 @@ class _EducationListScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 24)),
                     title: 'Attempt SSC',
                     subtitle: 'Prep: ${character.prepLevel}% \u2022 Need 20%+',
-                    onTap: () => onGameAction(const GameAction(
-                        'career.perform', {'actionId': 'career.take_ssc'})),
+                    onTap: () => showDialog(
+                      context: context,
+                      useRootNavigator: true,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        title: const Text('Attempt SSC Exam'),
+                        content: Text(
+                            'This exam is required for many government roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: const Text('Cancel',
+                                style: TextStyle(color: Colors.grey)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              onGameAction(const GameAction('career.perform',
+                                  {'actionId': 'career.take_ssc'}));
+                            },
+                            child: const Text('Attempt',
+                                style: TextStyle(
+                                    color: Color(0xFF006D37),
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 AppFlatRow(
                   icon: const Text('\ud83c\udfe6',
@@ -625,8 +733,36 @@ class _EducationListScreen extends StatelessWidget {
                   locked: character.memories.containsKey('passed_BankPO'),
                   onTap: character.memories.containsKey('passed_BankPO')
                       ? () {}
-                      : () => onGameAction(const GameAction('career.perform',
-                          {'actionId': 'career.take_bank_po'})),
+                      : () => showDialog(
+                            context: context,
+                            useRootNavigator: true,
+                            builder: (ctx) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              title: const Text('Attempt Bank PO Exam'),
+                              content: Text(
+                                  'This exam is required for banking roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: const Text('Cancel',
+                                      style: TextStyle(color: Colors.grey)),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(ctx).pop();
+                                    onGameAction(const GameAction(
+                                        'career.perform',
+                                        {'actionId': 'career.take_bank_po'}));
+                                  },
+                                  child: const Text('Attempt',
+                                      style: TextStyle(
+                                          color: Color(0xFF006D37),
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          ),
                 ),
               ],
             ),
@@ -727,8 +863,35 @@ class _UniversityScreen extends StatelessWidget {
                 title: inst.name,
                 subtitle:
                     'Fees: ₹${GameEngine.formatMoney(inst.feesPerYear)} • Prestige: ${inst.tier}',
-                onTap: () => onGameAction(GameAction('career.perform',
-                    {'actionId': 'education.enroll::${inst.name}'})),
+                onTap: () => showDialog(
+                  context: context,
+                  useRootNavigator: true,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    title: Text('${inst.name} Admission'),
+                    content: Text(
+                        'Fees: ₹${GameEngine.formatMoney(inst.feesPerYear)}/year\nPrestige: ${inst.tier}\n\nDo you wish to enroll?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Cancel',
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          onGameAction(GameAction('career.perform',
+                              {'actionId': 'education.enroll::${inst.name}'}));
+                        },
+                        child: const Text('Enroll',
+                            style: TextStyle(
+                                color: Color(0xFF006D37),
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }).toList(),
           ),
@@ -786,7 +949,7 @@ PreferredSizeWidget _buildAppBar(BuildContext context, String title,
 
 Widget _buildIdentityHeader(Character character) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     decoration: const BoxDecoration(
       color: Colors.white,
       border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
@@ -813,8 +976,8 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   character.name,
                   style: GoogleFonts.lexend(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF181C1F),
                     letterSpacing: -0.5,
                   ),
@@ -827,7 +990,7 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   formatMoney(character.bankBalance),
                   style: GoogleFonts.lexend(
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF059669),
                   ),
@@ -835,7 +998,7 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   'Age: ${character.age}',
                   style: GoogleFonts.lexend(
-                    fontSize: 13,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF71717A),
                   ),
@@ -844,9 +1007,9 @@ Widget _buildIdentityHeader(Character character) {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         _buildMetricBar('Smarts', character.smarts),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         _buildMetricBar('Looks', character.looks),
       ],
     ),
@@ -870,7 +1033,7 @@ Widget _buildMetricBar(String label, int value,
       ),
       Expanded(
         child: Container(
-          height: 8,
+          height: 5,
           decoration: const BoxDecoration(color: Color(0xFFF4F4F5)),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,

@@ -20,18 +20,18 @@ class InfluencerProfileSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Row(
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 40,
+            height: 40,
             decoration: const BoxDecoration(
               color: Color(0xFFE8F7EF),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.alternate_email,
-                color: Color(0xFF059669), size: 28),
+                color: Color(0xFF059669), size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -46,8 +46,8 @@ class InfluencerProfileSection extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.lexend(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                           color: const Color(0xFF181C1F),
                         ),
                       ),
@@ -63,12 +63,12 @@ class InfluencerProfileSection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
                     color: const Color(0xFF5C5E62),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 2),
                 Text(
                   active
                       ? '${formatMoney(character.annualIncome)}/yr'
@@ -76,8 +76,8 @@ class InfluencerProfileSection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: active
                         ? const Color(0xFF059669)
                         : const Color(0xFF71717A),

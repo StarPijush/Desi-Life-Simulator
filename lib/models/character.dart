@@ -2,6 +2,7 @@
 import 'package:hive/hive.dart';
 import 'relationship.dart';
 import 'loan_model.dart';
+import 'career_history_entry.dart';
 
 part 'character.g.dart';
 
@@ -353,6 +354,9 @@ class Character extends HiveObject {
   @HiveField(112)
   bool isStudentLeader;
 
+  @HiveField(113)
+  List<CareerHistoryEntry> careerHistory;
+
   Character({
     required this.name,
     this.age = 0,
@@ -477,6 +481,7 @@ class Character extends HiveObject {
     List<String> connections = const [],
     this.isPartyMember = false,
     this.isStudentLeader = false,
+    List<CareerHistoryEntry> careerHistory = const [],
   })  : achievements = List<String>.from(achievements),
         ownedAssets = List<String>.from(ownedAssets),
         relationships = List<Relationship>.from(relationships),
@@ -499,7 +504,8 @@ class Character extends HiveObject {
         activityPerformance = Map<String, int>.from(activityPerformance),
         claimedScholarships = List<String>.from(claimedScholarships),
         connections = List<String>.from(connections),
-        activeTutors = Map<dynamic, dynamic>.from(activeTutors);
+        activeTutors = Map<dynamic, dynamic>.from(activeTutors),
+        careerHistory = List<CareerHistoryEntry>.from(careerHistory);
 
   bool get hasPartTimeJob => currentPartTimeJob != 'None';
 
@@ -1101,6 +1107,7 @@ class Character extends HiveObject {
         'connections': connections,
         'isPartyMember': isPartyMember,
         'isStudentLeader': isStudentLeader,
+        'careerHistory': careerHistory.map((entry) => entry.toJson()).toList(),
       };
 
   factory Character.fromJson(Map<String, dynamic> json) => Character(
@@ -1221,6 +1228,13 @@ class Character extends HiveObject {
         connections: List<String>.from(json['connections'] as List? ?? []),
         isPartyMember: json['isPartyMember'] as bool? ?? false,
         isStudentLeader: json['isStudentLeader'] as bool? ?? false,
+        careerHistory: (json['careerHistory'] as List? ?? [])
+            .map((entry) => entry is CareerHistoryEntry
+                ? entry
+                : CareerHistoryEntry.fromJson(
+                    Map<String, dynamic>.from(entry as Map),
+                  ))
+            .toList(growable: true),
       );
 
   Character copyWith({
@@ -1331,9 +1345,10 @@ class Character extends HiveObject {
     List<String>? connections,
     bool? isPartyMember,
     bool? isStudentLeader,
-  }) =>
-      Character(
-        name: name ?? this.name,
+    List<CareerHistoryEntry>? careerHistory,
+  }) {
+    return Character(
+      name: name ?? this.name,
         age: age ?? this.age,
         city: city ?? this.city,
         bankBalance: bankBalance ?? this.bankBalance,
@@ -1469,5 +1484,9 @@ class Character extends HiveObject {
         connections: List<String>.from(connections ?? this.connections, growable: true),
         isPartyMember: isPartyMember ?? this.isPartyMember,
         isStudentLeader: isStudentLeader ?? this.isStudentLeader,
+        careerHistory: List<CareerHistoryEntry>.from(
+            careerHistory ?? this.careerHistory,
+            growable: true),
       );
+  }
 }

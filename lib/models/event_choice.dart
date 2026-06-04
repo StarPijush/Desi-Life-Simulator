@@ -61,6 +61,9 @@ class EventChoice {
   final bool hiddenRiskB;
   final bool isTemptation;
 
+  final String? gameActionA;
+  final String? gameActionB;
+
   final Map<String, int>? traitShiftsA;
   final Map<String, int>? traitShiftsB;
   final String? memoryFlagA;
@@ -92,6 +95,8 @@ class EventChoice {
     this.memoryFlagB,
     this.memoryFlagAFail,
     this.memoryFlagBFail,
+    this.gameActionA,
+    this.gameActionB,
   });
 
   Map<String, dynamic> toMap() => {
@@ -118,6 +123,8 @@ class EventChoice {
         'memoryFlagB': memoryFlagB,
         'memoryFlagAFail': memoryFlagAFail,
         'memoryFlagBFail': memoryFlagBFail,
+        'gameActionA': gameActionA,
+        'gameActionB': gameActionB,
       };
 
   factory EventChoice.fromMap(Map<String, dynamic> map) => EventChoice(
@@ -144,5 +151,7 @@ class EventChoice {
         memoryFlagB: map['memoryFlagB'],
         memoryFlagAFail: map['memoryFlagAFail'],
         memoryFlagBFail: map['memoryFlagBFail'],
+        gameActionA: map['gameActionA'],
+        gameActionB: map['gameActionB'],
       );
 }

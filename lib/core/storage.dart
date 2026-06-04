@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/character.dart';
+import '../models/career_history_entry.dart';
 import '../models/relationship.dart';
 import '../models/loan_model.dart';
 
@@ -36,6 +37,9 @@ class StorageService {
     }
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(LoanModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(21)) {
+      Hive.registerAdapter(CareerHistoryEntryAdapter());
     }
     // Note: LegacyStoreAdapter will need to be generated
     // For now we can use dynamic or register when ready

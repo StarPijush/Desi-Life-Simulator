@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../core/design_system.dart';
 import '../core/engine.dart';
@@ -247,7 +248,7 @@ class _HomePageState extends State<HomePage> {
   void _runGameAction(GameAction action) {
     _applyActionResult(
       GameEngine.processAction(_characterNotifier.value, action),
-      popToRoot: action.payload['stayInFlow'] != true,
+      showResultPopup: action.payload['hidePopup'] != true,
     );
   }
 
@@ -255,7 +256,7 @@ class _HomePageState extends State<HomePage> {
     _applyActionResult(action(_characterNotifier.value));
   }
 
-  void _applyActionResult(ActionResult result, {bool popToRoot = true}) {
+  void _applyActionResult(ActionResult result, {bool showResultPopup = true}) {
     final currentVersion = _characterNotifier.value.stateVersion;
     final updatedCharacter = result.character.copyWith(
       stateVersion: result.character.stateVersion <= currentVersion
@@ -289,8 +290,23 @@ class _HomePageState extends State<HomePage> {
     StorageService.saveCharacter(updatedCharacter);
     _saveEvents();
 
-    if (popToRoot) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+    if (showResultPopup && mounted) {
+      final mainEvent = actionEvents.first;
+      showDialog(
+        context: context,
+        useRootNavigator: true,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(mainEvent.title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+          content: Text(mainEvent.description, style: GoogleFonts.lexend()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Continue', style: TextStyle(color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -368,6 +384,19 @@ class _HomePageState extends State<HomePage> {
           updated.triggerMutation();
           _characterNotifier.value = updated;
           StorageService.saveCharacter(updated);
+
+          // Handle GameAction payload (e.g. Unexpected Career Offers)
+          final actionToRun = isOptionA ? choice.gameActionA : choice.gameActionB;
+          if (actionToRun != null && isSuccess) {
+            final actionResult = GameEngine.processAction(
+                _characterNotifier.value,
+                GameAction('career.perform', {'actionId': actionToRun})
+            );
+            if (actionResult.success) {
+               _characterNotifier.value = actionResult.character;
+               StorageService.saveCharacter(_characterNotifier.value);
+            }
+          }
 
           // Create result event
           String statHint = '';

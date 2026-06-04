@@ -50,19 +50,36 @@ class JobsListScreen extends StatelessWidget {
                 title: group.name,
                 subtitle:
                     '${firstStep.title} • ₹${GameEngine.formatMoney(firstStep.annualSalary)}/yr',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _JobDetailScreen(
-                    character: character,
-                    onGameAction: onGameAction,
-                    jobTitle: firstStep.title,
-                    emoji: group.emoji.isNotEmpty ? group.emoji : '💼',
-                    salary: firstStep.annualSalary.toDouble(),
-                    stressLevel: 'Low',
-                    workHours: 40,
-                    promotionChance: 'Moderate',
-                    actionId: 'career.apply_group::${group.name}',
+                onTap: () => showDialog(
+                  context: context,
+                  useRootNavigator: true,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    title: Text('Apply for ${firstStep.title}?'),
+                    content: Text(
+                        'Salary: ₹${GameEngine.formatMoney(firstStep.annualSalary.toDouble())}/year\nStress: Low\nHours: 40 hours/week'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Cancel',
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          onGameAction(GameAction('career.perform', {
+                            'actionId': 'career.apply_group::${group.name}'
+                          }));
+                        },
+                        child: const Text('Apply',
+                            style: TextStyle(
+                                color: Color(0xFF006D37),
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
-                )),
+                ),
               );
             }).toList(),
           ),
@@ -86,7 +103,7 @@ class JobsListScreen extends StatelessWidget {
             child: Text(
               'AVAILABLE POSITIONS',
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF5C5E62),
                 letterSpacing: 1.5,
@@ -139,7 +156,7 @@ class JobsListScreen extends StatelessWidget {
         }
       },
       child: Container(
-        height: 56,
+        height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: const BoxDecoration(
           color: Color(0xFFFFFFFF),
@@ -160,16 +177,16 @@ class JobsListScreen extends StatelessWidget {
                     Text(
                       title,
                       style: GoogleFonts.lexend(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                         color: const Color(0xFF161C28),
                       ),
                     ),
                     Text(
                       subtitle,
                       style: GoogleFonts.lexend(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF5C5E62),
                       ),
                     ),
@@ -193,7 +210,7 @@ class JobsListScreen extends StatelessWidget {
             Text(
               label.toUpperCase(),
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF5C5E62),
                 letterSpacing: 1.0,
@@ -202,7 +219,7 @@ class JobsListScreen extends StatelessWidget {
             Text(
               '$value%',
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -211,7 +228,7 @@ class JobsListScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Container(
-          height: 8,
+          height: 5,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xFFDDE2F3),
@@ -367,23 +384,38 @@ class JobsListScreen extends StatelessWidget {
                           : null,
                       onTap: locked
                           ? () {}
-                          : () => Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => _JobDetailScreen(
-                                  character: character,
-                                  onGameAction: onGameAction,
-                                  jobTitle: job.title,
-                                  emoji: job.emoji,
-                                  salary: job.startingSalary,
-                                  stressLevel: job.stressLevel > 70
-                                      ? 'Extreme'
-                                      : job.stressLevel > 40
-                                          ? 'High'
-                                          : 'Low',
-                                  workHours: 40,
-                                  promotionChance: 'Moderate',
-                                  actionId: 'career.apply::${job.title}',
+                          : () => showDialog(
+                                context: context,
+                                useRootNavigator: true,
+                                builder: (ctx) => AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  title: Text('Apply for ${job.title}?'),
+                                  content: Text(
+                                      'Salary: ₹${GameEngine.formatMoney(job.startingSalary)}/year\nStress: ${job.stressLevel > 70 ? 'Extreme' : job.stressLevel > 40 ? 'High' : 'Low'}\nHours: 40 hours/week'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(),
+                                      child: const Text('Cancel',
+                                          style: TextStyle(color: Colors.grey)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                        onGameAction(GameAction(
+                                            'career.perform', {
+                                          'actionId':
+                                              'career.apply::${job.title}'
+                                        }));
+                                      },
+                                      child: const Text('Apply',
+                                          style: TextStyle(
+                                              color: Color(0xFF006D37),
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
-                              )),
+                              ),
                     );
                   }).toList(),
                 ),
@@ -424,7 +456,7 @@ class JobsListScreen extends StatelessWidget {
             Text(
               label.toUpperCase(),
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF5C5E62),
               ),
@@ -432,7 +464,7 @@ class JobsListScreen extends StatelessWidget {
             Text(
               '$value%',
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF161C28),
               ),
@@ -441,7 +473,7 @@ class JobsListScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Container(
-          height: 12,
+          height: 5,
           width: double.infinity,
           decoration: const BoxDecoration(
               color: Color(0xFFDEDFE3)), // secondary-container
@@ -456,236 +488,14 @@ class JobsListScreen extends StatelessWidget {
   }
 }
 
-
-class _JobDetailScreen extends StatelessWidget {
-  final Character character;
-  final void Function(GameAction) onGameAction;
-  final String jobTitle;
-  final String emoji;
-  final double salary;
-  final String stressLevel;
-  final int workHours;
-  final String promotionChance;
-  final String actionId;
-
-  const _JobDetailScreen({
-    required this.character,
-    required this.onGameAction,
-    required this.jobTitle,
-    required this.emoji,
-    required this.salary,
-    required this.stressLevel,
-    required this.workHours,
-    required this.promotionChance,
-    required this.actionId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: _buildAppBar(context, 'JOB DETAIL', trailing: const SizedBox()),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildSectionHeader('JOB INFO'),
-          AppFlatRowGroup(
-            rows: [
-              AppFlatRow(
-                icon: Text(emoji, style: const TextStyle(fontSize: 24)),
-                title: jobTitle,
-                subtitle: 'Position',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {},
-              ),
-              AppFlatRow(
-                icon: const Text('💰', style: TextStyle(fontSize: 24)),
-                title: '₹${GameEngine.formatMoney(salary)}/year',
-                subtitle: 'Salary',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {},
-              ),
-              AppFlatRow(
-                icon: const Text('😰', style: TextStyle(fontSize: 24)),
-                title: stressLevel,
-                subtitle: 'Stress Level',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {},
-              ),
-              AppFlatRow(
-                icon: const Text('⏰', style: TextStyle(fontSize: 24)),
-                title: '$workHours hours/week',
-                subtitle: 'Work Hours',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {},
-              ),
-              AppFlatRow(
-                icon: const Text('🚀', style: TextStyle(fontSize: 24)),
-                title: promotionChance,
-                subtitle: 'Promotion Chance',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {},
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-          _buildSectionHeader('ACTIONS'),
-          AppFlatRowGroup(
-            rows: [
-              AppFlatRow(
-                icon: const Text('✅', style: TextStyle(fontSize: 20)),
-                title: 'Apply for Job',
-                subtitle: 'Submit your application',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF006D37)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () {
-                  onGameAction(
-                      GameAction('career.perform', {'actionId': actionId}));
-                  Navigator.of(context).pop();
-                },
-              ),
-              AppFlatRow(
-                icon: const Text('🔍', style: TextStyle(fontSize: 20)),
-                title: 'Research Company',
-                subtitle: 'Learn more about the role',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () => onGameAction(const GameAction(
-                    'career.perform', {'actionId': 'career.research_company'})),
-              ),
-              AppFlatRow(
-                icon: const Text('🔙', style: TextStyle(fontSize: 20)),
-                title: 'Back to Listings',
-                subtitle: 'Return to the jobs page',
-                titleStyle: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF161C28)),
-                subtitleStyle: GoogleFonts.lexend(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62)),
-                onTap: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-
-          // Metric Bars Footer Area
-          Container(
-            margin: const EdgeInsets.only(top: 32, bottom: 32),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                _buildJobMetricBarDetailed('Performance',
-                    character.jobPerformance.toInt(), const Color(0xFF2ECC71)),
-                const SizedBox(height: 16),
-                _buildJobMetricBarDetailed(
-                    'Stress', character.stressLevel, const Color(0xFFFF9875)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildJobMetricBarDetailed(String label, int value, Color color) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label.toUpperCase(),
-              style: GoogleFonts.lexend(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF5C5E62),
-              ),
-            ),
-            Text(
-              '$value%',
-              style: GoogleFonts.lexend(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF5C5E62),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Container(
-          height: 8,
-          width: double.infinity,
-          decoration: const BoxDecoration(
-              color: Color(0xFFDDE2F3)), // surface-container-highest
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: (value / 100).clamp(0.01, 1.0),
-            child: Container(color: color),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-PreferredSizeWidget _buildAppBar(BuildContext context, String title, {Widget? trailing}) {
+PreferredSizeWidget _buildAppBar(BuildContext context, String title,
+    {Widget? trailing}) {
   return FlatBackAppBar(title: title, trailing: trailing);
 }
 
 Widget _buildIdentityHeader(Character character) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     decoration: const BoxDecoration(
       color: Colors.white,
       border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
@@ -712,8 +522,8 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   character.name,
                   style: GoogleFonts.lexend(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF181C1F),
                     letterSpacing: -0.5,
                   ),
@@ -726,7 +536,7 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   formatMoney(character.bankBalance),
                   style: GoogleFonts.lexend(
-                    fontSize: 20,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF059669),
                   ),
@@ -734,7 +544,7 @@ Widget _buildIdentityHeader(Character character) {
                 Text(
                   'Age: ${character.age}',
                   style: GoogleFonts.lexend(
-                    fontSize: 13,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF71717A),
                   ),
@@ -743,9 +553,9 @@ Widget _buildIdentityHeader(Character character) {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         _buildMetricBar('Smarts', character.smarts),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         _buildMetricBar('Looks', character.looks),
       ],
     ),
@@ -769,7 +579,7 @@ Widget _buildMetricBar(String label, int value,
       ),
       Expanded(
         child: Container(
-          height: 8,
+          height: 5,
           decoration: const BoxDecoration(color: Color(0xFFF4F4F5)),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
@@ -793,5 +603,3 @@ Widget _buildSectionHeader(String title) {
     ),
   );
 }
-
-

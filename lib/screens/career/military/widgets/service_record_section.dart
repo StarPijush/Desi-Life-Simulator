@@ -30,20 +30,22 @@ class ServiceRecordSection extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     _StatBar(label: 'Fitness', value: fitness),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     _StatBar(label: 'Discipline', value: discipline),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     _StatBar(label: 'Leadership', value: leadership),
                   ],
                 ),
               ),
               const Divider(height: 1, thickness: 1, color: Color(0xFFF4F4F5)),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     Expanded(
@@ -90,7 +92,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.lexend(
-          fontSize: 13,
+          fontSize: 12,
           height: 1.0,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF71717A),
@@ -132,11 +134,11 @@ class _StatBar extends StatelessWidget {
         const SizedBox(height: 4),
         Stack(
           children: [
-            Container(height: 10, color: const Color(0xFFE5E7EB)),
+            Container(height: 5, color: const Color(0xFFE5E7EB)),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: clamped / 100,
-              child: Container(height: 10, color: const Color(0xFF10B981)),
+              child: Container(height: 5, color: const Color(0xFF10B981)),
             ),
           ],
         ),
@@ -173,7 +175,7 @@ class _RecordMetric extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.lexend(
-              fontSize: 18,
+              fontSize: 13,
               height: 1.2,
               fontWeight: FontWeight.w700,
               color: valueColor,
@@ -193,7 +195,7 @@ class _RecordMetric extends StatelessWidget {
 
 TextStyle _labelStyle(Color color) {
   return GoogleFonts.lexend(
-    fontSize: 13,
+    fontSize: 9,
     height: 1.0,
     fontWeight: FontWeight.w600,
     color: color,

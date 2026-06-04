@@ -35,13 +35,13 @@ class PartTimeStatusSection extends StatelessWidget {
               _InfoRow(label: 'Education', value: _educationLabel(character)),
               _InfoRow(label: 'Current Job', value: currentJob?.name ?? 'None'),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Column(
                   children: [
                     _MetricBar(label: 'Work Experience', value: experience),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
                     _MetricBar(label: 'Responsibility', value: responsibility),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
                     _MetricBar(label: 'Customer Skills', value: customerSkill),
                   ],
                 ),
@@ -71,7 +71,7 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
       ),
@@ -120,11 +120,11 @@ class _MetricBar extends StatelessWidget {
         const SizedBox(height: 4),
         Stack(
           children: [
-            Container(height: 8, color: const Color(0xFFE5E7EB)),
+            Container(height: 5, color: const Color(0xFFE5E7EB)),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: clamped / 100,
-              child: Container(height: 8, color: const Color(0xFF2ECC71)),
+              child: Container(height: 5, color: const Color(0xFF2ECC71)),
             ),
           ],
         ),
@@ -149,14 +149,14 @@ class _SectionHeader extends StatelessWidget {
 }
 
 TextStyle _bodyStyle(Color color) => GoogleFonts.lexend(
-      fontSize: 16,
-      height: 1.4,
+      fontSize: 10,
+      height: 1.15,
       fontWeight: FontWeight.w500,
       color: color,
     );
 
 TextStyle _labelStyle(Color color) => GoogleFonts.lexend(
-      fontSize: 13,
+      fontSize: 9,
       height: 1.0,
       fontWeight: FontWeight.w600,
       color: color,

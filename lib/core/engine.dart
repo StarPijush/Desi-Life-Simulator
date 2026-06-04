@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import '../models/career_history_entry.dart';
 import '../models/character.dart';
 import '../models/loan_model.dart';
 import '../models/life_event.dart';
@@ -378,8 +379,8 @@ class CareerSystem {
       failureEvent: 'Months of experiments produced little progress.',
     ),
     SpecialCareerDefinition(
-      name: 'Army',
-      entryTitle: 'Army Cadet',
+      name: 'Military',
+      entryTitle: 'Recruit',
       description: 'Service, discipline, danger, and honor.',
       minAge: 18,
       smartsReq: 45,
@@ -837,24 +838,54 @@ class CareerSystem {
             title: 'Party Worker',
             annualSalary: 360000,
             smartsToReach: 55,
-            minYearsToPromote: 2,
+            minYearsToPromote: 1,
+            emoji: '??'),
+        CareerStep(
+            title: 'Local Volunteer',
+            annualSalary: 480000,
+            smartsToReach: 58,
+            minYearsToPromote: 1,
+            emoji: '??'),
+        CareerStep(
+            title: 'Ward Candidate',
+            annualSalary: 600000,
+            smartsToReach: 60,
+            minYearsToPromote: 1,
             emoji: '??'),
         CareerStep(
             title: 'Councillor',
             annualSalary: 900000,
             smartsToReach: 62,
-            minYearsToPromote: 3,
+            minYearsToPromote: 2,
             emoji: '??'),
         CareerStep(
             title: 'MLA',
             annualSalary: 1800000,
             smartsToReach: 72,
+            minYearsToPromote: 3,
+            emoji: '??'),
+        CareerStep(
+            title: 'Minister',
+            annualSalary: 3000000,
+            smartsToReach: 78,
+            minYearsToPromote: 3,
+            emoji: '??'),
+        CareerStep(
+            title: 'Chief Minister',
+            annualSalary: 4200000,
+            smartsToReach: 84,
             minYearsToPromote: 4,
             emoji: '??'),
         CareerStep(
-            title: 'Cabinet Minister',
-            annualSalary: 4200000,
-            smartsToReach: 84,
+            title: 'MP',
+            annualSalary: 5400000,
+            smartsToReach: 88,
+            minYearsToPromote: 4,
+            emoji: '??'),
+        CareerStep(
+            title: 'Prime Minister',
+            annualSalary: 9000000,
+            smartsToReach: 94,
             minYearsToPromote: 5,
             emoji: '??'),
       ],
@@ -996,7 +1027,7 @@ class CareerSystem {
       ],
     ),
     CareerGroup(
-      name: 'Army',
+      name: 'Military',
       emoji: '??',
       description: 'Service and discipline',
       smartsToEnter: 45,
@@ -1004,15 +1035,27 @@ class CareerSystem {
       tier: CareerTier.special,
       steps: [
         CareerStep(
-            title: 'Army Cadet',
+            title: 'Recruit',
             annualSalary: 420000,
             smartsToReach: 45,
+            minYearsToPromote: 1,
+            emoji: '??'),
+        CareerStep(
+            title: 'Cadet',
+            annualSalary: 600000,
+            smartsToReach: 50,
             minYearsToPromote: 1,
             emoji: '??'),
         CareerStep(
             title: 'Lieutenant',
             annualSalary: 900000,
             smartsToReach: 55,
+            minYearsToPromote: 2,
+            emoji: '??'),
+        CareerStep(
+            title: 'Captain',
+            annualSalary: 1300000,
+            smartsToReach: 62,
             minYearsToPromote: 3,
             emoji: '??'),
         CareerStep(
@@ -1020,6 +1063,18 @@ class CareerSystem {
             annualSalary: 1800000,
             smartsToReach: 68,
             minYearsToPromote: 4,
+            emoji: '??'),
+        CareerStep(
+            title: 'Colonel',
+            annualSalary: 2600000,
+            smartsToReach: 74,
+            minYearsToPromote: 4,
+            emoji: '??'),
+        CareerStep(
+            title: 'Brigadier',
+            annualSalary: 3400000,
+            smartsToReach: 80,
+            minYearsToPromote: 5,
             emoji: '??'),
         CareerStep(
             title: 'General',
@@ -1067,7 +1122,8 @@ class CareerSystem {
 
   static CareerGroup? findGroup(String name) {
     try {
-      return allGroups.firstWhere((g) => g.name == name);
+      final normalized = name == 'Army' ? 'Military' : name;
+      return allGroups.firstWhere((g) => g.name == normalized);
     } catch (_) {
       return null;
     }
@@ -1136,7 +1192,7 @@ class CareerSystem {
   }
 
   static void assignCareer(Character c, CareerGroup group) {
-    c.careerGroup = group.name;
+    c.careerGroup = group.name == 'Army' ? 'Military' : group.name;
     c.careerStep = 0;
     c.yearsInRole = 0;
     c.jobLevel = 0;
@@ -1146,13 +1202,49 @@ class CareerSystem {
     final step = group.steps.first;
     c.jobTitle = step.title;
     c.annualIncome = step.annualSalary;
+    if (c.careerGroup == 'Politician') {
+      c.currentPosition = step.title;
+      c.isPartyMember = true;
+      if (c.partyName == 'None') c.partyName = 'People First Party';
+    }
   }
 
   static String switchCareer(Character c, CareerGroup newGroup) {
+    _recordCareerHistory(c, 'Switched career');
     assignCareer(c, newGroup);
+    _applyReputationTransfer(c, newGroup.name);
     c.smarts = (c.smarts - 5).clamp(0, 100);
     c.happiness = (c.happiness + 10).clamp(0, 100);
     return 'Career switch: you joined ${newGroup.name} as ${newGroup.steps.first.title}. Salary: ${GameEngine.formatMoney(newGroup.steps.first.annualSalary)}/yr.';
+  }
+
+  static void _recordCareerHistory(Character c, String achievement) {
+    if (c.annualIncome <= 0 || c.careerGroup == 'None') return;
+    c.careerHistory.add(
+      CareerHistoryEntry(
+        careerName: c.jobTitle,
+        startAge: c.age - c.yearsInJob,
+        endAge: c.age,
+        yearsWorked: c.yearsInJob,
+        achievement: achievement,
+        careerType: c.careerGroup,
+      ),
+    );
+  }
+
+  static void _applyReputationTransfer(Character c, String newCareerName) {
+    if (newCareerName == 'Politician') {
+      if (c.careerGroup == 'Military' && c.jobLevel >= 2) {
+        c.publicTrust = (c.publicTrust + 20).clamp(0, 100);
+        c.popularity = (c.popularity + 12).clamp(0, 100);
+      } else if (c.careerGroup == 'Government' && c.jobLevel >= 3) {
+        c.partyInfluence = (c.partyInfluence + 15).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 10).clamp(0, 100);
+      }
+    } else if (c.careerGroup == 'Politician' && newCareerName == 'Corporate') {
+      c.reputation = (c.reputation + 12).clamp(0, 100);
+      c.social = (c.social + 8).clamp(0, 100);
+    }
   }
 
   static String? tryPromotion(Character c, Random rng) {
@@ -1170,6 +1262,14 @@ class CareerSystem {
     }
     if (c.smarts < nextStep.smartsToReach) return null;
     if (c.jobPerformance <= 70) return null;
+
+    if (c.careerGroup == 'Politician') {
+      final block = _politicianPromotionBlock(c, group.steps[currentStepIdx + 1].title);
+      if (block != null) {
+        c.tensionSignals.add(block);
+        return null;
+      }
+    }
 
     final lacksEdu = _eduLevel(c.educationLevel) < _eduLevel(group.eduToEnter);
     if (lacksEdu && c.smarts < 95) {
@@ -1203,6 +1303,9 @@ class CareerSystem {
     c.jobLevel = c.careerStep;
     c.yearsInJob = 0;
     c.jobTitle = nextStep.title;
+    if (c.careerGroup == 'Politician') {
+      c.currentPosition = nextStep.title;
+    }
 
     c.majorDecisions.add({
       'age': c.age,
@@ -1222,6 +1325,7 @@ class CareerSystem {
     if (nextStep.title == 'IAS Officer') c.addAchievement('ias_officer');
     if (nextStep.title == 'Business Tycoon') c.addAchievement('entrepreneur');
     if (nextStep.title == 'Doctor') c.addAchievement('doctor');
+    if (nextStep.title == 'Prime Minister') c.addAchievement('prime_minister');
 
     // High ambition = High stress upon promotion
     if (c.ambition > 70) {
@@ -1232,6 +1336,41 @@ class CareerSystem {
       return 'Pinnacle reached: you are now ${nextStep.title}. Salary: ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
     }
     return 'Promoted: you are now ${nextStep.title}. New salary: ${GameEngine.formatMoney(nextStep.annualSalary)}/yr.';
+  }
+
+  static String? _politicianPromotionBlock(Character c, String nextTitle) {
+    switch (nextTitle) {
+      case 'Local Volunteer':
+        return c.politicalExperience >= 15
+            ? null
+            : 'Politics gate: Local Volunteer needs 15 Political Experience.';
+      case 'Ward Candidate':
+        return c.politicalExperience >= 30 && c.partyInfluence >= 20
+            ? null
+            : 'Politics gate: Ward Candidate needs 30 Political Experience and 20 Party Influence.';
+      case 'Councillor':
+      case 'MLA':
+        return c.memories['politician_victory_for_$nextTitle'] == true
+            ? null
+            : 'Politics gate: $nextTitle requires an election victory.';
+      case 'Minister':
+        return c.partyInfluence >= 50 && c.publicTrust >= 45
+            ? null
+            : 'Politics gate: Minister needs 50 Party Influence and 45 Public Trust.';
+      case 'Chief Minister':
+        return c.memories['politician_major_victory'] == true
+            ? null
+            : 'Politics gate: Chief Minister requires a major election victory.';
+      case 'MP':
+        return c.partyInfluence >= 70 && c.nationalReputation >= 55
+            ? null
+            : 'Politics gate: MP needs 70 Party Influence and 55 National Reputation.';
+      case 'Prime Minister':
+        return c.memories['politician_national_victory'] == true
+            ? null
+            : 'Politics gate: Prime Minister requires a national election victory.';
+    }
+    return null;
   }
 
   static String? tryDemotion(Character c, Random rng) {
@@ -2792,6 +2931,8 @@ class GameEngine {
     _applyEducationProgression(character, events);
     _updateMarketPrices(character, []);
     _applyCareerProgression(character, events, newAchievements);
+    _applyPoliticianCareerEvents(character, events);
+    _applyMilitaryCareerEvents(character, events, newAchievements);
     _applyFinancialsSilent(character, events, oldStats);
     _applyNaturalAging(character);
 
@@ -4001,6 +4142,18 @@ class GameEngine {
           c, actionId.substring(influencerPrefix.length), payload);
     }
 
+    const politicianPrefix = 'career.politician.';
+    if (actionId.startsWith(politicianPrefix)) {
+      return _performPoliticianAction(
+          c, actionId.substring(politicianPrefix.length), payload);
+    }
+
+    const militaryPrefix = 'career.military.';
+    if (actionId.startsWith(militaryPrefix)) {
+      return _performMilitaryAction(
+          c, actionId.substring(militaryPrefix.length), payload);
+    }
+
     const businessPrefix = 'career.business.';
     if (actionId.startsWith(businessPrefix)) {
       return _performBusinessAction(
@@ -4244,6 +4397,7 @@ class GameEngine {
         );
 
       case 'career.job.quit':
+      case 'career.resign':
         if (c.annualIncome <= 0 || c.careerGroup == 'None') {
           return ActionResult(
             message: 'You do not have a job to quit.',
@@ -4251,6 +4405,35 @@ class GameEngine {
             success: false,
           );
         }
+
+        // --- Reputation Transfer System ---
+        String repTransferMessage = "";
+        if (c.careerGroup == 'Government' && c.jobLevel > 3) {
+          c.partyInfluence = (c.partyInfluence + 15).clamp(0, 100);
+          c.publicTrust = (c.publicTrust + 10).clamp(0, 100);
+          repTransferMessage = "\n\n✨ Your government service gave you credibility. Party Influence +15%, Public Trust +10%.";
+        } else if (c.careerGroup == 'Corporate' && c.jobLevel > 4) {
+          c.campaignFunds += c.bankBalance * 0.1; // 10% of wealth can be easily mobilized
+          c.reputation = (c.reputation + 10).clamp(0, 100);
+          repTransferMessage = "\n\n✨ Your corporate network gives you an edge. You unlocked potential campaign funding and +10% Reputation.";
+        } else if (c.careerGroup == 'Military' && c.jobLevel > 2) {
+          c.publicTrust = (c.publicTrust + 20).clamp(0, 100);
+          c.popularity = (c.popularity + 15).clamp(0, 100);
+          repTransferMessage = "\n\n✨ As a veteran, the public reveres you. Public Trust +20%, Popularity +15%.";
+        }
+
+        // --- Career History Logging ---
+        c.careerHistory.add(
+          CareerHistoryEntry(
+            careerName: c.jobTitle,
+            startAge: c.age - c.yearsInJob,
+            endAge: c.age,
+            yearsWorked: c.yearsInJob,
+            achievement: 'Resigned',
+            careerType: c.careerGroup,
+          ),
+        );
+
         c.jobTitle = 'Unemployed';
         c.annualIncome = 0;
         c.careerGroup = 'None';
@@ -4261,7 +4444,7 @@ class GameEngine {
         c.jobPerformance = 50;
         c.happiness = (c.happiness + 4).clamp(0, 100);
         return ActionResult(
-          message: 'You quit your job and stepped back into the job market.',
+          message: 'You resigned and stepped back into the job market.$repTransferMessage',
           character: c,
         );
 
@@ -6515,6 +6698,271 @@ class GameEngine {
     }
   }
 
+  static ActionResult _performPoliticianAction(Character c, String action, Map<String, dynamic> payload) {
+    if (c.careerGroup != 'Politician') {
+      return ActionResult(
+        message: 'You are not in politics!',
+        character: c,
+        success: false,
+      );
+    }
+
+    switch (action) {
+      case 'community_service':
+        c.karma = (c.karma + 2).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 2).clamp(0, 100);
+        c.politicalExperience = (c.politicalExperience + 3).clamp(0, 100);
+        c.happiness = (c.happiness + 1).clamp(0, 100);
+        return ActionResult(
+          message: 'You organized a community cleanup drive. People appreciate your effort! (+Public Trust, +Experience)',
+          character: c,
+        );
+
+      case 'join_party':
+        if (c.isPartyMember || c.partyInfluence > 0) {
+          return ActionResult(message: 'You are already in a party.', character: c, success: false);
+        }
+        c.isPartyMember = true;
+        c.partyName = 'People First Party';
+        c.partyInfluence = 5;
+        c.politicalExperience = (c.politicalExperience + 5).clamp(0, 100);
+        return ActionResult(
+          message: 'You officially joined a major political party as a grassroots worker.',
+          character: c,
+        );
+
+      case 'attend_rally':
+        c.partyInfluence = (c.partyInfluence + 2).clamp(0, 100);
+        c.social = (c.social + 1).clamp(0, 100);
+        c.politicalExperience = (c.politicalExperience + 1).clamp(0, 100);
+        return ActionResult(
+          message: 'You attended a massive political rally and networked with local leaders.',
+          character: c,
+        );
+
+      case 'political_debate':
+        if (_rng.nextDouble() < (c.smarts / 100.0)) {
+          c.popularity = (c.popularity + 5).clamp(0, 100);
+          c.publicTrust = (c.publicTrust + 3).clamp(0, 100);
+          return ActionResult(
+            message: 'You destroyed your opponent in a local debate! Your popularity surged.',
+            character: c,
+          );
+        } else {
+          c.popularity = (c.popularity - 3).clamp(0, 100);
+          c.publicTrust = (c.publicTrust - 2).clamp(0, 100);
+          return ActionResult(
+            message: 'You fumbled during the debate and became a minor meme on local social media.',
+            character: c,
+            success: false,
+          );
+        }
+
+      case 'campaigning':
+        if (c.campaignFunds < 5000) {
+          return ActionResult(
+            message: 'You need at least ₹5000 in Campaign Funds to run a proper campaign.',
+            character: c,
+            success: false,
+          );
+        }
+        c.campaignFunds -= 5000;
+        c.popularity = (c.popularity + 8).clamp(0, 100);
+        c.partyInfluence = (c.partyInfluence + 2).clamp(0, 100);
+        if (_nextPoliticianTitle(c) != null && c.careerStep >= 2) {
+          final electionEvents = <LifeEvent>[];
+          _resolvePoliticianElection(c, electionEvents);
+          return ActionResult(
+            message: electionEvents.isNotEmpty
+                ? electionEvents.first.description
+                : 'You ran a focused campaign and strengthened your base.',
+            character: c,
+            success: electionEvents.isEmpty ||
+                electionEvents.first.type != LifeEventType.negative,
+            events: electionEvents,
+          );
+        }
+        return ActionResult(
+          message: 'You spent ₹5000 on banners and local ads. Your popularity increased!',
+          character: c,
+        );
+
+      case 'fund_raising':
+        final amount = 2000 + _rng.nextInt(8000) * (c.partyInfluence / 100.0);
+        c.campaignFunds += amount;
+        return ActionResult(
+          message: 'You hosted a dinner and raised ₹${formatMoney(amount)} for your campaign!',
+          character: c,
+        );
+
+      case 'meet_leaders':
+        if (_rng.nextDouble() < 0.6) {
+          c.partyInfluence = (c.partyInfluence + 5).clamp(0, 100);
+          c.nationalReputation = (c.nationalReputation + 2).clamp(0, 100);
+          return ActionResult(
+            message: 'You had tea with senior party members. They see your potential.',
+            character: c,
+          );
+        } else {
+          return ActionResult(
+            message: 'The senior leaders ignored you at the gathering.',
+            character: c,
+            success: false,
+          );
+        }
+
+      case 'public_speech':
+        if (_rng.nextDouble() < 0.7) {
+          c.publicTrust = (c.publicTrust + 4).clamp(0, 100);
+          c.popularity = (c.popularity + 4).clamp(0, 100);
+          c.politicalExperience = (c.politicalExperience + 2).clamp(0, 100);
+          return ActionResult(
+            message: 'Your fiery speech resonated with the crowd. "Jai Hind!" echoed through the ground.',
+            character: c,
+          );
+        } else {
+          c.publicTrust = (c.publicTrust - 2).clamp(0, 100);
+          return ActionResult(
+            message: 'The crowd was unresponsive and someone threw a slipper near the stage.',
+            character: c,
+            success: false,
+          );
+        }
+
+      default:
+        return ActionResult(
+          message: 'Unknown politician action.',
+          character: c,
+          success: false,
+        );
+    }
+  }
+
+  static ActionResult _performMilitaryAction(Character c, String action, Map<String, dynamic> payload) {
+    if (action == 'enlist') {
+      final group = CareerSystem.findGroup('Military');
+      if (group == null) {
+        return ActionResult(
+          message: 'Military enlistment is unavailable right now.',
+          character: c,
+          success: false,
+        );
+      }
+      if (!CareerSystem.canEnter(group, c) || c.age < 18) {
+        return ActionResult(
+          message:
+              'Military enlistment needs Age 18+, Secondary education, and 45 Smarts.',
+          character: c,
+          success: false,
+        );
+      }
+      if (c.careerGroup != 'None' && c.annualIncome > 0) {
+        return applyCareerSwitch(c, group);
+      }
+      CareerSystem.assignCareer(c, group);
+      c.discipline = (c.discipline + 10).clamp(0, 100);
+      c.health = (c.health + 5).clamp(0, 100);
+      return ActionResult(
+        message: 'You enlisted in the military as a Recruit.',
+        character: c,
+      );
+    }
+
+    if (c.careerGroup != 'Military') {
+      return ActionResult(
+        message: 'You are not in the military!',
+        character: c,
+        success: false,
+      );
+    }
+
+    switch (action) {
+      case 'training':
+        c.discipline = (c.discipline + 3).clamp(0, 100);
+        c.health = (c.health + 2).clamp(0, 100);
+        c.stressLevel = (c.stressLevel + 2).clamp(0, 100);
+        return ActionResult(
+          message: 'You completed an exhausting training drill. Your discipline improved.',
+          character: c,
+        );
+
+      case 'physical_drill':
+        if (_rng.nextDouble() < 0.1) {
+          c.health = (c.health - 5).clamp(0, 100);
+          return ActionResult(
+            message: 'You pushed too hard during the drill and pulled a muscle. Rest up.',
+            character: c,
+            success: false,
+          );
+        }
+        c.health = (c.health + 4).clamp(0, 100);
+        c.discipline = (c.discipline + 1).clamp(0, 100);
+        return ActionResult(
+          message: '10km run with a 20kg backpack. You feel invincible.',
+          character: c,
+        );
+
+      case 'leadership_course':
+        c.smarts = (c.smarts + 2).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 5).clamp(0, 100);
+        return ActionResult(
+          message: 'You attended a tactical leadership seminar. Command noticed your initiative.',
+          character: c,
+        );
+
+      case 'special_mission':
+        if (c.health < 60) {
+          return ActionResult(
+            message: 'You are not fit enough for a special mission right now.',
+            character: c,
+            success: false,
+          );
+        }
+        if (_rng.nextDouble() < 0.6) {
+          c.popularity = (c.popularity + 10).clamp(0, 100);
+          c.jobPerformance = (c.jobPerformance + 15).clamp(0, 100);
+          c.stressLevel = (c.stressLevel + 10).clamp(0, 100);
+          return ActionResult(
+            message: 'Mission Accomplished! Your squad returned successful. Command is proud.',
+            character: c,
+          );
+        } else {
+          c.health = (c.health - 15).clamp(0, 100);
+          c.stressLevel = (c.stressLevel + 20).clamp(0, 100);
+          return ActionResult(
+            message: 'Mission went sideways. You sustained minor injuries but everyone made it out.',
+            character: c,
+            success: false,
+          );
+        }
+
+      case 'border_deployment':
+        c.stressLevel = (c.stressLevel + 15).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 10).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 5).clamp(0, 100);
+        return ActionResult(
+          message: 'You spent weeks in a freezing forward post. It was tough, but you did your duty.',
+          character: c,
+        );
+
+      case 'peacekeeping_mission':
+        c.karma = (c.karma + 10).clamp(0, 100);
+        c.social = (c.social + 5).clamp(0, 100);
+        c.popularity = (c.popularity + 5).clamp(0, 100);
+        return ActionResult(
+          message: 'Deployed for a UN Peacekeeping mission. You helped rebuild a local school.',
+          character: c,
+        );
+
+      default:
+        return ActionResult(
+          message: 'Unknown military action.',
+          character: c,
+          success: false,
+        );
+    }
+  }
+
   static void _applyBusinessProgression(Character c, List<LifeEvent> events) {
     if (!_hasActiveBusiness(c)) return;
 
@@ -6802,6 +7250,280 @@ class GameEngine {
     }
   }
 
+  static void _applyPoliticianCareerEvents(
+      Character c, List<LifeEvent> events) {
+    if (c.careerGroup != 'Politician' || c.annualIncome <= 0) return;
+    if (_rng.nextDouble() > 0.30) return;
+
+    final possible = <void Function()>[
+      () {
+        c.popularity = (c.popularity + 8).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 4).clamp(0, 100);
+        _addEvent(events, c.age, 'Campaign Rally',
+            description:
+                'Your rally drew a loud crowd and gave your campaign fresh momentum.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.politicalExperience = (c.politicalExperience + 5).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 3).clamp(0, 100);
+        _addEvent(events, c.age, 'Door-to-Door Campaign',
+            description:
+                'You spent long days meeting voters in person and learning local issues.',
+            type: LifeEventType.positive);
+      },
+      () {
+        final won = _rng.nextDouble() <
+            ((c.smarts + c.social + c.politicalExperience) / 300);
+        c.popularity = (c.popularity + (won ? 6 : -4)).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + (won ? 4 : -3)).clamp(0, 100);
+        _addEvent(events, c.age, 'Debate Performance',
+            description: won
+                ? 'You handled the debate sharply and voters noticed.'
+                : 'Your debate answers sounded weak and opponents attacked.',
+            type: won ? LifeEventType.positive : LifeEventType.negative);
+      },
+      () => _resolvePoliticianElection(c, events),
+      () {
+        c.partyInfluence = (c.partyInfluence + 6).clamp(0, 100);
+        c.nationalReputation = (c.nationalReputation + 4).clamp(0, 100);
+        _addEvent(events, c.age, 'Coalition Negotiation',
+            description:
+                'You helped settle a tense coalition negotiation and gained influence.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.publicTrust = (c.publicTrust + 6).clamp(0, 100);
+        _addEvent(events, c.age, 'Media Praise',
+            description: 'A major news panel praised your public work.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.publicTrust = (c.publicTrust - 5).clamp(0, 100);
+        c.scandalLevel = (c.scandalLevel + 4).clamp(0, 100);
+        _addEvent(events, c.age, 'Media Attack',
+            description:
+                'A hostile media segment questioned your motives and hurt public trust.',
+            type: LifeEventType.negative);
+      },
+      () {
+        c.scandalLevel = (c.scandalLevel + 10).clamp(0, 100);
+        c.publicTrust = (c.publicTrust - 8).clamp(0, 100);
+        _addEvent(events, c.age, 'Corruption Allegation',
+            description:
+                'A corruption allegation surfaced. No proof yet, but the damage is real.',
+            type: LifeEventType.negative,
+            priority: EventPriority.important);
+      },
+      () {
+        c.partyInfluence = (c.partyInfluence - 6).clamp(0, 100);
+        _addEvent(events, c.age, 'Party Conflict',
+            description:
+                'A faction inside your party resisted your rise this year.',
+            type: LifeEventType.negative);
+      },
+      () {
+        c.scandalLevel = (c.scandalLevel + 12).clamp(0, 100);
+        c.popularity = (c.popularity - 8).clamp(0, 100);
+        _addEvent(events, c.age, 'Scandal',
+            description:
+                'A personal scandal became public and opponents used it hard.',
+            type: LifeEventType.negative,
+            priority: EventPriority.important);
+      },
+      () {
+        c.publicTrust = (c.publicTrust - 5).clamp(0, 100);
+        c.stressLevel = (c.stressLevel + 8).clamp(0, 100);
+        _addEvent(events, c.age, 'Public Protest',
+            description:
+                'A protest outside your office demanded answers on local issues.',
+            type: LifeEventType.negative);
+      },
+      () {
+        c.partyInfluence = (c.partyInfluence + 8).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 8).clamp(0, 100);
+        _addEvent(events, c.age, 'Cabinet Promotion',
+            description:
+                'Party seniors floated your name for a stronger cabinet role.',
+            type: LifeEventType.positive);
+      },
+    ];
+
+    possible[_rng.nextInt(possible.length)]();
+  }
+
+  static void _resolvePoliticianElection(
+      Character c, List<LifeEvent> events) {
+    final nextTitle = _nextPoliticianTitle(c);
+    if (nextTitle == null) return;
+
+    final base = (c.popularity * 0.28) +
+        (c.publicTrust * 0.24) +
+        (c.partyInfluence * 0.20) +
+        (c.politicalExperience * 0.16) +
+        (c.nationalReputation * 0.12) -
+        (c.scandalLevel * 0.35);
+    final chance = (base / 100).clamp(0.08, 0.82);
+    final won = _rng.nextDouble() < chance;
+
+    if (won) {
+      c.electionsWon += 1;
+      c.jobPerformance = (c.jobPerformance + 12).clamp(0, 100);
+      c.popularity = (c.popularity + 8).clamp(0, 100);
+      c.publicTrust = (c.publicTrust + 6).clamp(0, 100);
+      c.memories['politician_victory_for_$nextTitle'] = true;
+      if (nextTitle == 'Chief Minister') {
+        c.memories['politician_major_victory'] = true;
+      }
+      if (nextTitle == 'Prime Minister') {
+        c.memories['politician_national_victory'] = true;
+      }
+      _addEvent(events, c.age, 'Election Victory',
+          description:
+              'You won the election fight for $nextTitle. The next gate is open.',
+          type: LifeEventType.positive,
+          priority: EventPriority.important);
+    } else {
+      c.electionsLost += 1;
+      c.jobPerformance = (c.jobPerformance - 8).clamp(0, 100);
+      c.popularity = (c.popularity - 6).clamp(0, 100);
+      final recount = _rng.nextDouble() < 0.18;
+      _addEvent(events, c.age, recount ? 'Vote Recount' : 'Election Defeat',
+          description: recount
+              ? 'The race was painfully close, but the recount did not change enough.'
+              : 'You lost the election and need to rebuild your voter base.',
+          type: LifeEventType.negative,
+          priority: EventPriority.important);
+    }
+  }
+
+  static String? _nextPoliticianTitle(Character c) {
+    final group = CareerSystem.findGroup('Politician');
+    if (group == null || c.careerStep >= group.steps.length - 1) return null;
+    return group.steps[c.careerStep + 1].title;
+  }
+
+  static void _applyMilitaryCareerEvents(
+      Character c, List<LifeEvent> events, List<String> newAchievements) {
+    if (c.careerGroup != 'Military' || c.annualIncome <= 0) return;
+    if (_rng.nextDouble() > 0.20) return;
+
+    final roll = _rng.nextDouble();
+    if (roll < 0.58) {
+      final risks = <void Function()>[
+        () {
+          c.health = (c.health - 5).clamp(0, 100);
+          c.stressLevel = (c.stressLevel + 5).clamp(0, 100);
+          _addEvent(events, c.age, 'Minor Injury',
+              description: 'A routine drill ended with a painful injury.',
+              type: LifeEventType.negative);
+        },
+        () {
+          c.health = (c.health - 16).clamp(0, 100);
+          c.stressLevel = (c.stressLevel + 12).clamp(0, 100);
+          _addEvent(events, c.age, 'Serious Injury',
+              description:
+                  'A dangerous assignment left you badly hurt and shaken.',
+              type: LifeEventType.negative,
+              priority: EventPriority.important);
+        },
+        () {
+          c.jobPerformance = (c.jobPerformance - 10).clamp(0, 100);
+          _addEvent(events, c.age, 'Training Failure',
+              description:
+                  'You failed a demanding training assessment and command noticed.',
+              type: LifeEventType.negative);
+        },
+        () {
+          c.happiness = (c.happiness - 8).clamp(0, 100);
+          c.memories['remote_deployment_${c.age}'] = true;
+          _addEvent(events, c.age, 'Remote Transfer',
+              description:
+                  'You were transferred to a remote posting far from familiar support.',
+              type: LifeEventType.negative);
+        },
+        () {
+          c.reputation = (c.reputation - 6).clamp(0, 100);
+          _addEvent(events, c.age, 'Court Inquiry',
+              description:
+                  'An inquiry reviewed your unit after a disputed operation.',
+              type: LifeEventType.negative);
+        },
+        () {
+          c.discipline = (c.discipline - 8).clamp(0, 100);
+          c.jobPerformance = (c.jobPerformance - 6).clamp(0, 100);
+          _addEvent(events, c.age, 'Disciplinary Action',
+              description:
+                  'A lapse in protocol brought formal disciplinary action.',
+              type: LifeEventType.negative);
+        },
+        () {
+          c.stressLevel = (c.stressLevel + 18).clamp(0, 100);
+          c.publicTrust = (c.publicTrust + 4).clamp(0, 100);
+          _addEvent(events, c.age, 'Border Incident',
+              description:
+                  'A tense border incident put your unit under heavy pressure.',
+              type: LifeEventType.negative,
+              priority: EventPriority.important);
+        },
+        () {
+          c.jobPerformance = (c.jobPerformance - 14).clamp(0, 100);
+          c.health = (c.health - 8).clamp(0, 100);
+          _addEvent(events, c.age, 'Mission Failure',
+              description:
+                  'A mission failed under difficult conditions and command is reviewing it.',
+              type: LifeEventType.negative,
+              priority: EventPriority.important);
+        },
+      ];
+      risks[_rng.nextInt(risks.length)]();
+      return;
+    }
+
+    final rewards = <void Function()>[
+      () {
+        c.reputation = (c.reputation + 12).clamp(0, 100);
+        c.jobPerformance = (c.jobPerformance + 12).clamp(0, 100);
+        c.addAchievement('gallantry_award');
+        newAchievements.add('gallantry_award');
+        _addEvent(events, c.age, 'Gallantry Award',
+            description: 'You received a gallantry award for exceptional duty.',
+            type: LifeEventType.positive,
+            priority: EventPriority.important);
+      },
+      () {
+        c.reputation = (c.reputation + 8).clamp(0, 100);
+        c.memories['military_medal_${c.age}'] = true;
+        _addEvent(events, c.age, 'Military Medal',
+            description: 'Your service record earned a military medal.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.karma = (c.karma + 10).clamp(0, 100);
+        c.publicTrust = (c.publicTrust + 8).clamp(0, 100);
+        _addEvent(events, c.age, 'Heroic Rescue',
+            description:
+                'You helped rescue civilians during a dangerous situation.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.jobPerformance = (c.jobPerformance + 10).clamp(0, 100);
+        _addEvent(events, c.age, 'Commendation',
+            description: 'Command formally commended your discipline.',
+            type: LifeEventType.positive);
+      },
+      () {
+        c.jobPerformance = (c.jobPerformance + 16).clamp(0, 100);
+        c.tensionSignals.add('Command recommended you for promotion.');
+        _addEvent(events, c.age, 'Promotion Recommendation',
+            description:
+                'A senior officer recommended you for the next rank board.',
+            type: LifeEventType.positive);
+      },
+    ];
+    rewards[_rng.nextInt(rewards.length)]();
+  }
+
   static void _applyNaturalAging(Character c) {
     if (c.age > 60) c.health = (c.health - _rng.nextInt(2)).clamp(0, 100);
     if (c.age > 75) c.health = (c.health - _rng.nextInt(3)).clamp(0, 100);
@@ -7047,6 +7769,8 @@ class GameEngine {
           resultB: cMap['resultB'],
           memoryFlagA: cMap['memoryFlagA'],
           memoryFlagB: cMap['memoryFlagB'],
+          gameActionA: cMap['gameActionA'],
+          gameActionB: cMap['gameActionB'],
         );
       }
 

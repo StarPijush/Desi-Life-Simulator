@@ -18,11 +18,13 @@ class MilitaryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MilitaryScreen(
       character: character,
-      onTrainPhysically: () => _emit('career.military.train_physically'),
-      onWeaponsPractice: () => _emit('career.military.weapons_practice'),
-      onLeadershipTraining: () => _emit('career.military.leadership_training'),
-      onPromotionExam: () => _emit('career.military.promotion_exam'),
-      onSpecialForcesSelection: () => _emit('career.military.special_forces'),
+      onTrainPhysically: () => _emit(character.careerGroup == 'Military'
+          ? 'career.military.training'
+          : 'career.military.enlist'),
+      onWeaponsPractice: () => _emit('career.military.physical_drill'),
+      onLeadershipTraining: () => _emit('career.military.leadership_course'),
+      onPromotionExam: () => _emit('career.military.border_deployment'),
+      onSpecialForcesSelection: () => _emit('career.military.special_mission'),
     );
   }
 

@@ -10,6 +10,43 @@ class EventData {
 
   // Unified Smart Event System
   static final List<Map<String, dynamic>> allSmartEvents = [
+    // --- UNEXPECTED CAREER OFFERS (ADDENDUM 5) ---
+    {
+      'title': 'Political Mentorship',
+      'desc': 'A veteran political leader noticed your influence in the community. They are offering you a chance to join their party and start a political career.',
+      'type': 'Career',
+      'cond': (c) => c.age >= 25 && c.careerGroup != 'Politician' && c.social > 70 && c.karma > 60,
+      'weight': 5,
+      'choice': {
+        'title': 'Political Offer',
+        'desc': 'This will replace your current career.',
+        'optionA': 'Join Politics',
+        'optionB': 'Decline Politely',
+        'gameActionA': 'career.special.apply::Politician',
+        'effectA': {'reputation': 10},
+        'effectB': {'happiness': 5},
+        'resultA': 'You stepped into the turbulent world of politics!',
+        'resultB': 'You decided to stay out of the mud.',
+      }
+    },
+    {
+      'title': 'Military Recommendation',
+      'desc': 'A retired army officer was impressed by your discipline during a community crisis. He is willing to recommend you for military officer training.',
+      'type': 'Career',
+      'cond': (c) => c.age >= 18 && c.age <= 25 && c.careerGroup != 'Military' && c.health > 70,
+      'weight': 5,
+      'choice': {
+        'title': 'Military Offer',
+        'desc': 'This will replace your current career.',
+        'optionA': 'Enlist in Military',
+        'optionB': 'Decline Offer',
+        'gameActionA': 'career.apply_group::Military',
+        'effectA': {'discipline': 10},
+        'effectB': {'happiness': 5},
+        'resultA': 'You packed your bags for the academy!',
+        'resultB': 'You thanked him but declined.',
+      }
+    },
     // --- EMOTIONAL MEMORY ECHOES ---
     {
       'title': 'Father\'s Pride',

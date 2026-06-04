@@ -25,12 +25,48 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
   final List<Map<String, dynamic>> _offers = [];
 
   static const List<Map<String, dynamic>> _brands = [
-    {'name': 'Zomato', 'minFollowers': 5000, 'basePay': 1500, 'payPerFollower': 0.12, 'fame': 1},
-    {'name': 'Mamaearth', 'minFollowers': 8000, 'basePay': 2500, 'payPerFollower': 0.14, 'fame': 2},
-    {'name': 'Boat Audio', 'minFollowers': 12000, 'basePay': 4000, 'payPerFollower': 0.16, 'fame': 2},
-    {'name': 'Dream11', 'minFollowers': 25000, 'basePay': 8000, 'payPerFollower': 0.18, 'fame': 3},
-    {'name': 'Jio Fiber', 'minFollowers': 50000, 'basePay': 18000, 'payPerFollower': 0.22, 'fame': 4},
-    {'name': 'TATA Tea', 'minFollowers': 100000, 'basePay': 45000, 'payPerFollower': 0.25, 'fame': 5},
+    {
+      'name': 'Zomato',
+      'minFollowers': 5000,
+      'basePay': 1500,
+      'payPerFollower': 0.12,
+      'fame': 1
+    },
+    {
+      'name': 'Mamaearth',
+      'minFollowers': 8000,
+      'basePay': 2500,
+      'payPerFollower': 0.14,
+      'fame': 2
+    },
+    {
+      'name': 'Boat Audio',
+      'minFollowers': 12000,
+      'basePay': 4000,
+      'payPerFollower': 0.16,
+      'fame': 2
+    },
+    {
+      'name': 'Dream11',
+      'minFollowers': 25000,
+      'basePay': 8000,
+      'payPerFollower': 0.18,
+      'fame': 3
+    },
+    {
+      'name': 'Jio Fiber',
+      'minFollowers': 50000,
+      'basePay': 18000,
+      'payPerFollower': 0.22,
+      'fame': 4
+    },
+    {
+      'name': 'TATA Tea',
+      'minFollowers': 100000,
+      'basePay': 45000,
+      'payPerFollower': 0.25,
+      'fame': 5
+    },
   ];
 
   @override
@@ -44,7 +80,9 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
     if (_character.followers < 5000) return;
 
     final rng = Random();
-    final eligibleBrands = _brands.where((b) => _character.followers >= (b['minFollowers'] as int)).toList();
+    final eligibleBrands = _brands
+        .where((b) => _character.followers >= (b['minFollowers'] as int))
+        .toList();
     if (eligibleBrands.isEmpty) return;
 
     // Shuffle and pick 2-3 brands
@@ -55,7 +93,8 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
       final brand = eligibleBrands[i];
       final double basePay = (brand['basePay'] as int).toDouble();
       final double payPerFollower = brand['payPerFollower'] as double;
-      final double payout = basePay + (_character.followers * payPerFollower) + rng.nextInt(1000);
+      final double payout =
+          basePay + (_character.followers * payPerFollower) + rng.nextInt(1000);
       final int fame = brand['fame'] as int;
 
       _offers.add({
@@ -205,14 +244,15 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
                   child: const SizedBox(
                     width: 24,
                     height: 40,
-                    child: Icon(Icons.arrow_back, color: Color(0xFF10B981), size: 24),
+                    child: Icon(Icons.arrow_back,
+                        color: Color(0xFF10B981), size: 24),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Text(
                   'INFLUENCER STUDIO',
                   style: GoogleFonts.lexend(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: const Color(0xFF10B981),
                     letterSpacing: -0.02,
@@ -265,7 +305,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
           ),
           if (_character.followers < 5000)
             Container(
-              height: 72,
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               color: Colors.white,
               alignment: Alignment.centerLeft,
@@ -277,7 +317,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
                     child: Text(
                       'Locked: Reach 5,000 followers to unlock sponsorships.',
                       style: GoogleFonts.lexend(
-                        fontSize: 13,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFFBA1A1A),
                       ),
@@ -288,14 +328,14 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
             )
           else if (_offers.isEmpty)
             Container(
-              height: 72,
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               color: Colors.white,
               alignment: Alignment.center,
               child: Text(
                 'No sponsorships available right now. Post more content!',
                 style: GoogleFonts.lexend(
-                  fontSize: 13,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF5C5E62),
                 ),
@@ -330,7 +370,8 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
           ),
           Column(
             children: [
-              _buildStatRow('Brand Deals Completed', '${_character.brandDealsCompleted}'),
+              _buildStatRow(
+                  'Brand Deals Completed', '${_character.brandDealsCompleted}'),
               _buildStatRow('Total Content Posts', '${_character.totalPosts}'),
             ],
           ),
@@ -342,7 +383,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
 
   Widget _buildStatRow(String label, String value) {
     return Container(
-      height: 52,
+      height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -356,7 +397,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
           Text(
             label,
             style: GoogleFonts.lexend(
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF161C28),
             ),
@@ -364,7 +405,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
           Text(
             value,
             style: GoogleFonts.lexend(
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w800,
               color: const Color(0xFF006D37),
             ),
@@ -383,7 +424,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
     return GestureDetector(
       onTap: () => _showOfferDialog(index),
       child: Container(
-        height: 72,
+        height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -394,7 +435,7 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
         child: Row(
           children: [
             const Text('💰', style: TextStyle(fontSize: 24)),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -403,8 +444,8 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
                   Text(
                     '$company Campaign Offer',
                     style: GoogleFonts.lexend(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: const Color(0xFF161C28),
                     ),
                   ),
@@ -412,8 +453,8 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
                   Text(
                     'Payout: ₹${GameEngine.formatMoney(payout)} • Fame +$fame%',
                     style: GoogleFonts.lexend(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
                       color: const Color(0xFF006D37),
                     ),
                   ),

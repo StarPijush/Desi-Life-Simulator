@@ -35,8 +35,10 @@ class SchoolActivitiesScreen extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(id, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title:
+              Text(id, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
           content: Text(isJoined
               ? 'You are currently a member of the $id. You can practice harder to improve your performance or leave the activity.'
               : 'Would you like to try out for the $id? Make sure you meet the requirements.'),
@@ -83,17 +85,23 @@ class SchoolActivitiesScreen extends StatelessWidget {
   Widget _buildActivityRow(BuildContext context, String id, String emoji) {
     final bool isJoined = character.joinedActivities.contains(id);
     final int performance = character.activityPerformance[id] ?? 0;
-    
+
     return AppFlatRow(
       icon: Text(emoji, style: const TextStyle(fontSize: 24)),
       title: id,
-      subtitle: isJoined ? 'Performance: ${_getPerformanceString(performance)}' : null,
-      subtitleStyle: isJoined ? GoogleFonts.lexend(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFF006D37),
-      ) : null,
-      trailing: isJoined ? const Icon(Icons.check_circle, color: Color(0xFF006D37), size: 20) : null,
+      subtitle: isJoined
+          ? 'Performance: ${_getPerformanceString(performance)}'
+          : null,
+      subtitleStyle: isJoined
+          ? GoogleFonts.lexend(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF006D37),
+            )
+          : null,
+      trailing: isJoined
+          ? const Icon(Icons.check_circle, color: Color(0xFF006D37), size: 20)
+          : null,
       onTap: () => _showActivityDialog(context, id, isJoined),
     );
   }
@@ -114,7 +122,6 @@ class SchoolActivitiesScreen extends StatelessWidget {
               _buildActivityRow(context, 'Basketball', '🏀'),
             ],
           ),
-          
           _buildSectionHeader('ARTS & CULTURE'),
           AppFlatRowGroup(
             rows: [
@@ -124,7 +131,6 @@ class SchoolActivitiesScreen extends StatelessWidget {
               _buildActivityRow(context, 'Art Club', '🎨'),
             ],
           ),
-
           _buildSectionHeader('ACADEMICS & CLUBS'),
           AppFlatRowGroup(
             rows: [
@@ -133,7 +139,6 @@ class SchoolActivitiesScreen extends StatelessWidget {
               _buildActivityRow(context, 'Science Club', '🔬'),
             ],
           ),
-          
           _buildSectionHeader('VOLUNTEERING'),
           AppFlatRowGroup(
             rows: [
@@ -141,12 +146,9 @@ class SchoolActivitiesScreen extends StatelessWidget {
               _buildActivityRow(context, 'Teaching Volunteer', '👨‍🏫'),
             ],
           ),
-          
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 }
-
-

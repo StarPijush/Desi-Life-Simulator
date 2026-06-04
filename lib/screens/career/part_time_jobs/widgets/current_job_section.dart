@@ -49,7 +49,7 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
       ),
@@ -86,7 +86,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.lexend(
-          fontSize: 13,
+          fontSize: 12,
           height: 1,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF5C5E62),
@@ -97,8 +97,8 @@ class _SectionHeader extends StatelessWidget {
 }
 
 TextStyle _bodyStyle(Color color) => GoogleFonts.lexend(
-      fontSize: 16,
-      height: 1.4,
+      fontSize: 10,
+      height: 1.15,
       fontWeight: FontWeight.w500,
       color: color,
     );

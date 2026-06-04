@@ -20,12 +20,12 @@ class InfluencerStatsSection extends StatelessWidget {
         const AppSectionHeader.band('CREATOR STATS'),
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: GridView.count(
             crossAxisCount: 2,
             childAspectRatio: 2.8,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
@@ -68,7 +68,7 @@ class _StatTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +79,7 @@ class _StatTile extends StatelessWidget {
               child: Text(
                 value,
                 style: GoogleFonts.lexend(
-                  fontSize: 18,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFF181C1F),
                 ),
@@ -91,7 +91,7 @@ class _StatTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.lexend(
-                fontSize: 11,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF71717A),
               ),

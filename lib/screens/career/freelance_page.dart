@@ -104,7 +104,7 @@ PreferredSizeWidget _buildHtmlFreelanceAppBar(
               Text(
                 title.toUpperCase(),
                 style: GoogleFonts.lexend(
-                  fontSize: 18,
+                  fontSize: 16,
                   height: 1.2,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF161C28),
@@ -130,8 +130,7 @@ class FreelanceClientsScreen extends StatefulWidget {
   });
 
   @override
-  State<FreelanceClientsScreen> createState() =>
-      _FreelanceClientsScreenState();
+  State<FreelanceClientsScreen> createState() => _FreelanceClientsScreenState();
 }
 
 class _FreelanceClientsScreenState extends State<FreelanceClientsScreen> {
@@ -243,7 +242,7 @@ class _FreelanceClientsScreenState extends State<FreelanceClientsScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: const BoxDecoration(
               color: Color(0xFFF1F3FF),
               border: Border(
@@ -254,7 +253,7 @@ class _FreelanceClientsScreenState extends State<FreelanceClientsScreen> {
             child: Text(
               'AVAILABLE CLIENTS',
               style: GoogleFonts.lexend(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF3D4A3E),
                 letterSpacing: 1.2,
@@ -316,7 +315,7 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 90),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: _pressed
               ? const Color(0xFF2ECC71).withValues(alpha: 0.14)
@@ -330,9 +329,9 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
-                margin: const EdgeInsets.only(right: 16),
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(right: 10),
                 alignment: Alignment.center,
                 color: widget.client.tint,
                 child: Text(widget.client.emoji,
@@ -349,9 +348,9 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
                           child: Text(
                             widget.client.name,
                             style: GoogleFonts.lexend(
-                              fontSize: 18,
-                              height: 1.2,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              height: 1.1,
+                              fontWeight: FontWeight.w600,
                               color: const Color(0xFF161C28),
                             ),
                             maxLines: 1,
@@ -362,7 +361,7 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
                           GameEngine.formatMoney(
                               widget.client.payout.toDouble()),
                           style: GoogleFonts.lexend(
-                            fontSize: 13,
+                            fontSize: 10,
                             height: 1,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF006D37),
@@ -374,21 +373,21 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
                     Text(
                       widget.client.work,
                       style: GoogleFonts.lexend(
-                        fontSize: 12,
-                        height: 1.15,
+                        fontSize: 10,
+                        height: 1.1,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF3D4A3E),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
                           'STRESS:',
                           style: GoogleFonts.lexend(
-                            fontSize: 11,
+                            fontSize: 9,
                             height: 1,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF3D4A3E),
@@ -397,7 +396,7 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
                         const SizedBox(width: 8),
                         SizedBox(
                           width: 96,
-                          height: 8,
+                          height: 5,
                           child: Stack(
                             children: [
                               Container(color: const Color(0xFFDEDFE3)),
@@ -413,7 +412,7 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
                         Text(
                           widget.client.stressLabel.toUpperCase(),
                           style: GoogleFonts.lexend(
-                            fontSize: 11,
+                            fontSize: 9,
                             height: 1,
                             fontWeight: FontWeight.w600,
                             color: stressColor,
@@ -428,7 +427,7 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
               Icon(
                 widget.locked ? Icons.lock : Icons.chevron_right,
                 color: const Color(0xFFBBCBBB),
-                size: 24,
+                size: 20,
               ),
             ],
           ),
@@ -437,5 +436,3 @@ class _FreelanceClientRowState extends State<_FreelanceClientRow> {
     );
   }
 }
-
-

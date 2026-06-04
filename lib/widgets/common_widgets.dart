@@ -292,12 +292,12 @@ class AppFlatRow extends StatefulWidget {
     required this.onTap,
     this.locked = false,
     this.isPrestige = false,
-    this.height = 58,
+    this.height = 50,
     this.pressedColor = const Color(0xFFFAFAFA),
     this.lockedColor = const Color(0x99F1F3FF),
     this.lockedOpacity = 0.6,
     this.showChevron = true,
-    this.subtitleFontSize = 12,
+    this.subtitleFontSize = 10,
     this.subtitleWeight = FontWeight.w500,
     this.trailingBeforeGap = false,
   });
@@ -351,7 +351,7 @@ class _AppFlatRowState extends State<AppFlatRow> {
                             widget.title,
                             style: widget.titleStyle ??
                                 GoogleFonts.lexend(
-                                  fontSize: 16,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: widget.isPrestige
                                       ? const Color(0xFFB58A3D)
@@ -398,7 +398,7 @@ class _AppFlatRowState extends State<AppFlatRow> {
                   color: widget.isPrestige
                       ? const Color(0xFFFFD700)
                       : const Color(0xFFD4D4D8),
-                  size: 24,
+                  size: 20,
                 ),
             ],
           ),
@@ -629,7 +629,8 @@ class _ActivityListRowState extends State<ActivityListRow> {
               SizedBox(
                 width: 24,
                 child: Center(
-                  child: Text(widget.icon, style: const TextStyle(fontSize: 20)),
+                  child:
+                      Text(widget.icon, style: const TextStyle(fontSize: 20)),
                 ),
               ),
               const SizedBox(width: 16),

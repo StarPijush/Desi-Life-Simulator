@@ -111,7 +111,7 @@ class _ActionRowState extends State<_ActionRow> {
       child: Opacity(
         opacity: widget.enabled ? 1 : 0.6,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: _pressed ? const Color(0xFF2ECC71) : Colors.white,
             border: const Border(
@@ -120,7 +120,7 @@ class _ActionRowState extends State<_ActionRow> {
           child: Row(
             children: [
               Icon(widget.icon, color: const Color(0xFF006D37), size: 24),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,18 +128,18 @@ class _ActionRowState extends State<_ActionRow> {
                     Text(
                       widget.title,
                       style: GoogleFonts.lexend(
-                        fontSize: 16,
-                        height: 1.4,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        height: 1.1,
+                        fontWeight: FontWeight.w600,
                         color: const Color(0xFF161C28),
                       ),
                     ),
                     Text(
                       widget.subtitle,
                       style: GoogleFonts.lexend(
-                        fontSize: 13,
-                        height: 1,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        height: 1.1,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF5C5E62),
                       ),
                     ),
@@ -166,7 +166,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.lexend(
-          fontSize: 13,
+          fontSize: 12,
           height: 1,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF5C5E62),

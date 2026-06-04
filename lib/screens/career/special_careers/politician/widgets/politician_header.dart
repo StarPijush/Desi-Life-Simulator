@@ -13,7 +13,7 @@ class PoliticianHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       margin: const EdgeInsets.only(bottom: 4.0),
       color: AppColors.scaffoldBg,
       child: Row(
@@ -23,7 +23,8 @@ class PoliticianHeader extends StatelessWidget {
           Expanded(
             child: Text(
               character.name,
-              style: AppTextStyles.pageTitle.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.pageTitle
+                  .copyWith(color: AppColors.textPrimary),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -35,14 +36,14 @@ class PoliticianHeader extends StatelessWidget {
                 GameEngine.formatMoney(character.bankBalance),
                 style: AppTextStyles.pageTitle.copyWith(
                   color: AppColors.primary,
-                  fontSize: 18,
+                  fontSize: 14,
                 ),
               ),
               Text(
                 'Age: ${character.age}',
                 style: AppTextStyles.sectionLabel.copyWith(
                   color: AppColors.textMuted,
-                  fontSize: 13,
+                  fontSize: 9,
                 ),
               ),
             ],

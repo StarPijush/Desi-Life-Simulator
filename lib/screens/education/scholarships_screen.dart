@@ -23,18 +23,23 @@ class ScholarshipsScreen extends StatelessWidget {
     return AppSectionHeader.education(title);
   }
 
-  void _showScholarshipDialog(BuildContext context, String id, String title, bool isClaimed) {
+  void _showScholarshipDialog(
+      BuildContext context, String id, String title, bool isClaimed) {
     if (isClaimed) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: const Text('You have already claimed this scholarship. The funds were deposited into your bank account.'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(title,
+              style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+          content: const Text(
+              'You have already claimed this scholarship. The funds were deposited into your bank account.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK', style: TextStyle(color: Color(0xFF006D37))),
+              child:
+                  const Text('OK', style: TextStyle(color: Color(0xFF006D37))),
             ),
           ],
         ),
@@ -46,9 +51,12 @@ class ScholarshipsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: const Text('Would you like to apply for this scholarship? We will evaluate your eligibility based on your performance and stats.'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(title,
+              style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+          content: const Text(
+              'Would you like to apply for this scholarship? We will evaluate your eligibility based on your performance and stats.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -61,7 +69,8 @@ class ScholarshipsScreen extends StatelessWidget {
                     {'activityId': 'scholarship.apply::$id'}));
               },
               child: const Text('Apply',
-                  style: TextStyle(color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -69,8 +78,8 @@ class ScholarshipsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScholarshipRow(
-      BuildContext context, String id, String title, String subtitle, String emoji, double reward) {
+  Widget _buildScholarshipRow(BuildContext context, String id, String title,
+      String subtitle, String emoji, double reward) {
     final bool isClaimed = character.claimedScholarships.contains(id);
     final String formattedReward = NumberFormat.currency(
       symbol: '₹',
@@ -79,7 +88,6 @@ class ScholarshipsScreen extends StatelessWidget {
     ).format(reward);
 
     return AppFlatRow(
-      height: 64,
       icon: Text(emoji, style: const TextStyle(fontSize: 24)),
       title: title,
       subtitle: subtitle,
@@ -88,7 +96,7 @@ class ScholarshipsScreen extends StatelessWidget {
           : Text(
               formattedReward,
               style: GoogleFonts.lexend(
-                fontSize: 14,
+                fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF006D37),
               ),
@@ -118,7 +126,6 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-          
           _buildSectionHeader('High School Merit'),
           AppFlatRowGroup(
             rows: [
@@ -140,7 +147,6 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-
           _buildSectionHeader('Talent & Extracurricular'),
           AppFlatRowGroup(
             rows: [
@@ -178,12 +184,9 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-          
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 }
-
-

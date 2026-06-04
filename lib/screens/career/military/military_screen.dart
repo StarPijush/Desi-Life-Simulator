@@ -34,13 +34,13 @@ class MilitaryScreen extends StatelessWidget {
 
   static const List<String> _rankNames = [
     'Recruit',
-    'Sepoy',
-    'Naik',
-    'Havildar',
+    'Cadet',
     'Lieutenant',
     'Captain',
     'Major',
     'Colonel',
+    'Brigadier',
+    'General',
   ];
 
   @override
@@ -71,16 +71,17 @@ class MilitaryScreen extends StatelessWidget {
             medals: _medals,
             promotionScore: promotionScore,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           MilitaryActionsSection(
             promotionScore: promotionScore,
+            isEnlisted: character.careerGroup == 'Military',
             onTrainPhysically: onTrainPhysically,
             onWeaponsPractice: onWeaponsPractice,
             onLeadershipTraining: onLeadershipTraining,
             onPromotionExam: onPromotionExam,
             onSpecialForcesSelection: onSpecialForcesSelection,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           RankProgressionSection(
             ranks: _rankProgress(activeRankIndex),
           ),
@@ -95,7 +96,9 @@ class MilitaryScreen extends StatelessWidget {
   }
 
   int get _yearsServed {
-    return max(character.yearsInJob, character.yearsInRole).clamp(0, 99).toInt();
+    return max(character.yearsInJob, character.yearsInRole)
+        .clamp(0, 99)
+        .toInt();
   }
 
   int get _leadership {
@@ -108,7 +111,7 @@ class MilitaryScreen extends StatelessWidget {
     final score = ((character.jobPerformance * 0.45) +
             (character.discipline * 0.25) +
             (character.health * 0.15) +
-        (_leadership * 0.15))
+            (_leadership * 0.15))
         .round();
     return score.clamp(0, 100).toInt();
   }
@@ -121,7 +124,8 @@ class MilitaryScreen extends StatelessWidget {
         .where((key) => key.toLowerCase().contains('deployment'))
         .length;
     final achievementCount = character.achievements
-        .where((achievement) => achievement.toLowerCase().contains('deployment'))
+        .where(
+            (achievement) => achievement.toLowerCase().contains('deployment'))
         .length;
     return max(historyCount, max(memoryCount, achievementCount));
   }
@@ -175,7 +179,7 @@ class _ActiveDutySection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       foregroundDecoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1),
@@ -199,9 +203,9 @@ class _ActiveDutySection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lexend(
-                    fontSize: 24,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    height: 1.1,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF18181B),
                     letterSpacing: -0.5,
                   ),
@@ -211,9 +215,9 @@ class _ActiveDutySection extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.lexend(
-                    fontSize: 16,
-                    height: 1.4,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                    height: 1.1,
+                    fontWeight: FontWeight.w600,
                     color: const Color(0xFF059669),
                   ),
                 ),
@@ -227,8 +231,8 @@ class _ActiveDutySection extends StatelessWidget {
               Text(
                 formatMoney(monthlyPay),
                 style: GoogleFonts.lexend(
-                  fontSize: 18,
-                  height: 1.2,
+                  fontSize: 14,
+                  height: 1.1,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF18181B),
                 ),
@@ -248,7 +252,7 @@ class _ActiveDutySection extends StatelessWidget {
 
   TextStyle get _labelStyle {
     return GoogleFonts.lexend(
-      fontSize: 13,
+      fontSize: 9,
       height: 1.0,
       fontWeight: FontWeight.w600,
       color: const Color(0xFF71717A),

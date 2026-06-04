@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/design_system.dart';
+import '../../../../core/engine.dart';
 import '../../../../models/character.dart';
 import 'widgets/politician_header.dart';
 import 'widgets/politician_navigation_section.dart';
@@ -9,8 +10,13 @@ import 'widgets/politician_stat_bars.dart';
 
 class PoliticianScreen extends StatelessWidget {
   final Character character;
+  final void Function(GameAction) onGameAction;
 
-  const PoliticianScreen({super.key, required this.character});
+  const PoliticianScreen({
+    super.key,
+    required this.character,
+    required this.onGameAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +52,10 @@ class PoliticianScreen extends StatelessWidget {
           PoliticianStatBars(character: character),
           
           _buildSectionHeader('Management'),
-          PoliticianNavigationSection(character: character),
+          PoliticianNavigationSection(
+            character: character,
+            onAction: _emit,
+          ),
           
           // Quick Action Button
           Padding(
@@ -56,7 +65,7 @@ class PoliticianScreen extends StatelessWidget {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Implement start political campaign logic
+                  _emit('campaigning');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -79,6 +88,13 @@ class PoliticianScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _emit(String actionId) {
+    onGameAction(GameAction(
+      'career.perform',
+      {'actionId': 'career.politician.$actionId'},
+    ));
   }
 
   Widget _buildSectionHeader(String title) {

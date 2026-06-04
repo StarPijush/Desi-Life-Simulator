@@ -61,14 +61,18 @@ class _RankRow extends StatelessWidget {
     final locked = progress.state == MilitaryRankState.locked;
 
     return Opacity(
-      opacity: completed ? 0.5 : locked ? 0.6 : 1,
+      opacity: completed
+          ? 0.5
+          : locked
+              ? 0.6
+              : 1,
       child: Container(
         color: active
             ? const Color(0xFFECFDF5)
             : completed
                 ? const Color(0xFFFAFAFA)
                 : Colors.white,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             SizedBox(
@@ -87,16 +91,17 @@ class _RankRow extends StatelessWidget {
                 size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 active ? progress.rank.toUpperCase() : progress.rank,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.lexend(
-                  fontSize: 16,
-                  height: 1.4,
-                  fontWeight: active || completed ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 13,
+                  height: 1.1,
+                  fontWeight:
+                      active || completed ? FontWeight.w600 : FontWeight.w500,
                   color: active
                       ? const Color(0xFF064E3B)
                       : const Color(0xFF18181B),
@@ -108,7 +113,7 @@ class _RankRow extends StatelessWidget {
               Text(
                 progress.status!.toUpperCase(),
                 style: GoogleFonts.lexend(
-                  fontSize: 13,
+                  fontSize: 9,
                   height: 1.0,
                   fontWeight: active ? FontWeight.w900 : FontWeight.w600,
                   fontStyle: completed ? FontStyle.italic : FontStyle.normal,
@@ -136,7 +141,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.lexend(
-          fontSize: 13,
+          fontSize: 12,
           height: 1.0,
           fontWeight: FontWeight.w600,
           color: const Color(0xFF71717A),

@@ -63,7 +63,7 @@ class _PartTimeJobsScreenState extends State<PartTimeJobsScreen> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 16),
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           PartTimeStatusSection(
             character: displayCharacter,
             currentJob: currentJob,
@@ -71,19 +71,19 @@ class _PartTimeJobsScreenState extends State<PartTimeJobsScreen> {
             responsibility: _responsibility,
             customerSkill: _customerSkill,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           PositionsSection(
             character: displayCharacter,
             jobs: PartTimeJobsData.jobs,
             onSelectJob: _confirmJob,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           CurrentJobSection(
             job: currentJob,
             performance: _performance,
             monthsWorked: _monthsWorked,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           WorkActionsSection(
             hasJob: currentJob != null,
             onWorkShift: () => _workAction('work_shift'),
@@ -245,11 +245,11 @@ class _PartTimeHeader extends StatelessWidget implements PreferredSizeWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.lexend(
-                  fontSize: 24,
-                  height: 1.2,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  height: 1.1,
+                  fontWeight: FontWeight.w700,
                   color: const Color(0xFF161C28),
-                  letterSpacing: -0.5,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

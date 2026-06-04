@@ -13,14 +13,15 @@ class PoliticianStatBars extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.cardBg,
-      margin: const EdgeInsets.only(bottom: 12.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: [
           // Position Row
-          _buildInfoRow('Current Position', character.currentPosition, isBold: true),
+          _buildInfoRow('Current Position', character.currentPosition,
+              isBold: true),
           // Party Row
           _buildInfoRow('Party', character.partyName, isMuted: true),
-          
+
           // Popularity Bar
           _buildProgressBar(
             label: 'Popularity',
@@ -28,7 +29,7 @@ class PoliticianStatBars extends StatelessWidget {
             color: AppColors.info,
             textColor: AppColors.primary,
           ),
-          
+
           // Public Trust Bar
           _buildProgressBar(
             label: 'Public Trust',
@@ -42,9 +43,10 @@ class PoliticianStatBars extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isBold = false, bool isMuted = false}) {
+  Widget _buildInfoRow(String label, String value,
+      {bool isBold = false, bool isMuted = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.divider, width: 1.0),
@@ -77,11 +79,13 @@ class PoliticianStatBars extends StatelessWidget {
     bool isLast = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        border: isLast ? null : const Border(
-          bottom: BorderSide(color: AppColors.divider, width: 1.0),
-        ),
+        border: isLast
+            ? null
+            : const Border(
+                bottom: BorderSide(color: AppColors.divider, width: 1.0),
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,14 +106,15 @@ class PoliticianStatBars extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Container(
-            height: 16,
+            height: 5,
             width: double.infinity,
             color: AppColors.dividerLight,
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
-              widthFactor: (value / 100.0).clamp(0.005, 1.0), // 0.5% min width for visibility like HTML
+              widthFactor: (value / 100.0)
+                  .clamp(0.005, 1.0), // 0.5% min width for visibility like HTML
               child: Container(
                 color: color,
               ),

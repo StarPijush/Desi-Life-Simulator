@@ -84,7 +84,7 @@ class _PositionRowState extends State<_PositionRow> {
       child: Opacity(
         opacity: locked ? 0.8 : 1,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: background,
             border: const Border(
@@ -93,7 +93,7 @@ class _PositionRowState extends State<_PositionRow> {
           child: Row(
             children: [
               SizedBox(
-                width: 32,
+                width: 28,
                 child: locked
                     ? ColorFiltered(
                         colorFilter: const ColorFilter.mode(
@@ -106,7 +106,7 @@ class _PositionRowState extends State<_PositionRow> {
                     : Text(widget.job.emoji,
                         style: const TextStyle(fontSize: 24, height: 1)),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,9 +116,9 @@ class _PositionRowState extends State<_PositionRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lexend(
-                        fontSize: 18,
-                        height: 1.2,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        height: 1.1,
+                        fontWeight: FontWeight.w600,
                         color: locked
                             ? const Color(0xFF5C5E62)
                             : const Color(0xFF161C28),
@@ -131,9 +131,9 @@ class _PositionRowState extends State<_PositionRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lexend(
-                        fontSize: 13,
-                        height: 1.0,
-                        fontWeight: locked ? FontWeight.w700 : FontWeight.w600,
+                        fontSize: 10,
+                        height: 1.1,
+                        fontWeight: locked ? FontWeight.w600 : FontWeight.w500,
                         color: locked
                             ? const Color(0xFFBA1A1A)
                             : const Color(0xFF5C5E62),
@@ -152,7 +152,7 @@ class _PositionRowState extends State<_PositionRow> {
                     Text(
                       'Age ${widget.job.minAge}+',
                       style: GoogleFonts.lexend(
-                        fontSize: 13,
+                        fontSize: 9,
                         height: 1.0,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF5C5E62),
