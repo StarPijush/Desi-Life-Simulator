@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'relationship.dart';
 import 'loan_model.dart';
 import 'career_history_entry.dart';
+import 'actor_career_data.dart';
 
 part 'character.g.dart';
 
@@ -357,6 +358,9 @@ class Character extends HiveObject {
   @HiveField(113)
   List<CareerHistoryEntry> careerHistory;
 
+  @HiveField(114)
+  ActorCareerData? actorStats;
+
   Character({
     required this.name,
     this.age = 0,
@@ -482,6 +486,7 @@ class Character extends HiveObject {
     this.isPartyMember = false,
     this.isStudentLeader = false,
     List<CareerHistoryEntry> careerHistory = const [],
+    this.actorStats,
   })  : achievements = List<String>.from(achievements),
         ownedAssets = List<String>.from(ownedAssets),
         relationships = List<Relationship>.from(relationships),
@@ -850,6 +855,10 @@ class Character extends HiveObject {
       };
       personalityScores[personality] = 70;
     }
+
+    if (actorStats != null) {
+      // Non-nullable fields, default values handled by constructor/Hive
+    }
   }
 
   /// Part of robust save system: Critical Check Only
@@ -1108,6 +1117,7 @@ class Character extends HiveObject {
         'isPartyMember': isPartyMember,
         'isStudentLeader': isStudentLeader,
         'careerHistory': careerHistory.map((entry) => entry.toJson()).toList(),
+        'actorStats': actorStats?.toJson(),
       };
 
   factory Character.fromJson(Map<String, dynamic> json) => Character(
@@ -1235,6 +1245,13 @@ class Character extends HiveObject {
                     Map<String, dynamic>.from(entry as Map),
                   ))
             .toList(growable: true),
+        actorStats: json['actorStats'] == null
+            ? null
+            : json['actorStats'] is ActorCareerData
+                ? json['actorStats'] as ActorCareerData
+                : ActorCareerData.fromJson(
+                    Map<String, dynamic>.from(json['actorStats'] as Map),
+                  ),
       );
 
   Character copyWith({
@@ -1346,6 +1363,7 @@ class Character extends HiveObject {
     bool? isPartyMember,
     bool? isStudentLeader,
     List<CareerHistoryEntry>? careerHistory,
+    ActorCareerData? actorStats,
   }) {
     return Character(
       name: name ?? this.name,
@@ -1487,6 +1505,7 @@ class Character extends HiveObject {
         careerHistory: List<CareerHistoryEntry>.from(
             careerHistory ?? this.careerHistory,
             growable: true),
+        actorStats: actorStats ?? this.actorStats,
       );
   }
 }

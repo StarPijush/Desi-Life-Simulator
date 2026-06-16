@@ -17,6 +17,8 @@ import 'activities_page.dart';
 import 'finance/finance_page.dart';
 import 'people/people_page.dart';
 import '../models/event_choice.dart';
+import '../widgets/events/event_card.dart';
+import '../widgets/events/event_types.dart';
 
 typedef LifeAction = ActionResult Function(Character character);
 
@@ -275,9 +277,9 @@ class _HomePageState extends State<HomePage> {
               metadata: {'age': updatedCharacter.age},
             ),
           ]
-        : result.events
-            .map((event) => LifeEvent.fromJson(event.toJson()))
-            .toList();
+        : result.events;
+
+    final rawActionEvents = actionEvents;
 
     _characterNotifier.value = updatedCharacter;
     _eventsNotifier.value = _sanitizeTimeline([
@@ -290,23 +292,43 @@ class _HomePageState extends State<HomePage> {
     StorageService.saveCharacter(updatedCharacter);
     _saveEvents();
 
-    if (showResultPopup && mounted) {
-      final mainEvent = actionEvents.first;
-      showDialog(
-        context: context,
-        useRootNavigator: true,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(mainEvent.title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: Text(mainEvent.description, style: GoogleFonts.lexend()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Continue', style: TextStyle(color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+    if (showResultPopup && mounted && rawActionEvents.isNotEmpty) {
+      final mainEvent = rawActionEvents.cast<LifeEvent?>().firstWhere(
+        (e) => e is ActionEvent,
+        orElse: () => rawActionEvents.first,
       );
+      final popupAllowed = mainEvent?.metadata['popupAllowed'] != false;
+
+      if (mainEvent is ActionEvent && popupAllowed) {
+        showEventCard(
+          context: context,
+          category: mainEvent.category,
+          mode: mainEvent.mode,
+          title: mainEvent.title,
+          description: mainEvent.description,
+          infoRows: mainEvent.infoRows,
+          requirements: mainEvent.requirements,
+          illustration: mainEvent.emojiIllustration != null 
+              ? EventIllustration.emoji(mainEvent.emojiIllustration!)
+              : null,
+        );
+      } else if (mainEvent != null && popupAllowed) {
+        showDialog(
+          context: context,
+          useRootNavigator: true,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Text(mainEvent.title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+            content: Text(mainEvent.description, style: GoogleFonts.lexend()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Continue', style: TextStyle(color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 

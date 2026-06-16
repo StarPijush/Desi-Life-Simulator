@@ -1,0 +1,72 @@
+==== REPLACE ====
+"import 'dart:math';\nimport 'dart:ui';\nimport 'package:flutter/foundation.dart';\nimport '../models/career_history_entry.dart';\nimport '../models/character.dart';\nimport '../models/loan_model.dart';\nimport '../models/life_event.dart';\nimport '../models/part_time_job.dart';\nimport '../models/relationship.dart';\nimport '../models/event_choice.dart';\nimport '../widgets/events/event_types.dart';\nimport 'assets_data.dart';\nimport 'investments_data.dart';\nimport 'event_data.dart';\nimport 'enums.dart';\nimport 'career_data.dart';\nimport 'institute_data.dart';\nimport 'part_time_jobs_data.dart';\nimport 'random_events.dart';\nimport 'events/event_factory.dart';\nimport 'events/smart_event_converter.dart';\n\n// Top-level worker for Isolate/Compute\n// Using Map for strict serializable data crossing the isolate boundary\nMap<String, dynamic> simulateAgeUp(Map<String, dynamic> characterJson) {"
+
+==== REPLACE ====
+    if (eligible.isEmpty) return [];
+
+    final List<LifeEvent> results = [];
+    final List<SmartEvent> triggeredSmartEvents = [];
+    final Random r = Random();
+
+    for (int i = 0; i < count; i++) {
+
+      final selected = eligible[selectedIdx];
+      triggeredSmartEvents.add(selected);
+
+      // Update Event History (Deduplication)
+
+      eligible.removeAt(selectedIdx);
+    }
+
+    // --- SMART EVENT POPUP CONVERSION ---
+    final popupCandidates = triggeredSmartEvents.where((e) => e.popupEligible).toList();
+    if (popupCandidates.isNotEmpty) {
+      popupCandidates.sort((a, b) => b.popupPriority.compareTo(a.popupPriority));
+      final topEvent = popupCandidates.first;
+      final actionEvent = convertSmartEventToActionEvent(topEvent, c);
+      if (actionEvent != null) {
+        results.add(actionEvent);
+      }
+    }
+
+    return results;
+  }
+
+==== REPLACE ====
+"  static List<LifeEvent> _pickSmartEvents(Character c, {int count = 1}) {\n    final eligible = EventData.allSmartEvents.where((e) {\n      // --- EVENT DEDUPLICATION (COOLDOWN) ---\n      final title = e.title;\n      if (c.eventHistory.containsKey(title)) {\n        if (c.age - c.eventHistory[title]! < 20) return false;\n      }\n\n      // --- CONTEXTUAL FILTERING (LIFESTYLE TIERS) ---\n      final requiredTier = e.tier;\n      if (requiredTier != null && c.lifestyleTier != requiredTier) return false;\n\n      // 1. Wealth Filtering (Rich people don't get minor money stress)\n      if (c.bankBalance > 2000000 &&\n          e.type == 'Financial' &&\n          (e.money) > -50000 &&\n          (e.money) < 0) return false;\n\n      // 2. Fame Filtering (Famous people get more drama, less generic neutral events)\n      if (c.fame > 75 && e.type == 'Neutral' && _rng.nextDouble() < 0.5) {\n        return false;\n      }\n\n      // 4. Sports Career Gating\n      if (e.category == 'Sports') {\n        if (c.jobTitle != 'Cricketer' && c.jobTitle != 'Footballer') return false;\n      }\n\n      // 3. Identity Insecurity (High-fame/Wealthy characters don't get \"Sharma Ji\" type insecurity)\n      if ((c.bankBalance > 5000000 || c.fame > 80) &&\n          e.title.contains('Sharma')) return false;\n\n      try {\n        return e.cond(c) == true;\n      } catch (err) {\n        debugPrint(\"Error evaluating event condition: $err\");\n        return false;\n      }\n    }).toList();\n\n    if (eligible.isEmpty) return [];\n\n    final List<LifeEvent> results = [];\n    final List<SmartEvent> triggeredSmartEvents = [];\n    final Random r = Random();\n\n    for (int i = 0; i < count; i++) {\n      if (eligible.isEmpty) break;\n\n      // Calculate total weight with modifiers\n      double totalWeight = 0;\n      final List<double> weights = [];\n\n      for (var e in eligible) {\n        double w = (e.weight).toDouble();\n\n        // Category Weighting\n        if (['Career', 'Education', 'Relationships'].contains(e.type)
+<truncated 4833 bytes>
+
+==== REPLACE ====
+"import 'career_data.dart';\nimport 'institute_data.dart';\nimport 'part_time_jobs_data.dart';\nimport '../models/smart_event.dart';\nimport 'events/smart_event_converter.dart';"
+
+==== REPLACE ====
+"  static bool canEnterSpecial(SpecialCareerDefinition career, Character c) {\n    return true; // Temporarily bypassed for testing\n  }"
+
+==== REPLACE ====
+==== REPLACE ====
+import '../../../../../../models/character.dart';
+
+==== REPLACE ====
+==== REPLACE ====
+==== REPLACE ====
+    }
+  }
+
+  static void _applyActorCareerEvents(Character character, List<LifeEvent> events) {
+
+==== REPLACE ====
+"  static void _applyActorCareerEvents(Character character, List<LifeEvent> events) {\n    if (character.actorStats == null) return;\n    \n    final stats = character.actorStats!;\n    final List<Map<dynamic, dynamic>> stillActive = [];\n    \n    for (var project in stats.activeProjects) {\n      bool isMovie = project['type'] == 'movie';\n      \n      // Calculate progress increment\n      double progressInc = isMovie \n          ? (10 + _rng.nextInt(21)) / 100.0 // 10% to 30%\n          : (5 + _rng.nextInt(16)) / 100.0; // 5% to 20%\n          \n      // Check for random production events (15% chance)\n      if (_rng.nextDouble() < 0.15) {\n        bool positive = _rng.nextBool();\n        if (isMovie) {\n          if (positive) {\n            _addEvent(events, character.age, '🎬 MEDIA ATTENTION',\n                description: 'Your upcoming movie \"${project['title']}\" is generating massive buzz!',\n                type: LifeEventType.positive);\n            stats.fame += 3;\n            progressInc += 0.05;\n          } else {\n            _addEvent(events, character.age, '⏸️ PRODUCTION DELAY',\n                description: 'Director conflicts have delayed filming for \"${project['title']}\".',\n                type: LifeEventType.negative);\n            progressInc -= 0.10;\n          }\n        } else {\n          if (positive) {\n            _addEvent(events, character.age, '📺 RATINGS BUZZ',\n                description: 'Early screenings of \"${project['title']}\" are highly rated!',\n                type: LifeEventType.positive);\n            stats.reputation += 2;\n            progressInc += 0.05;\n          } else {\n            _addEvent(events, character.age, '📅 SCHEDULE CONFLICT',\n                description: 'Scheduling issues delayed the shoot for \"${project['title']}\".',\n                type: LifeEventType.negative);\n            progressInc -= 0.05;\n          }\n        }\n      }\n      \n      // Apply progress\n      double currentProgress = (project['progress'] as double
+<truncated 1431 bytes>
+
+==== REPLACE ====
+"            priority: EventPriority.important);"
+
+==== REPLACE ====
+"import '../models/smart_event.dart';\nimport 'events/smart_event_converter.dart';\nimport 'events/event_factory.dart';\nimport '../screens/career/special_careers/actor/models/released_project.dart';\n\n// Top-level worker for Isolate/Compute"
+
+==== REPLACE ====
+"      // Check completion / release\n      if (currentProgress >= 1.0) {\n        // Immediate Release Logic\n        int luck = _rng.nextInt(101); // 0-100\n        double rawReleaseScore;\n        \n        if (isMovie) {\n          rawReleaseScore = (stats.actingSkill * 0.35) +\n              (stats.fame * 0.20) +\n              (stats.reputation * 0.15) +\n              (stats.experience * 0.10) +\n              (luck * 0.20);\n        } else {\n          rawReleaseScore = (stats.actingSkill * 0.30) +\n              (stats.fame * 0.25) +\n              (stats.reputation * 0.15) +\n              (stats.experience * 0.10) +\n              (luck * 0.20);\n        }\n        \n        int releaseScore = rawReleaseScore.round().clamp(0, 100);\n        \n        // Generate ratings (weighted toward releaseScore)\n        int criticScore = (releaseScore + (_rng.nextInt(31) - 15)).clamp(0, 100); // +/- 15\n        int audienceScore = (releaseScore + (_rng.nextInt(41) - 20)).clamp(0, 100); // +/- 20\n        \n        // Determine outcome\n        String outcome;\n        if (releaseScore <= 24) outcome = 'FLOP';\n        else if (releaseScore <= 49) outcome = 'AVERAGE';\n        else if (releaseScore <= 74) outcome = 'HIT';\n        else if (releaseScore <= 89) outcome = 'SUPER HIT';\n        else outcome = 'BLOCKBUSTER';\n        \n        // Apply Rewards\n        if (isMovie) {\n          stats.completedMovieProjects.add(project['title']); // Keep legacy\n          \n          if (outcome == 'FLOP') {\n            stats.fame -= 3;\n            stats.reputation -= 2;\n          } else if (outcome == 'AVERAGE') {\n            stats.fame += 1;\n            stats.fanbase += 1000;\n          } else if (outcome == 'HIT') {\n            stats.fame += 5;\n            stats.reputation += 2;\n            stats.fanbase += 10000;\n          } else if (outcome == 'SUPER HIT') {\n            stats.fame += 10;\n            stats.reputation += 5;\n            stats.fanbase += 100000;\n          } else if (outcome == 'BLOCKBUSTER
+<truncated 3272 bytes>
+
+==== REPLACE ====
+==== REPLACE ====

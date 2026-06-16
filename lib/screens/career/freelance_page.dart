@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/engine.dart';
 import '../../models/character.dart';
+import '../../widgets/events/event_card.dart';
+import '../../widgets/events/event_types.dart';
 
 class _FreelanceClient {
   final String emoji;
@@ -157,11 +159,23 @@ class _FreelanceClientsScreenState extends State<FreelanceClientsScreen> {
   void _performGig(_FreelanceClient client) {
     if (_skill < client.requiredSkill) {
       HapticFeedback.selectionClick();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Needs ${_requiredTier(client.requiredSkill)} freelance skill.'),
-          duration: const Duration(milliseconds: 900),
+      showEventCard(
+        context: context,
+        category: EventCategory.freelance,
+        mode: EventCardMode.requirement,
+        title: 'Client Unavailable',
+        description: 'You need a higher freelance skill tier to take this gig.',
+        illustration: const EventIllustration.emoji('🔒'),
+        requirements: [
+          EventRequirement(
+            emojiIcon: '💻',
+            label: 'Skill (Current: ${_requiredTier(_skill)} | Required: ${_requiredTier(client.requiredSkill)})',
+            isMet: false,
+          ),
+        ],
+        primaryAction: EventCardAction(
+          label: 'Okay',
+          onPressed: () => Navigator.of(context).pop(),
         ),
       );
       return;

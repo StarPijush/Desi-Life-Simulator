@@ -110,38 +110,39 @@ class PoliticianNavigationSection extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () {
-        showDialog(
+        showModalBottomSheet(
           context: context,
           useRootNavigator: true,
-          builder: (ctx) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            title: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: actions
-                  .map(
-                    (action) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(action.label),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                        onAction(action.id);
-                      },
-                    ),
-                  )
-                  .toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Close',
-                    style: TextStyle(color: AppColors.primary)),
-              ),
-            ],
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
+          builder: (ctx) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 16),
+                    ...actions.map(
+                      (action) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(action.label),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          onAction(action.id);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
       child: Container(

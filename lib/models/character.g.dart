@@ -138,15 +138,15 @@ class CharacterAdapter extends TypeAdapter<Character> {
       connections: (fields[110] as List).cast<String>(),
       isPartyMember: fields[111] as bool,
       isStudentLeader: fields[112] as bool,
-      careerHistory:
-          (fields[113] as List? ?? const []).cast<CareerHistoryEntry>(),
+      careerHistory: (fields[113] as List).cast<CareerHistoryEntry>(),
+      actorStats: fields[114] as ActorCareerData?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Character obj) {
     writer
-      ..writeByte(114)
+      ..writeByte(115)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -374,7 +374,9 @@ class CharacterAdapter extends TypeAdapter<Character> {
       ..writeByte(112)
       ..write(obj.isStudentLeader)
       ..writeByte(113)
-      ..write(obj.careerHistory);
+      ..write(obj.careerHistory)
+      ..writeByte(114)
+      ..write(obj.actorStats);
   }
 
   @override

@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../../models/character.dart';
 import '../../core/engine.dart';
 import '../../widgets/common_widgets.dart';
-
+import '../../widgets/events/event_card.dart';
+import '../../widgets/events/event_types.dart';
 class ScholarshipsScreen extends StatelessWidget {
   final Character character;
   final void Function(GameAction) onGameAction;
@@ -23,58 +24,53 @@ class ScholarshipsScreen extends StatelessWidget {
     return AppSectionHeader.education(title);
   }
 
-  void _showScholarshipDialog(
-      BuildContext context, String id, String title, bool isClaimed) {
+  void _showScholarshipDialog(BuildContext context, String id, String title,
+      bool isClaimed, double reward, String subtitle) {
     if (isClaimed) {
-      showDialog(
+      showEventCard(
         context: context,
-        builder: (ctx) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(title,
-              style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: const Text(
-              'You have already claimed this scholarship. The funds were deposited into your bank account.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child:
-                  const Text('OK', style: TextStyle(color: Color(0xFF006D37))),
-            ),
-          ],
+        category: EventCategory.scholarship,
+        mode: EventCardMode.info,
+        title: title,
+        description: 'You have already claimed this scholarship. The funds were deposited into your bank account.',
+        illustration: const EventIllustration.emoji('💰'),
+        primaryAction: EventCardAction(
+          label: 'OK',
+          onPressed: () => Navigator.of(context).pop(),
         ),
       );
       return;
     }
 
-    showDialog(
+    final formattedReward = NumberFormat.currency(
+      symbol: '₹',
+      decimalDigits: 0,
+      locale: 'en_IN',
+    ).format(reward);
+
+    showEventCard(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(title,
-              style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: const Text(
-              'Would you like to apply for this scholarship? We will evaluate your eligibility based on your performance and stats.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                onGameAction(GameAction('activity.perform',
-                    {'activityId': 'scholarship.apply::$id'}));
-              },
-              child: const Text('Apply',
-                  style: TextStyle(
-                      color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
+      category: EventCategory.scholarship,
+      mode: EventCardMode.offer,
+      title: 'Scholarship: $title',
+      description: 'Would you like to apply for this scholarship? We will evaluate your eligibility based on your performance and stats.',
+      illustration: const EventIllustration.emoji('🎓'),
+      infoRows: [
+        EventInfoRow(label: 'Grant', value: formattedReward),
+        EventInfoRow(label: 'Criteria', value: subtitle.replaceAll('Requires ', '')),
+      ],
+      primaryAction: EventCardAction(
+        label: 'Apply',
+        onPressed: () {
+          Navigator.of(context).pop();
+          onGameAction(GameAction('activity.perform',
+              {'activityId': 'scholarship.apply::$id'}));
+        },
+      ),
+      secondaryAction: EventCardAction(
+        label: 'Cancel',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
     );
   }
 
@@ -101,7 +97,7 @@ class ScholarshipsScreen extends StatelessWidget {
                 color: const Color(0xFF006D37),
               ),
             ),
-      onTap: () => _showScholarshipDialog(context, id, title, isClaimed),
+      onTap: () => _showScholarshipDialog(context, id, title, isClaimed, reward, subtitle),
     );
   }
 

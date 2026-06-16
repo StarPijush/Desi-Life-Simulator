@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/character.dart';
 import '../../core/engine.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/events/event_card.dart';
+import '../../widgets/events/event_types.dart';
 
 class SchoolActivitiesScreen extends StatelessWidget {
   final Character character;
@@ -31,54 +33,52 @@ class SchoolActivitiesScreen extends StatelessWidget {
   }
 
   void _showActivityDialog(BuildContext context, String id, bool isJoined) {
-    showDialog(
+    showEventCard(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title:
-              Text(id, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-          content: Text(isJoined
-              ? 'You are currently a member of the $id. You can practice harder to improve your performance or leave the activity.'
-              : 'Would you like to try out for the $id? Make sure you meet the requirements.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            if (isJoined) ...[
-              TextButton(
+      category: EventCategory.education,
+      mode: EventCardMode.actions,
+      title: id,
+      description: isJoined
+          ? 'You are currently a member of the $id. You can practice harder to improve your performance or leave the activity.'
+          : 'Would you like to try out for the $id? Make sure you meet the requirements.',
+      illustration: const EventIllustration.emoji('🏫'),
+      actions: isJoined
+          ? [
+              EventCardAction(
+                label: 'Practice Harder',
                 onPressed: () {
-                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
                   onGameAction(GameAction('activity.perform',
                       {'activityId': 'school_activity.practice::$id'}));
                 },
-                child: const Text('Practice Harder',
-                    style: TextStyle(color: Color(0xFF006D37))),
               ),
-              TextButton(
+              EventCardAction(
+                label: 'Leave Activity',
                 onPressed: () {
-                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
                   onGameAction(GameAction('activity.perform',
                       {'activityId': 'school_activity.leave::$id'}));
                 },
-                child: const Text('Leave Activity',
-                    style: TextStyle(color: Colors.red)),
               ),
-            ] else
-              TextButton(
+              EventCardAction(
+                label: 'Cancel',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ]
+          : [
+              EventCardAction(
+                label: 'Join',
                 onPressed: () {
-                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
                   onGameAction(GameAction('activity.perform',
                       {'activityId': 'school_activity.join::$id'}));
                 },
-                child: const Text('Join',
-                    style: TextStyle(color: Color(0xFF006D37))),
               ),
-          ],
-        );
-      },
+              EventCardAction(
+                label: 'Cancel',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
     );
   }
 

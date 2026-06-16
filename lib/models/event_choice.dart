@@ -7,6 +7,14 @@ class StatEffect {
   final int social;
   final int karma;
   final double money;
+  final int fame;
+  final int stressLevel;
+  final int looks;
+  final int jobPerformance;
+  final int discipline;
+  final int reputation;
+  final double annualIncomeMod;
+  final int cibilDelta;
 
   const StatEffect({
     this.happiness = 0,
@@ -15,6 +23,14 @@ class StatEffect {
     this.social = 0,
     this.karma = 0,
     this.money = 0,
+    this.fame = 0,
+    this.stressLevel = 0,
+    this.looks = 0,
+    this.jobPerformance = 0,
+    this.discipline = 0,
+    this.reputation = 0,
+    this.annualIncomeMod = 1.0,
+    this.cibilDelta = 0,
   });
 
   Map<String, dynamic> toMap() => {
@@ -24,6 +40,14 @@ class StatEffect {
         'social': social,
         'karma': karma,
         'money': money,
+        'fame': fame,
+        'stressLevel': stressLevel,
+        'looks': looks,
+        'jobPerformance': jobPerformance,
+        'discipline': discipline,
+        'reputation': reputation,
+        'annualIncomeMod': annualIncomeMod,
+        'cibilDelta': cibilDelta,
       };
 
   factory StatEffect.fromMap(Map<String, dynamic> map) => StatEffect(
@@ -33,6 +57,14 @@ class StatEffect {
         social: map['social'] ?? 0,
         karma: map['karma'] ?? 0,
         money: (map['money'] ?? 0).toDouble(),
+        fame: map['fame'] ?? 0,
+        stressLevel: map['stressLevel'] ?? 0,
+        looks: map['looks'] ?? 0,
+        jobPerformance: map['jobPerformance'] ?? 0,
+        discipline: map['discipline'] ?? 0,
+        reputation: map['reputation'] ?? 0,
+        annualIncomeMod: (map['annualIncomeMod'] ?? 1.0).toDouble(),
+        cibilDelta: map['cibilDelta'] ?? 0,
       );
 }
 
@@ -63,6 +95,8 @@ class EventChoice {
 
   final String? gameActionA;
   final String? gameActionB;
+  final String? gameActionAFail;
+  final String? gameActionBFail;
 
   final Map<String, int>? traitShiftsA;
   final Map<String, int>? traitShiftsB;
@@ -97,6 +131,8 @@ class EventChoice {
     this.memoryFlagBFail,
     this.gameActionA,
     this.gameActionB,
+    this.gameActionAFail,
+    this.gameActionBFail,
   });
 
   Map<String, dynamic> toMap() => {
@@ -125,6 +161,8 @@ class EventChoice {
         'memoryFlagBFail': memoryFlagBFail,
         'gameActionA': gameActionA,
         'gameActionB': gameActionB,
+        'gameActionAFail': gameActionAFail,
+        'gameActionBFail': gameActionBFail,
       };
 
   factory EventChoice.fromMap(Map<String, dynamic> map) => EventChoice(
@@ -153,5 +191,7 @@ class EventChoice {
         memoryFlagBFail: map['memoryFlagBFail'],
         gameActionA: map['gameActionA'],
         gameActionB: map['gameActionB'],
+        gameActionAFail: map['gameActionAFail'],
+        gameActionBFail: map['gameActionBFail'],
       );
 }

@@ -29,6 +29,14 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
     _character = widget.character;
   }
 
+  @override
+  void didUpdateWidget(InfluencerCareerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.character != oldWidget.character) {
+      _character = widget.character;
+    }
+  }
+
   void _runAction(String action, [Map<String, dynamic>? payload]) {
     final gameAction = GameAction(
       'career.perform',
@@ -38,69 +46,7 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
         ...?payload,
       },
     );
-    final result = GameEngine.processAction(_character, gameAction);
-    setState(() => _character = result.character);
     widget.onGameAction(gameAction);
-
-    // If result contains event info, we show it, else standard Snack bar
-    if (result.events.isNotEmpty) {
-      final event = result.events.first;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4.0)),
-          ),
-          backgroundColor: Colors.white,
-          title: Text(
-            event.title,
-            style: GoogleFonts.lexend(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF161C28),
-            ),
-          ),
-          content: Text(
-            event.description,
-            style: GoogleFonts.lexend(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF5C5E62),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: GoogleFonts.lexend(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF006D37),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              result.message,
-              style: GoogleFonts.lexend(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            backgroundColor: result.success
-                ? const Color(0xFF006D37)
-                : const Color(0xFFBA1A1A),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-    }
   }
 
   void _changeNiche() {

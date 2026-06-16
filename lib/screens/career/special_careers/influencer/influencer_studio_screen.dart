@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/engine.dart';
 import '../../../../models/character.dart';
+import '../../../../widgets/events/event_card.dart';
+import '../../../../widgets/events/event_types.dart';
 
 class InfluencerStudioScreen extends StatefulWidget {
   final Character character;
@@ -76,6 +78,14 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
     _generateOffers();
   }
 
+  @override
+  void didUpdateWidget(InfluencerStudioScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.character != oldWidget.character) {
+      _character = widget.character;
+    }
+  }
+
   void _generateOffers() {
     if (_character.followers < 5000) return;
 
@@ -118,25 +128,10 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
       },
     );
 
-    final result = GameEngine.processAction(_character, gameAction);
     setState(() {
-      _character = result.character;
       _offers.removeAt(index);
     });
     widget.onGameAction(gameAction);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Accepted sponsorship from ${offer['company']}! Earned ₹${GameEngine.formatMoney(offer['money'])}',
-            style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: const Color(0xFF006D37),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
   }
 
   void _rejectOffer(int index) {
@@ -144,74 +139,41 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
     setState(() {
       _offers.removeAt(index);
     });
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Rejected offer from $company.',
-            style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: const Color(0xFF5C5E62),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showEventCard(
+      context: context,
+      category: EventCategory.fame,
+      mode: EventCardMode.info,
+      title: 'Offer Declined',
+      description: 'Rejected offer from $company.',
+    );
   }
 
   void _showOfferDialog(int index) {
     final offer = _offers[index];
-    showDialog(
+    showEventCard(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(4.0)),
-        ),
-        backgroundColor: Colors.white,
-        title: Text(
-          'SPONSORSHIP OFFER',
-          style: GoogleFonts.lexend(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF161C28),
-            letterSpacing: 0.5,
-          ),
-        ),
-        content: Text(
-          '${offer['company']} is offering you ₹${GameEngine.formatMoney(offer['money'])} to post a sponsored campaign on your profile. This will boost your fame by +${offer['fame']}%. Do you accept?',
-          style: GoogleFonts.lexend(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF5C5E62),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _rejectOffer(index);
-            },
-            child: Text(
-              'DECLINE',
-              style: GoogleFonts.lexend(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFBA1A1A),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _acceptOffer(index);
-            },
-            child: Text(
-              'ACCEPT',
-              style: GoogleFonts.lexend(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF006D37),
-              ),
-            ),
-          ),
-        ],
+      category: EventCategory.fame,
+      mode: EventCardMode.offer,
+      title: 'SPONSORSHIP OFFER',
+      description: '${offer['company']} wants to sponsor a campaign on your profile.',
+      illustration: const EventIllustration.emoji('🤝'),
+      infoRows: [
+        EventInfoRow(label: 'Payout', value: '₹${GameEngine.formatMoney(offer['money'])}'),
+        EventInfoRow(label: 'Fame Boost', value: '+${offer['fame']}%'),
+      ],
+      primaryAction: EventCardAction(
+        label: 'ACCEPT',
+        onPressed: () {
+          Navigator.pop(context);
+          _acceptOffer(index);
+        },
+      ),
+      secondaryAction: EventCardAction(
+        label: 'DECLINE',
+        onPressed: () {
+          Navigator.pop(context);
+          _rejectOffer(index);
+        },
       ),
     );
   }

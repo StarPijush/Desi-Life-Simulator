@@ -16,3 +16,11 @@ enum EventPriority {
   rare, 
   critical 
 }
+
+enum EventRarity {
+  common,
+  uncommon,
+  rare,
+  epic,
+  legendary,
+}

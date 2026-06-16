@@ -6,6 +6,8 @@ import '../../../core/engine.dart';
 import '../../../core/part_time_jobs_data.dart';
 import '../../../models/character.dart';
 import '../../../models/part_time_job.dart';
+import '../../../widgets/events/event_card.dart';
+import '../../../widgets/events/event_types.dart';
 import 'widgets/current_job_section.dart';
 import 'widgets/positions_section.dart';
 import 'widgets/status_section.dart';
@@ -98,56 +100,24 @@ class _PartTimeJobsScreenState extends State<PartTimeJobsScreen> {
   }
 
   Future<void> _confirmJob(PartTimeJob job) async {
-    final accepted = await showDialog<bool>(
+    final accepted = await showEventCard<bool>(
       context: context,
-      builder: (context) => Center(
-        child: Material(
-          color: Colors.white,
-          elevation: 0,
-          child: Container(
-            width: 280,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Accept Job?',
-                  style: GoogleFonts.lexend(
-                    fontSize: 18,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF161C28),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  job.name,
-                  style: GoogleFonts.lexend(
-                    fontSize: 16,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF5C5E62),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Accept'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+      category: EventCategory.freelance,
+      mode: EventCardMode.offer,
+      title: 'Job Offer: ${job.name}',
+      description: 'You have been offered a part-time position.',
+      illustration: const EventIllustration.emoji('💼'),
+      infoRows: [
+        EventInfoRow(label: 'Wage', value: '₹${job.salary}/hr'),
+        EventInfoRow(label: 'Min Age', value: '${job.minAge} Years'),
+      ],
+      primaryAction: EventCardAction(
+        label: 'Accept',
+        onPressed: () => Navigator.of(context).pop(true),
+      ),
+      secondaryAction: EventCardAction(
+        label: 'Decline',
+        onPressed: () => Navigator.of(context).pop(false),
       ),
     );
     if (accepted != true) return;

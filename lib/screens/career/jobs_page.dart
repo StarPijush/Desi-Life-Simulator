@@ -7,7 +7,8 @@ import '../../core/design_system.dart';
 import '../../core/engine.dart';
 import '../../models/character.dart';
 import '../../widgets/common_widgets.dart';
-
+import '../../widgets/events/event_card.dart';
+import '../../widgets/events/event_types.dart';
 class JobsListScreen extends StatelessWidget {
   final String title;
   final Character character;
@@ -50,34 +51,25 @@ class JobsListScreen extends StatelessWidget {
                 title: group.name,
                 subtitle:
                     '${firstStep.title} • ₹${GameEngine.formatMoney(firstStep.annualSalary)}/yr',
-                onTap: () => showDialog(
+                onTap: () => showEventCard(
                   context: context,
-                  useRootNavigator: true,
-                  builder: (ctx) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    title: Text('Apply for ${firstStep.title}?'),
-                    content: Text(
-                        'Salary: ₹${GameEngine.formatMoney(firstStep.annualSalary.toDouble())}/year\nStress: Low\nHours: 40 hours/week'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Cancel',
-                            style: TextStyle(color: Colors.grey)),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          onGameAction(GameAction('career.perform', {
-                            'actionId': 'career.apply_group::${group.name}'
-                          }));
-                        },
-                        child: const Text('Apply',
-                            style: TextStyle(
-                                color: Color(0xFF006D37),
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                  category: EventCategory.career,
+                  mode: EventCardMode.choice,
+                  title: 'Apply for ${firstStep.title}?',
+                  description: 'Salary: ₹${GameEngine.formatMoney(firstStep.annualSalary.toDouble())}/year\nStress: Low\nHours: 40 hours/week',
+                  illustration: EventIllustration.emoji(group.emoji.isNotEmpty ? group.emoji : '💼'),
+                  primaryAction: EventCardAction(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  secondaryAction: EventCardAction(
+                    label: 'Apply',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onGameAction(GameAction('career.perform', {
+                        'actionId': 'career.apply_group::${group.name}'
+                      }));
+                    },
                   ),
                 ),
               );
@@ -151,8 +143,20 @@ class JobsListScreen extends StatelessWidget {
               'career.perform', {'actionId': 'career.apply_group::Part-Time'}));
           Navigator.of(context).pop();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('You must be $minAge to apply.')));
+          showEventCard(
+            context: context,
+            category: EventCategory.career,
+            mode: EventCardMode.requirement,
+            title: 'Too Young',
+            description: 'You are too young for a part-time job. Try again when you are $minAge.',
+            requirements: [
+              EventRequirement(
+                emojiIcon: '🎂',
+                label: 'Age (Current: ${character.age} | Required: $minAge+)',
+                isMet: false,
+              ),
+            ],
+          );
         }
       },
       child: Container(
@@ -383,39 +387,8 @@ class JobsListScreen extends StatelessWidget {
                               color: const Color(0xFFDC2626))
                           : null,
                       onTap: locked
-                          ? () {}
-                          : () => showDialog(
-                                context: context,
-                                useRootNavigator: true,
-                                builder: (ctx) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  title: Text('Apply for ${job.title}?'),
-                                  content: Text(
-                                      'Salary: ₹${GameEngine.formatMoney(job.startingSalary)}/year\nStress: ${job.stressLevel > 70 ? 'Extreme' : job.stressLevel > 40 ? 'High' : 'Low'}\nHours: 40 hours/week'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(ctx).pop(),
-                                      child: const Text('Cancel',
-                                          style: TextStyle(color: Colors.grey)),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(ctx).pop();
-                                        onGameAction(GameAction(
-                                            'career.perform', {
-                                          'actionId':
-                                              'career.apply::${job.title}'
-                                        }));
-                                      },
-                                      child: const Text('Apply',
-                                          style: TextStyle(
-                                              color: Color(0xFF006D37),
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                          ? () => _showJobRequirements(context, job, character)
+                          : () => _showJobOffer(context, job),
                     );
                   }).toList(),
                 ),
@@ -484,6 +457,97 @@ class JobsListScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showJobOffer(BuildContext context, JobDefinition job) {
+    showEventCard(
+      context: context,
+      category: EventCategory.career,
+      mode: EventCardMode.offer,
+      title: 'Job Opening: ${job.title}',
+      description: 'The company is hiring. Are you ready to apply?',
+      illustration: EventIllustration.emoji(job.emoji),
+      infoRows: [
+        EventInfoRow(label: 'Salary', value: '₹${GameEngine.formatMoney(job.startingSalary)}/yr'),
+        EventInfoRow(label: 'Stress', value: job.stressLevel > 70 ? 'Extreme' : job.stressLevel > 40 ? 'High' : 'Low'),
+        const EventInfoRow(label: 'Hours', value: '40 hours/week'),
+      ],
+      primaryAction: EventCardAction(
+        label: 'Apply',
+        onPressed: () {
+          Navigator.of(context).pop();
+          onGameAction(GameAction('career.perform', {
+            'actionId': 'career.apply::${job.title}'
+          }));
+        },
+      ),
+      secondaryAction: EventCardAction(
+        label: 'Cancel',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  void _showJobRequirements(BuildContext context, JobDefinition job, Character character) {
+    final eduLevels = [
+      'None',
+      'Primary',
+      'Secondary',
+      'Higher Secondary',
+      'Undergraduate',
+      'Graduate',
+      'Postgraduate'
+    ];
+    final charEduIdx = eduLevels.indexOf(character.educationLevel);
+    final reqEduIdx = eduLevels.indexOf(job.eduReq);
+    
+    bool hasSpec = true;
+    if (job.specializationReq != null) {
+      final spec = job.specializationReq!;
+      hasSpec = character.specialization == spec ||
+          character.degree.toLowerCase().contains(spec.toLowerCase()) ||
+          character.memories.containsKey('track_${spec.toLowerCase()}') ||
+          character.memories.containsKey('cleared_$spec');
+    }
+
+    showEventCard(
+      context: context,
+      category: EventCategory.career,
+      mode: EventCardMode.requirement,
+      title: '${job.title} Locked',
+      description: 'You do not meet the minimum requirements for this position.',
+      illustration: const EventIllustration.emoji('🔒'),
+      requirements: [
+        if (reqEduIdx > 0)
+          EventRequirement(
+            emojiIcon: '📚',
+            label: 'Education (Current: ${character.educationLevel} | Required: ${job.eduReq})',
+            isMet: charEduIdx >= reqEduIdx,
+          ),
+        if (job.smartsReq > 0)
+          EventRequirement(
+            emojiIcon: '🧠',
+            label: 'Smarts (Current: ${character.smarts} | Required: ${job.smartsReq})',
+            isMet: character.smarts >= job.smartsReq,
+          ),
+        if (job.specializationReq != null)
+          EventRequirement(
+            emojiIcon: '🎓',
+            label: 'Specialization (Current: ${character.specialization.isEmpty ? "None" : character.specialization} | Required: ${job.specializationReq})',
+            isMet: hasSpec,
+          ),
+        if (job.examReq != null)
+          EventRequirement(
+            emojiIcon: '📝',
+            label: 'Exam (Required: ${job.examReq})',
+            isMet: character.memories.containsKey('passed_${job.examReq}'),
+          ),
+      ],
+      primaryAction: EventCardAction(
+        label: 'Okay',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
     );
   }
 }

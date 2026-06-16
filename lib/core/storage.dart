@@ -5,6 +5,10 @@ import '../models/character.dart';
 import '../models/career_history_entry.dart';
 import '../models/relationship.dart';
 import '../models/loan_model.dart';
+import '../models/actor_award.dart';
+import '../models/actor_agency.dart';
+import '../models/actor_career_data.dart';
+import '../screens/career/special_careers/actor/models/released_project.dart';
 
 class StorageService {
   static const String _characterBoxName = 'desilife_character';
@@ -40,6 +44,18 @@ class StorageService {
     }
     if (!Hive.isAdapterRegistered(21)) {
       Hive.registerAdapter(CareerHistoryEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(22)) {
+      Hive.registerAdapter(ActorCareerDataAdapter());
+    }
+    if (!Hive.isAdapterRegistered(23)) {
+      Hive.registerAdapter(ReleasedProjectAdapter());
+    }
+    if (!Hive.isAdapterRegistered(24)) {
+      Hive.registerAdapter(ActorAwardAdapter());
+    }
+    if (!Hive.isAdapterRegistered(25)) {
+      Hive.registerAdapter(ActorAgencyAdapter());
     }
     // Note: LegacyStoreAdapter will need to be generated
     // For now we can use dynamic or register when ready

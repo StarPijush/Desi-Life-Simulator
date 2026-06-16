@@ -8,10 +8,16 @@ import '../core/design_system.dart';
 import '../core/career_data.dart';
 import '../core/institute_data.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/events/event_card.dart';
+import '../widgets/events/event_types.dart';
 import 'career/freelance_page.dart';
 import 'career/jobs_page.dart';
 import 'career/military_page.dart';
 import 'career/part_time_jobs/part_time_jobs_screen.dart';
+import 'career/special_careers/actor/actor_page.dart';
+import 'career/special_careers/singer_page.dart';
+import 'career/special_careers/cricketer_page.dart';
+import 'career/special_careers/footballer_page.dart';
 import 'career/special_careers/influencer/influencer_screen.dart';
 import 'career/special_careers/politician/politician_screen.dart';
 import 'education/exam_quiz_page.dart';
@@ -81,32 +87,25 @@ class CareerPage extends StatelessWidget {
                       AppTextStyles.rowTitle.copyWith(color: AppColors.danger),
                   onTap: () {
                     // Using our global dialog system for a confirmation popup
-                    showDialog(
+                    showEventCard(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: AppColors.cardBg,
-                        title: Text('Resign?', style: AppTextStyles.h3),
-                        content: const Text(
+                      category: EventCategory.career,
+                      mode: EventCardMode.choice,
+                      title: 'Resign?',
+                      description:
                           'Are you sure you want to quit your current career? You will lose your salary and position, but you can explore new opportunities.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: Text('Cancel',
-                                style: AppTextStyles.rowTitle
-                                    .copyWith(color: AppColors.textMuted)),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              onGameAction(const GameAction('career.perform',
-                                  {'actionId': 'career.resign'}));
-                            },
-                            child: Text('Resign',
-                                style: AppTextStyles.rowTitle
-                                    .copyWith(color: AppColors.danger)),
-                          ),
-                        ],
+                      illustration: const EventIllustration.emoji('🚪'),
+                      primaryAction: EventCardAction(
+                        label: 'Cancel',
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      secondaryAction: EventCardAction(
+                        label: 'Resign',
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onGameAction(const GameAction(
+                              'career.perform', {'actionId': 'career.resign'}));
+                        },
                       ),
                     );
                   },
@@ -320,13 +319,70 @@ class _SpecialListScreen extends StatelessWidget {
   });
 
   bool _isLocked(String careerName) {
+    return false; // Temporarily bypassed for testing
+  }
+
+  void _showRequirements(BuildContext context, String careerName) {
     try {
       final career =
           CareerSystem.specialCareers.firstWhere((c) => c.name == careerName);
-      return !CareerSystem.canEnterSpecial(career, character);
-    } catch (_) {
-      return true; // Lock if not found
-    }
+
+      final eduLevels = [
+        'None',
+        'Primary',
+        'Secondary',
+        'Higher Secondary',
+        'Undergraduate',
+        'Graduate',
+        'Postgraduate'
+      ];
+      final charEduIdx = eduLevels.indexOf(character.educationLevel);
+      final reqEduIdx = eduLevels.indexOf(career.eduReq);
+
+      showEventCard(
+        context: context,
+        category: EventCategory.career,
+        mode: EventCardMode.requirement,
+        title: '$careerName Locked',
+        description:
+            'You do not meet the minimum requirements for this special career.',
+        illustration: const EventIllustration.emoji('🔒'),
+        requirements: [
+          if (career.minAge > 0)
+            EventRequirement(
+              emojiIcon: '🎂',
+              label:
+                  'Age (Current: ${character.age} | Required: ${career.minAge}+)',
+              isMet: character.age >= career.minAge,
+            ),
+          if (reqEduIdx > 0)
+            EventRequirement(
+              emojiIcon: '📚',
+              label:
+                  'Education (Current: ${character.educationLevel} | Required: ${career.eduReq})',
+              isMet: charEduIdx >= reqEduIdx,
+            ),
+          if (career.smartsReq > 0)
+            EventRequirement(
+              emojiIcon: '🧠',
+              label:
+                  'Smarts (Current: ${character.smarts} | Required: ${career.smartsReq})',
+              isMet: character.smarts >= career.smartsReq,
+            ),
+          if (career.socialReq > 0)
+            EventRequirement(
+              emojiIcon: '🗣️',
+              label:
+                  'Social (Current: ${character.social} | Required: ${career.socialReq})',
+              isMet: character.social >= career.socialReq,
+            ),
+        ],
+        primaryAction: EventCardAction(
+          label: 'Okay',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      );
+    } catch (_) {}
   }
 
   @override
@@ -344,16 +400,44 @@ class _SpecialListScreen extends StatelessWidget {
             title: 'Actor',
             subtitle: 'Fame: 0% • Education: None',
             locked: _isLocked('Actor'),
-            onTap: () => onGameAction(const GameAction(
-                'career.perform', {'actionId': 'career.special.apply::Actor'})),
+            allowLockedTap: true,
+            onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => ActorPage(character: character)));
+                return;
+              }
+              if (_isLocked('Actor')) {
+                _showRequirements(context, 'Actor');
+              } else {
+                onGameAction(const GameAction('career.perform',
+                    {'actionId': 'career.special.apply::Actor'}));
+              }
+            },
           ),
           _SpecialFlatRow(
             icon: '🎤',
             title: 'Singer',
             subtitle: 'Fame: 0% • Skill: High',
             locked: _isLocked('Musician'),
-            onTap: () => onGameAction(const GameAction('career.perform',
-                {'actionId': 'career.special.apply::Musician'})),
+            allowLockedTap: true,
+            onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SingerPage()));
+                return;
+              }
+              if (_isLocked('Musician')) {
+                _showRequirements(context, 'Musician');
+              } else {
+                onGameAction(const GameAction('career.perform',
+                    {'actionId': 'career.special.apply::Musician'}));
+              }
+            },
           ),
           const SizedBox(height: 8),
           _buildSectionHeader('SPORTS'),
@@ -362,16 +446,39 @@ class _SpecialListScreen extends StatelessWidget {
             title: 'Cricketer',
             subtitle: 'Reputation: 0% • Skill: Max',
             locked: _isLocked('Athlete'),
-            onTap: () => onGameAction(const GameAction('career.perform',
-                {'actionId': 'career.special.apply::Athlete'})),
+            allowLockedTap: true,
+            onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const CricketerPage()));
+                return;
+              }
+              if (_isLocked('Athlete')) {
+                _showRequirements(context, 'Athlete');
+              } else {
+                onGameAction(const GameAction('career.perform',
+                    {'actionId': 'career.special.apply::Athlete'}));
+              }
+            },
           ),
           _SpecialFlatRow(
             icon: '⚽',
             title: 'Footballer',
             subtitle: 'Reputation: 0% • Skill: Max',
             locked: _isLocked('Athlete'),
-            onTap: () => onGameAction(const GameAction('career.perform',
-                {'actionId': 'career.special.apply::Athlete'})),
+            onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const FootballerPage()));
+                return;
+              }
+              onGameAction(const GameAction('career.perform',
+                  {'actionId': 'career.special.apply::Athlete'}));
+            },
           ),
           const SizedBox(height: 8),
           _buildSectionHeader('ENTERTAINMENT'),
@@ -381,14 +488,26 @@ class _SpecialListScreen extends StatelessWidget {
             subtitle: 'Fame: 0% • Followers: 0',
             locked: _isLocked('Influencer'),
             allowLockedTap: true,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => InfluencerCareerScreen(
-                  character: character,
-                  onGameAction: onGameAction,
+            onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => InfluencerCareerScreen(
+                            character: character, onGameAction: onGameAction)));
+                return;
+              }
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => InfluencerCareerScreen(
+                    character: character,
+                    onGameAction: onGameAction,
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           _buildSectionHeader('GOVERNMENT'),
@@ -397,8 +516,18 @@ class _SpecialListScreen extends StatelessWidget {
             title: 'Politician',
             subtitle: 'Reputation: 0% • Education: University',
             locked: _isLocked('Politician'),
-            allowLockedTap: character.careerGroup == 'Politician',
+            allowLockedTap: true,
             onTap: () {
+              // TODO: Remove Special Career Debug Mode after UI development
+              const bool kSpecialCareerDebugMode = true;
+              if (kSpecialCareerDebugMode) {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => PoliticianScreen(
+                            character: character, onGameAction: onGameAction)));
+                return;
+              }
               if (character.careerGroup == 'Politician') {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -410,8 +539,12 @@ class _SpecialListScreen extends StatelessWidget {
                 );
                 return;
               }
-              onGameAction(const GameAction('career.perform',
-                  {'actionId': 'career.special.apply::Politician'}));
+              if (_isLocked('Politician')) {
+                _showRequirements(context, 'Politician');
+              } else {
+                onGameAction(const GameAction('career.perform',
+                    {'actionId': 'career.special.apply::Politician'}));
+              }
             },
           ),
           const SizedBox(height: 48),
@@ -640,33 +773,25 @@ class _EducationListScreen extends StatelessWidget {
                     title: 'Attempt UPSC',
                     subtitle:
                         'Very low pass rate \u2022 High preparation needed',
-                    onTap: () => showDialog(
+                    onTap: () => showEventCard(
                       context: context,
-                      useRootNavigator: true,
-                      builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        title: const Text('Attempt UPSC Exam'),
-                        content: Text(
-                            'This is a highly competitive exam.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            child: const Text('Cancel',
-                                style: TextStyle(color: Colors.grey)),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(ctx).pop();
-                              onGameAction(const GameAction('career.perform',
-                                  {'actionId': 'career.take_upsc'}));
-                            },
-                            child: const Text('Attempt',
-                                style: TextStyle(
-                                    color: Color(0xFF006D37),
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                      category: EventCategory.education,
+                      mode: EventCardMode.choice,
+                      title: 'Attempt UPSC Exam',
+                      description:
+                          'This is a highly competitive exam.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?',
+                      illustration: const EventIllustration.emoji('📝'),
+                      primaryAction: EventCardAction(
+                        label: 'Cancel',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      secondaryAction: EventCardAction(
+                        label: 'Attempt',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          onGameAction(const GameAction('career.perform',
+                              {'actionId': 'career.take_upsc'}));
+                        },
                       ),
                     ),
                   ),
@@ -691,33 +816,25 @@ class _EducationListScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 24)),
                     title: 'Attempt SSC',
                     subtitle: 'Prep: ${character.prepLevel}% \u2022 Need 20%+',
-                    onTap: () => showDialog(
+                    onTap: () => showEventCard(
                       context: context,
-                      useRootNavigator: true,
-                      builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        title: const Text('Attempt SSC Exam'),
-                        content: Text(
-                            'This exam is required for many government roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            child: const Text('Cancel',
-                                style: TextStyle(color: Colors.grey)),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(ctx).pop();
-                              onGameAction(const GameAction('career.perform',
-                                  {'actionId': 'career.take_ssc'}));
-                            },
-                            child: const Text('Attempt',
-                                style: TextStyle(
-                                    color: Color(0xFF006D37),
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                      category: EventCategory.education,
+                      mode: EventCardMode.choice,
+                      title: 'Attempt SSC Exam',
+                      description:
+                          'This exam is required for many government roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?',
+                      illustration: const EventIllustration.emoji('📝'),
+                      primaryAction: EventCardAction(
+                        label: 'Cancel',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      secondaryAction: EventCardAction(
+                        label: 'Attempt',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          onGameAction(const GameAction('career.perform',
+                              {'actionId': 'career.take_ssc'}));
+                        },
                       ),
                     ),
                   ),
@@ -733,34 +850,25 @@ class _EducationListScreen extends StatelessWidget {
                   locked: character.memories.containsKey('passed_BankPO'),
                   onTap: character.memories.containsKey('passed_BankPO')
                       ? () {}
-                      : () => showDialog(
+                      : () => showEventCard(
                             context: context,
-                            useRootNavigator: true,
-                            builder: (ctx) => AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              title: const Text('Attempt Bank PO Exam'),
-                              content: Text(
-                                  'This exam is required for banking roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(),
-                                  child: const Text('Cancel',
-                                      style: TextStyle(color: Colors.grey)),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(ctx).pop();
-                                    onGameAction(const GameAction(
-                                        'career.perform',
-                                        {'actionId': 'career.take_bank_po'}));
-                                  },
-                                  child: const Text('Attempt',
-                                      style: TextStyle(
-                                          color: Color(0xFF006D37),
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
+                            category: EventCategory.education,
+                            mode: EventCardMode.choice,
+                            title: 'Attempt Bank PO Exam',
+                            description:
+                                'This exam is required for banking roles.\nYour Current Prep Level: ${character.prepLevel}%\n\nDo you want to attempt it now?',
+                            illustration: const EventIllustration.emoji('🏦'),
+                            primaryAction: EventCardAction(
+                              label: 'Cancel',
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            secondaryAction: EventCardAction(
+                              label: 'Attempt',
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                onGameAction(const GameAction('career.perform',
+                                    {'actionId': 'career.take_bank_po'}));
+                              },
                             ),
                           ),
                 ),
@@ -863,33 +971,25 @@ class _UniversityScreen extends StatelessWidget {
                 title: inst.name,
                 subtitle:
                     'Fees: ₹${GameEngine.formatMoney(inst.feesPerYear)} • Prestige: ${inst.tier}',
-                onTap: () => showDialog(
+                onTap: () => showEventCard(
                   context: context,
-                  useRootNavigator: true,
-                  builder: (ctx) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    title: Text('${inst.name} Admission'),
-                    content: Text(
-                        'Fees: ₹${GameEngine.formatMoney(inst.feesPerYear)}/year\nPrestige: ${inst.tier}\n\nDo you wish to enroll?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Cancel',
-                            style: TextStyle(color: Colors.grey)),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          onGameAction(GameAction('career.perform',
-                              {'actionId': 'education.enroll::${inst.name}'}));
-                        },
-                        child: const Text('Enroll',
-                            style: TextStyle(
-                                color: Color(0xFF006D37),
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                  category: EventCategory.education,
+                  mode: EventCardMode.choice,
+                  title: '${inst.name} Admission',
+                  description:
+                      'Fees: ₹${GameEngine.formatMoney(inst.feesPerYear)}/year\nPrestige: ${inst.tier}\n\nDo you wish to enroll?',
+                  illustration: const EventIllustration.emoji('🎓'),
+                  primaryAction: EventCardAction(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  secondaryAction: EventCardAction(
+                    label: 'Enroll',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onGameAction(GameAction('career.perform',
+                          {'actionId': 'education.enroll::${inst.name}'}));
+                    },
                   ),
                 ),
               );

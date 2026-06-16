@@ -1,5 +1,6 @@
 import '../core/enums.dart';
 import '../models/event_choice.dart';
+import '../widgets/events/event_types.dart';
 
 class LifeEvent {
   final String title;
@@ -40,4 +41,26 @@ class LifeEvent {
         metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
         choice: json['choice'] != null ? EventChoice.fromMap(json['choice']) : null,
       );
+}
+
+class ActionEvent extends LifeEvent {
+  final EventCategory category;
+  final EventCardMode mode;
+  final List<EventInfoRow> infoRows;
+  final List<EventRequirement> requirements;
+  final String? emojiIllustration;
+
+  ActionEvent({
+    required super.title,
+    required super.description,
+    required super.type,
+    required this.category,
+    required this.mode,
+    this.infoRows = const [],
+    this.requirements = const [],
+    this.emojiIllustration,
+    super.choice,
+    super.statChanges,
+    super.metadata,
+  });
 }
