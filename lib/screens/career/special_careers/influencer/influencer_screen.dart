@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/design_system.dart';
 import '../../../../core/engine.dart';
 import '../../../../models/character.dart';
+import '../../../../widgets/core/app_scaffold.dart';
+import '../../../../widgets/core/app_status_banner.dart';
+import '../../../../widgets/game/action_tile.dart';
+import '../../../../widgets/game/game_card.dart';
+import '../../../../widgets/game/progress_bar.dart';
+import '../../../../widgets/game/section_header.dart';
 import 'influencer_studio_screen.dart';
 
-class InfluencerCareerScreen extends StatefulWidget {
+class InfluencerCareerScreen extends StatelessWidget {
   final Character character;
   final void Function(GameAction) onGameAction;
 
@@ -16,28 +21,8 @@ class InfluencerCareerScreen extends StatefulWidget {
     required this.onGameAction,
   });
 
-  @override
-  State<InfluencerCareerScreen> createState() => _InfluencerCareerScreenState();
-}
-
-class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
-  late Character _character;
-
-  @override
-  void initState() {
-    super.initState();
-    _character = widget.character;
-  }
-
-  @override
-  void didUpdateWidget(InfluencerCareerScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.character != oldWidget.character) {
-      _character = widget.character;
-    }
-  }
-
-  void _runAction(String action, [Map<String, dynamic>? payload]) {
+  void _runAction(BuildContext context, String action,
+      [Map<String, dynamic>? payload]) {
     final gameAction = GameAction(
       'career.perform',
       {
@@ -46,17 +31,17 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
         ...?payload,
       },
     );
-    widget.onGameAction(gameAction);
+    onGameAction(gameAction);
   }
 
-  void _changeNiche() {
+  void _changeNiche(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(8.0)),
       ),
-      builder: (context) {
+      builder: (ctx) {
         final niches = [
           'Gaming',
           'Lifestyle',
@@ -73,10 +58,10 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Text(
                   'SELECT NICHE',
-                  style: GoogleFonts.lexend(
+                  style: AppTextStyles.labelBold.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF606366),
@@ -84,23 +69,22 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFDDE2F3)),
+              const Divider(height: 1, color: AppColors.divider),
               ...niches.map((niche) => ListTile(
                     title: Text(
                       niche,
-                      style: GoogleFonts.lexend(
-                        fontWeight: FontWeight.w700,
-                        color: _character.contentType == niche
-                            ? const Color(0xFF006D37)
-                            : const Color(0xFF161C28),
+                      style: AppTextStyles.labelBold.copyWith(
+                        color: character.contentType == niche
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                       ),
                     ),
-                    trailing: _character.contentType == niche
-                        ? const Icon(Icons.check, color: Color(0xFF006D37))
+                    trailing: character.contentType == niche
+                        ? const Icon(Icons.check, color: AppColors.primary)
                         : null,
                     onTap: () {
-                      Navigator.pop(context);
-                      _runAction('set_niche', {'niche': niche});
+                      Navigator.pop(ctx);
+                      _runAction(context, 'set_niche', {'niche': niche});
                     },
                   )),
             ],
@@ -112,187 +96,90 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F3FF),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: Container(
-          height: 56,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFDDE2F3), width: 1),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SafeArea(
-            bottom: false,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        Navigator.of(context).pop();
-                      },
-                      child: const SizedBox(
-                        width: 24,
-                        height: 40,
-                        child: Icon(Icons.arrow_back,
-                            color: Color(0xFF10B981), size: 24),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      'LIFE SIM',
-                      style: GoogleFonts.lexend(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF10B981),
-                        letterSpacing: -0.02,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 24), // Spacer
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // Top Status Section
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'CURRENT STATUS',
-                          style: GoogleFonts.lexend(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF5C5E62),
-                            letterSpacing: 0.05,
-                          ),
+    return AppScaffold(
+      title: 'INFLUENCER',
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      children: [
+        // Top Status Section
+        Container(
+          color: AppColors.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppStatusBanner(
+                label: 'CURRENT STATUS',
+                title: '${character.followers}',
+                subtitle: 'Followers',
+                trailing: character.isVerified
+                    ? Text(
+                        'VERIFIED',
+                        style: AppTextStyles.labelBold.copyWith(
+                          fontSize: 13,
+                          color: const Color(0xFF2563EB),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              '${_character.followers}',
-                              style: GoogleFonts.lexend(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF161C28),
-                                letterSpacing: -0.02,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Followers',
-                              style: GoogleFonts.lexend(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF5C5E62),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    // Verification Status
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (_character.isVerified)
-                          Text(
-                            'VERIFIED',
-                            style: GoogleFonts.lexend(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF2563EB),
-                            ),
-                          )
-                        else if (_character.followers >= 100000)
-                          GestureDetector(
-                            onTap: () => _runAction('apply_verification'),
+                      )
+                    : character.followers >= 100000
+                        ? GestureDetector(
+                            onTap: () => _runAction(context, 'apply_verification'),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: const Color(0xFF006D37), width: 1.5),
+                                    color: AppColors.primary, width: 1.5),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                               child: Text(
                                 'APPLY FOR VERIFICATION',
-                                style: GoogleFonts.lexend(
+                                style: AppTextStyles.labelBold.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF006D37),
+                                  color: AppColors.primary,
                                   letterSpacing: 0.05,
                                 ),
                               ),
                             ),
                           )
-                        else
-                          Text(
+                        : Text(
                             'NO',
-                            style: GoogleFonts.lexend(
+                            style: AppTextStyles.labelBold.copyWith(
                               fontSize: 13,
-                              fontWeight: FontWeight.w700,
                               color: const Color(0xFFBA1A1A),
                             ),
                           ),
-                      ],
-                    ),
+              ),
+
+              // Platform Selection Tabs
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.containerPadding,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildPlatformTab(context, Icons.photo_camera, 'Instagram'),
+                    _buildPlatformTab(context, Icons.movie, 'YouTube'),
+                    _buildPlatformTab(context, Icons.smart_display, 'TikTok'),
+                    _buildPlatformTab(context, Icons.podcasts, 'Podcast'),
                   ],
                 ),
-                const SizedBox(height: 8),
-                // Platform Selection Tabs
-                Container(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Color(0xFFF1F3FF), width: 1),
-                    ),
-                  ),
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildPlatformTab(Icons.photo_camera, 'Instagram'),
-                      _buildPlatformTab(Icons.movie, 'YouTube'),
-                      _buildPlatformTab(Icons.smart_display, 'TikTok'),
-                      _buildPlatformTab(Icons.podcasts, 'Podcast'),
-                    ],
-                  ),
+              ),
+
+              // Niche Selector
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.containerPadding,
+                  vertical: AppSpacing.xs,
                 ),
-                const SizedBox(height: 8),
-                // Content Type Selector Row
-                GestureDetector(
-                  onTap: _changeNiche,
+                child: GestureDetector(
+                  onTap: () => _changeNiche(context),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F3FF),
-                      borderRadius: BorderRadius.circular(4),
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                     ),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -301,20 +188,18 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                           children: [
                             Text(
                               'NICHE / CONTENT TYPE',
-                              style: GoogleFonts.lexend(
+                              style: AppTextStyles.labelBold.copyWith(
                                 fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF5C5E62),
+                                color: AppColors.textSecondary,
                                 letterSpacing: 0.05,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpacing.xs),
                             Text(
-                              _character.contentType,
-                              style: GoogleFonts.lexend(
+                              character.contentType,
+                              style: AppTextStyles.labelBold.copyWith(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF006D37),
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -324,85 +209,88 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Fame and Engagement bars
-                _ProgressBar(
+              ),
+
+              // Fame and Engagement bars
+              const SizedBox(height: AppSpacing.xs),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.containerPadding,
+                ),
+                child: ProgressBarRow(
                   label: 'FAME',
-                  percentage: _character.fame,
-                  fillColor: const Color(0xFFFF9875),
+                  value: character.fame.toDouble(),
+                  color: const Color(0xFFFF9875),
                 ),
-                const SizedBox(height: 6),
-                _ProgressBar(
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.containerPadding,
+                ),
+                child: ProgressBarRow(
                   label: 'ENGAGEMENT',
-                  percentage: _character.engagement,
-                  fillColor: const Color(0xFF793015),
+                  value: character.engagement.toDouble(),
+                  color: const Color(0xFF793015),
                 ),
-              ],
-            ),
-          ),
-          // Section: CONTENT CREATION
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              'CONTENT CREATION',
-              style: GoogleFonts.lexend(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF606366),
-                letterSpacing: 1.5,
               ),
-            ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
           ),
-          Column(
+        ),
+        const SizedBox(height: AppSpacing.sm),
+
+        // Content Creation
+        const SectionHeader(title: 'CONTENT CREATION'),
+        GameCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
             children: [
-              _FlatRow(
+              ActionTile(
                 emoji: '📸',
-                title: 'Post Photo',
-                subtitle: 'Share a new look with your audience.',
-                onTap: () => _runAction('post_photo'),
+                label: 'Post Photo',
+                rewards: const [],
+                onTap: () => _runAction(context, 'post_photo'),
               ),
-              _FlatRow(
+              const SizedBox(height: AppSpacing.sm),
+              ActionTile(
                 emoji: '🎥',
-                title: 'Upload Video',
-                subtitle: 'Vlog your daily life and editing skills.',
-                onTap: () => _runAction('upload_video'),
+                label: 'Upload Video',
+                rewards: const [],
+                onTap: () => _runAction(context, 'upload_video'),
               ),
-              _FlatRow(
+              const SizedBox(height: AppSpacing.sm),
+              ActionTile(
                 emoji: '📱',
-                title: 'Create Short Video',
-                subtitle: 'Quick fun clips for the algorithm.',
-                onTap: () => _runAction('create_short'),
+                label: 'Create Short Video',
+                rewards: const [],
+                onTap: () => _runAction(context, 'create_short'),
               ),
-              _FlatRow(
+              const SizedBox(height: AppSpacing.sm),
+              ActionTile(
                 emoji: '🎙',
-                title: 'Go Live',
-                subtitle: 'Interact with fans in real-time.',
-                onTap: () => _runAction('go_live'),
+                label: 'Go Live',
+                rewards: const [],
+                onTap: () => _runAction(context, 'go_live'),
               ),
-              _FlatRow(
+              const SizedBox(height: AppSpacing.sm),
+              ActionTile(
                 emoji: '📖',
-                title: 'Share Story',
-                subtitle: 'Daily updates that disappear in 24h.',
-                onTap: () => _runAction('share_story'),
+                label: 'Share Story',
+                rewards: const [],
+                onTap: () => _runAction(context, 'share_story'),
               ),
-              const SizedBox(height: 16),
-              _FlatRow(
+              const SizedBox(height: AppSpacing.md),
+              ActionTile(
                 emoji: '🎤',
-                title: 'STUDIO',
-                subtitle:
-                    'Manage your audience, monetization, and career risks',
+                label: 'STUDIO',
+                rewards: const [],
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => InfluencerStudioScreen(
-                        character: _character,
-                        onGameAction: (action) {
-                          widget.onGameAction(action);
-                          // Refresh status when returning or updating
-                          final result =
-                              GameEngine.processAction(_character, action);
-                          setState(() => _character = result.character);
-                        },
+                        character: character,
+                        onGameAction: onGameAction,
                       ),
                     ),
                   );
@@ -410,19 +298,19 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 80),
-        ],
-      ),
+        ),
+        const SizedBox(height: 80),
+      ],
     );
   }
 
-  Widget _buildPlatformTab(IconData icon, String platformName) {
-    final isActive = _character.platform == platformName;
+  Widget _buildPlatformTab(BuildContext context, IconData icon, String platform) {
+    final isActive = character.platform == platform;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
         if (!isActive) {
-          _runAction('set_platform', {'platform': platformName});
+          _runAction(context, 'set_platform', {'platform': platform});
         }
       },
       child: Container(
@@ -430,155 +318,14 @@ class _InfluencerCareerScreenState extends State<InfluencerCareerScreen> {
         decoration: BoxDecoration(
           border: isActive
               ? const Border(
-                  bottom: BorderSide(color: Color(0xFF006D37), width: 2),
+                  bottom: BorderSide(color: AppColors.primary, width: 2),
                 )
               : null,
         ),
         child: Icon(
           icon,
           size: 20,
-          color: isActive ? const Color(0xFF006D37) : const Color(0xFF9CA3AF),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  final String label;
-  final int percentage;
-  final Color fillColor;
-
-  const _ProgressBar({
-    required this.label,
-    required this.percentage,
-    required this.fillColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.lexend(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF5C5E62),
-                letterSpacing: 0.05,
-              ),
-            ),
-            Text(
-              '$percentage%',
-              style: GoogleFonts.lexend(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF5C5E62),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Container(
-          height: 5,
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE8EEFF),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: percentage / 100.0,
-            child: Container(
-              color: fillColor,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FlatRow extends StatefulWidget {
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _FlatRow({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  State<_FlatRow> createState() => _FlatRowState();
-}
-
-class _FlatRowState extends State<_FlatRow> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        HapticFeedback.selectionClick();
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: Container(
-        height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: _pressed ? const Color(0xFFF1F3FF) : Colors.white,
-          border: const Border(
-            bottom: BorderSide(color: Color(0xFFDDE2F3), width: 1),
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              widget.emoji,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: GoogleFonts.lexend(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF161C28),
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    widget.subtitle,
-                    style: GoogleFonts.lexend(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF5C5E62),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFBBCBBB),
-              size: 20,
-            ),
-          ],
+          color: isActive ? AppColors.primary : AppColors.textSecondary,
         ),
       ),
     );

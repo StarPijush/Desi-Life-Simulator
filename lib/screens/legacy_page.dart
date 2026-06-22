@@ -1,11 +1,12 @@
-// lib/screens/legacy_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/character.dart';
 import '../core/storage.dart';
 import '../core/engine.dart';
-import 'create_character_screen.dart';
 import '../core/design_system.dart';
+import '../widgets/game/game_card.dart';
+import '../widgets/game/section_header.dart';
+import 'create_character_screen.dart';
 
 class LegacyPage extends StatelessWidget {
   final Character character;
@@ -46,22 +47,21 @@ class LegacyPage extends StatelessWidget {
     final (emoji, title, subtitle) = _karmaVerdict(character.karma);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 32),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
           children: [
-            // Header
             const Center(child: Text('🪦', style: TextStyle(fontSize: 64))),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.cardGap),
             Center(
               child: Text('REST IN PEACE',
                   style: AppTextStyles.sectionLabel.copyWith(letterSpacing: 3)),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Text(_generateNarrativeSummary().toUpperCase(),
                     textAlign: TextAlign.center,
                     style: AppTextStyles.rowTitle.copyWith(
@@ -72,66 +72,64 @@ class LegacyPage extends StatelessWidget {
                     )),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
             // Profile
-            const _SectionLabel(title: 'PROFILE'),
-            Container(
-              color: Colors.white,
+            const SectionHeader(title: 'PROFILE'),
+            GameCard(
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   _InfoRow(label: 'Name', value: character.name),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Age', value: '${character.age} years'),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'City', value: character.city),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Career', value: character.jobTitle),
                 ],
               ),
             ),
 
-            // Finances
-            const _SectionLabel(title: 'FINANCES'),
-            Container(
-              color: Colors.white,
+            const SizedBox(height: AppSpacing.sm),
+            const SectionHeader(title: 'FINANCES'),
+            GameCard(
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   _InfoRow(label: 'Net Worth', value: formatMoney(character.bankBalance + character.savingsBalance)),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Total Earned', value: formatMoney(character.totalEarned)),
                 ],
               ),
             ),
 
-            // Stats
-            const _SectionLabel(title: 'FINAL STATS'),
-            Container(
-              color: Colors.white,
+            const SizedBox(height: AppSpacing.sm),
+            const SectionHeader(title: 'FINAL STATS'),
+            GameCard(
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   _InfoRow(label: 'Happiness', value: '${character.happiness}%'),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Health', value: '${character.health}%'),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Smarts', value: '${character.smarts}%'),
-                  const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                  _divider,
                   _InfoRow(label: 'Karma', value: '${character.karma}%'),
                 ],
               ),
             ),
 
-            // Karma verdict
-            const _SectionLabel(title: 'KARMA VERDICT'),
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 14),
+            const SizedBox(height: AppSpacing.sm),
+            const SectionHeader(title: 'KARMA VERDICT'),
+            GameCard(
               child: Column(
                 children: [
                   Text(emoji, style: const TextStyle(fontSize: 40)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(title, style: AppTextStyles.rowTitle.copyWith(fontSize: 18)),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(subtitle,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.rowSubtitle),
@@ -139,11 +137,11 @@ class LegacyPage extends StatelessWidget {
               ),
             ),
 
-            // Achievements
             if (character.achievements.isNotEmpty) ...[
-              const _SectionLabel(title: 'ACHIEVEMENTS'),
-              Container(
-                color: Colors.white,
+              const SizedBox(height: AppSpacing.sm),
+              const SectionHeader(title: 'ACHIEVEMENTS'),
+              GameCard(
+                padding: EdgeInsets.zero,
                 child: Column(
                   children: [
                     for (int i = 0; i < character.achievements.length; i++) ...[
@@ -155,27 +153,27 @@ class LegacyPage extends StatelessWidget {
                         );
                       }),
                       if (i < character.achievements.length - 1)
-                        const Divider(height: 1, thickness: 0.5, color: AppColors.dividerLight, indent: 14),
+                        _divider,
                     ],
                   ],
                 ),
               ),
             ],
 
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.xl),
 
-            // New Life button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
               child: Material(
-                color: AppColors.info,
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
                 child: InkWell(
                   onTap: () async {
                     HapticFeedback.heavyImpact();
                     try {
                       await StorageService.clearAll();
                     } catch (e) {
-                      print("⚠️ Error clearing storage on legacy page: $e");
+                      debugPrint("Error clearing storage on legacy page: $e");
                     }
                     if (context.mounted) {
                       Navigator.of(context).pushReplacement(
@@ -183,6 +181,7 @@ class LegacyPage extends StatelessWidget {
                       );
                     }
                   },
+                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
                   child: Container(
                     height: 50,
                     alignment: Alignment.center,
@@ -204,19 +203,8 @@ class LegacyPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class _SectionLabel extends StatelessWidget {
-  final String title;
-  const _SectionLabel({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 6),
-      child: Text(title, style: AppTextStyles.sectionLabel),
-    );
-  }
+  static const _divider = Divider(height: 1, color: AppColors.divider);
 }
 
 class _InfoRow extends StatelessWidget {
@@ -227,7 +215,10 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.containerPadding,
+        vertical: AppSpacing.cardGap,
+      ),
       child: Row(
         children: [
           Text(label, style: AppTextStyles.rowSubtitle),

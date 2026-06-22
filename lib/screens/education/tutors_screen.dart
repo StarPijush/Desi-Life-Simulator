@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/character.dart';
 import '../../core/engine.dart';
-import '../../widgets/common_widgets.dart';
+import '../../core/design_system.dart';
+import '../../widgets/core/app_scaffold.dart';
+import '../../widgets/game/game_card.dart';
+import '../../widgets/game/section_header.dart';
 
 class TutorsScreen extends StatelessWidget {
   final Character character;
@@ -13,14 +15,6 @@ class TutorsScreen extends StatelessWidget {
     required this.character,
     required this.onGameAction,
   });
-
-  PreferredSizeWidget _buildAppBar(BuildContext context, String title) {
-    return EducationAppBar(title: title);
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return AppSectionHeader.education(title);
-  }
 
   void _showTutorOptionsDialog(
       BuildContext context, String subject, Map? activeTutor) {
@@ -33,28 +27,35 @@ class TutorsScreen extends StatelessWidget {
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$subject Tutors',
-                    style: GoogleFonts.lexend(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                Text(
+                  '$subject Tutors',
+                  style: AppTextStyles.displayMd.copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 if (activeTutor != null) ...[
-                  Text('Currently hired: ${activeTutor['name']}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Color(0xFF006D37))),
-                  const SizedBox(height: 8),
                   Text(
-                      'Cost: ₹${activeTutor['monthlyFee']}/mo\nBoost: +${activeTutor['learningBoost']}%\nStress Impact: ${activeTutor['stressImpact'] > 0 ? '+' : ''}${activeTutor['stressImpact']}'),
-                  const SizedBox(height: 16),
+                    'Currently hired: ${activeTutor['name']}',
+                    style: AppTextStyles.labelBold.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Cost: ₹${activeTutor['monthlyFee']}/mo\nBoost: +${activeTutor['learningBoost']}%\nStress Impact: ${activeTutor['stressImpact'] > 0 ? '+' : ''}${activeTutor['stressImpact']}',
+                    style: AppTextStyles.bodyMd,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red,
+                        backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                        foregroundColor: AppColors.error,
                         elevation: 0,
                       ),
                       onPressed: () {
@@ -65,15 +66,17 @@ class TutorsScreen extends StatelessWidget {
                       child: const Text('Fire Tutor'),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.lg),
                 ] else ...[
                   const Text(
-                      'Hiring a tutor will automatically deduct their monthly fee from your bank balance every year (fee x 12). Only one tutor per subject allowed.'),
-                  const SizedBox(height: 16),
+                    'Hiring a tutor will automatically deduct their monthly fee from your bank balance every year (fee x 12). Only one tutor per subject allowed.'),
+                  const SizedBox(height: AppSpacing.md),
                 ],
-                const Text('Available Tutors:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                Text(
+                  'Available Tutors:',
+                  style: AppTextStyles.labelBold,
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 _buildTutorOption(
                   title: 'Friendly Tutor',
                   fee: '₹7,000/mo',
@@ -84,7 +87,7 @@ class TutorsScreen extends StatelessWidget {
                         {'activityId': 'tutor.hire::$subject::Friendly'}));
                   },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 _buildTutorOption(
                   title: 'Strict Tutor',
                   fee: '₹12,000/mo',
@@ -103,19 +106,20 @@ class TutorsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTutorOption(
-      {required String title,
-      required String fee,
-      required String desc,
-      required VoidCallback onTap}) {
+  Widget _buildTutorOption({
+    required String title,
+    required String fee,
+    required String desc,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppBorderRadius.sm),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.cardGap),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE4E4E7)),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.outline),
+          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
         ),
         child: Row(
           children: [
@@ -123,16 +127,23 @@ class TutorsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(desc,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    title,
+                    style: AppTextStyles.labelBold,
+                  ),
+                  Text(
+                    desc,
+                    style: AppTextStyles.labelSm.copyWith(fontSize: 12),
+                  ),
                 ],
               ),
             ),
-            Text(fee,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Color(0xFF006D37))),
+            Text(
+              fee,
+              style: AppTextStyles.labelBold.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
           ],
         ),
       ),
@@ -143,52 +154,93 @@ class TutorsScreen extends StatelessWidget {
     final Map? activeTutor = character.activeTutors[subject];
     final bool hasTutor = activeTutor != null;
 
-    return AppFlatRow(
-      icon: Text(emoji, style: const TextStyle(fontSize: 24)),
-      title: subject,
-      subtitle: hasTutor ? 'Hired: ${activeTutor['name']}' : 'No active tutor',
-      subtitleStyle: hasTutor
-          ? GoogleFonts.lexend(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF006D37),
-            )
-          : null,
-      trailing: hasTutor
-          ? const Icon(Icons.check_circle, color: Color(0xFF006D37), size: 20)
-          : null,
+    return InkWell(
       onTap: () => _showTutorOptionsDialog(context, subject, activeTutor),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.containerPadding,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: AppSpacing.sm + 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subject,
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (hasTutor)
+                    Text(
+                      'Hired: ${activeTutor['name']}',
+                      style: AppTextStyles.labelSm.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  else
+                    Text(
+                      'No active tutor',
+                      style: AppTextStyles.labelSm.copyWith(fontSize: 10),
+                    ),
+                ],
+              ),
+            ),
+            if (hasTutor)
+              const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
+            else
+              const Icon(Icons.chevron_right, color: AppColors.outline, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: _buildAppBar(context, 'TUTORS'),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildSectionHeader('SCIENCE & MATH'),
-          AppFlatRowGroup(
-            rows: [
+    return AppScaffold(
+      title: 'TUTORS',
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      children: [
+        const SectionHeader(title: 'SCIENCE & MATH'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildSubjectRow(context, 'Mathematics', '📐'),
+              _buildDivider,
               _buildSubjectRow(context, 'Physics', '⚛️'),
+              _buildDivider,
               _buildSubjectRow(context, 'Chemistry', '🧪'),
+              _buildDivider,
               _buildSubjectRow(context, 'Biology', '🧬'),
             ],
           ),
-          _buildSectionHeader('COMMERCE & HUMANITIES'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'COMMERCE & HUMANITIES'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildSubjectRow(context, 'Accounts', '📊'),
+              _buildDivider,
               _buildSubjectRow(context, 'Economics', '📉'),
+              _buildDivider,
               _buildSubjectRow(context, 'English', '📚'),
             ],
           ),
-          const SizedBox(height: 32),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
+
+  static const _buildDivider = Divider(height: 1, color: AppColors.divider);
 }

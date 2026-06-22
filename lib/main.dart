@@ -1,9 +1,9 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'core/storage.dart';
 import 'core/design_system.dart';
+import 'core/theme.dart';
 import 'screens/home_page.dart';
 import 'screens/create_character_screen.dart';
 
@@ -40,16 +40,9 @@ class DesiLifeApp extends StatelessWidget {
           child: child!,
         );
       },
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.scaffoldBg,
-        textTheme: GoogleFonts.interTextTheme(),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
       home: const _AppBootstrap(),
     );
   }

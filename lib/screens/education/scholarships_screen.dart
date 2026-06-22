@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/character.dart';
 import '../../core/engine.dart';
-import '../../widgets/common_widgets.dart';
+import '../../core/design_system.dart';
+import '../../widgets/core/app_scaffold.dart';
+import '../../widgets/game/game_card.dart';
+import '../../widgets/game/section_header.dart';
+import '../../widgets/game/status_chip.dart';
 import '../../widgets/events/event_card.dart';
 import '../../widgets/events/event_types.dart';
+
 class ScholarshipsScreen extends StatelessWidget {
   final Character character;
   final void Function(GameAction) onGameAction;
@@ -15,14 +19,6 @@ class ScholarshipsScreen extends StatelessWidget {
     required this.character,
     required this.onGameAction,
   });
-
-  PreferredSizeWidget _buildAppBar(BuildContext context, String title) {
-    return EducationAppBar(title: title);
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return AppSectionHeader.education(title);
-  }
 
   void _showScholarshipDialog(BuildContext context, String id, String title,
       bool isClaimed, double reward, String subtitle) {
@@ -83,35 +79,62 @@ class ScholarshipsScreen extends StatelessWidget {
       locale: 'en_IN',
     ).format(reward);
 
-    return AppFlatRow(
-      icon: Text(emoji, style: const TextStyle(fontSize: 24)),
-      title: title,
-      subtitle: subtitle,
-      trailing: isClaimed
-          ? const Icon(Icons.check_circle, color: Color(0xFF006D37), size: 20)
-          : Text(
-              formattedReward,
-              style: GoogleFonts.lexend(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF006D37),
+    return InkWell(
+      onTap: () =>
+          _showScholarshipDialog(context, id, title, isClaimed, reward, subtitle),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.containerPadding,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: AppSpacing.sm + 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.labelSm.copyWith(fontSize: 10),
+                  ),
+                ],
               ),
             ),
-      onTap: () => _showScholarshipDialog(context, id, title, isClaimed, reward, subtitle),
+            if (isClaimed)
+              const StatusChip(label: 'CLAIMED', color: AppColors.primary)
+            else
+              Text(
+                formattedReward,
+                style: AppTextStyles.labelBold.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: _buildAppBar(context, 'SCHOLARSHIPS'),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildSectionHeader('Need-Based Aid'),
-          AppFlatRowGroup(
-            rows: [
+    return AppScaffold(
+      title: 'SCHOLARSHIPS',
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      children: [
+        const SectionHeader(title: 'NEED-BASED AID'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildScholarshipRow(
                 context,
                 'low_income',
@@ -122,9 +145,13 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-          _buildSectionHeader('High School Merit'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'HIGH SCHOOL MERIT'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildScholarshipRow(
                 context,
                 '10th_merit',
@@ -133,6 +160,7 @@ class ScholarshipsScreen extends StatelessWidget {
                 '📝',
                 10000,
               ),
+              _buildDivider,
               _buildScholarshipRow(
                 context,
                 '12th_excellence',
@@ -143,9 +171,13 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-          _buildSectionHeader('Talent & Extracurricular'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'TALENT & EXTRACURRICULAR'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildScholarshipRow(
                 context,
                 'sports_talent',
@@ -154,6 +186,7 @@ class ScholarshipsScreen extends StatelessWidget {
                 '🏅',
                 15000,
               ),
+              _buildDivider,
               _buildScholarshipRow(
                 context,
                 'arts_talent',
@@ -162,6 +195,7 @@ class ScholarshipsScreen extends StatelessWidget {
                 '🎭',
                 15000,
               ),
+              _buildDivider,
               _buildScholarshipRow(
                 context,
                 'coding_talent',
@@ -170,6 +204,7 @@ class ScholarshipsScreen extends StatelessWidget {
                 '💻',
                 15000,
               ),
+              _buildDivider,
               _buildScholarshipRow(
                 context,
                 'debate_excellence',
@@ -180,9 +215,11 @@ class ScholarshipsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 32),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
+
+  static const _buildDivider = Divider(height: 1, color: AppColors.divider);
 }

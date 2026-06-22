@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/character.dart';
 import '../../core/engine.dart';
-import '../../widgets/common_widgets.dart';
+import '../../core/design_system.dart';
+import '../../widgets/core/app_scaffold.dart';
+import '../../widgets/game/game_card.dart';
+import '../../widgets/game/section_header.dart';
+import '../../widgets/game/status_chip.dart';
 import '../../widgets/events/event_card.dart';
 import '../../widgets/events/event_types.dart';
 
@@ -16,20 +19,20 @@ class SchoolActivitiesScreen extends StatelessWidget {
     required this.onGameAction,
   });
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, String title) {
-    return EducationAppBar(title: title);
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return AppSectionHeader.education(title);
-  }
-
   String _getPerformanceString(int performance) {
     if (performance >= 5) return 'Elite';
     if (performance >= 4) return 'Excellent';
     if (performance >= 3) return 'Good';
     if (performance >= 2) return 'Average';
     return 'Beginner';
+  }
+
+  Color _getPerformanceColor(int performance) {
+    if (performance >= 5) return AppColors.primary;
+    if (performance >= 4) return const Color(0xFF059669);
+    if (performance >= 3) return AppColors.warning;
+    if (performance >= 2) return AppColors.textSecondary;
+    return AppColors.error;
   }
 
   void _showActivityDialog(BuildContext context, String id, bool isJoined) {
@@ -86,69 +89,112 @@ class SchoolActivitiesScreen extends StatelessWidget {
     final bool isJoined = character.joinedActivities.contains(id);
     final int performance = character.activityPerformance[id] ?? 0;
 
-    return AppFlatRow(
-      icon: Text(emoji, style: const TextStyle(fontSize: 24)),
-      title: id,
-      subtitle: isJoined
-          ? 'Performance: ${_getPerformanceString(performance)}'
-          : null,
-      subtitleStyle: isJoined
-          ? GoogleFonts.lexend(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF006D37),
-            )
-          : null,
-      trailing: isJoined
-          ? const Icon(Icons.check_circle, color: Color(0xFF006D37), size: 20)
-          : null,
+    return InkWell(
       onTap: () => _showActivityDialog(context, id, isJoined),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.containerPadding,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: AppSpacing.sm + 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    id,
+                    style: AppTextStyles.bodyMd.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (isJoined) ...[
+                    const SizedBox(height: 2),
+                    StatusChip(
+                      label: _getPerformanceString(performance),
+                      color: _getPerformanceColor(performance),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (isJoined)
+              const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
+            else
+              const Icon(Icons.chevron_right, color: AppColors.outline, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
-      appBar: _buildAppBar(context, 'SCHOOL ACTIVITIES'),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildSectionHeader('SPORTS'),
-          AppFlatRowGroup(
-            rows: [
+    return AppScaffold(
+      title: 'SCHOOL ACTIVITIES',
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      children: [
+        const SectionHeader(title: 'SPORTS'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildActivityRow(context, 'Cricket', '🏏'),
+              _buildDivider,
               _buildActivityRow(context, 'Football', '⚽'),
+              _buildDivider,
               _buildActivityRow(context, 'Basketball', '🏀'),
             ],
           ),
-          _buildSectionHeader('ARTS & CULTURE'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'ARTS & CULTURE'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildActivityRow(context, 'Acting Club', '🎭'),
+              _buildDivider,
               _buildActivityRow(context, 'Singing Club', '🎤'),
+              _buildDivider,
               _buildActivityRow(context, 'Dance Club', '💃'),
+              _buildDivider,
               _buildActivityRow(context, 'Art Club', '🎨'),
             ],
           ),
-          _buildSectionHeader('ACADEMICS & CLUBS'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'ACADEMICS & CLUBS'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildActivityRow(context, 'Debate Club', '🗣️'),
+              _buildDivider,
               _buildActivityRow(context, 'Coding Club', '💻'),
+              _buildDivider,
               _buildActivityRow(context, 'Science Club', '🔬'),
             ],
           ),
-          _buildSectionHeader('VOLUNTEERING'),
-          AppFlatRowGroup(
-            rows: [
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader(title: 'VOLUNTEERING'),
+        GameCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
               _buildActivityRow(context, 'NCC Cadet', '🪖'),
+              _buildDivider,
               _buildActivityRow(context, 'Teaching Volunteer', '👨‍🏫'),
             ],
           ),
-          const SizedBox(height: 32),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+      ],
     );
   }
+
+  static const _buildDivider = Divider(height: 1, color: AppColors.divider);
 }

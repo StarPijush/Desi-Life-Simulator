@@ -1,17 +1,16 @@
-// lib/screens/finance/market_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/design_system.dart';
 import '../../core/engine.dart';
 import '../../core/investments_data.dart';
 import '../../models/character.dart';
+import '../../widgets/core/app_scaffold.dart';
+import '../../widgets/game/section_header.dart';
 
-// ── Market Page (Stocks or Crypto) ──────────────────────────────────────────
 class MarketPage extends StatefulWidget {
   final Character character;
   final void Function(GameAction) onGameAction;
-  final String mode; // 'stock' or 'crypto'
+  final String mode;
 
   const MarketPage({
     super.key,
@@ -25,7 +24,6 @@ class MarketPage extends StatefulWidget {
 }
 
 class _MarketPageState extends State<MarketPage> {
-  // Simulate live prices with slight variance from base
   late final Map<String, double> _prices;
 
   @override
@@ -33,7 +31,6 @@ class _MarketPageState extends State<MarketPage> {
     super.initState();
     _prices = {};
     for (final asset in _assets) {
-      // Use character's saved market prices; fallback to initialPrice if not yet initialized by engine
       _prices[asset.name] = (widget.character.marketPrices[asset.name] as num?)?.toDouble() ?? asset.initialPrice;
     }
   }
@@ -43,13 +40,11 @@ class _MarketPageState extends State<MarketPage> {
 
   String get _title => widget.mode == 'crypto' ? 'CRYPTO MARKET' : 'STOCK MARKET';
 
-  // Compute % change from initial price
   double _change(MarketAsset a) {
     final current = _prices[a.name] ?? a.initialPrice;
     return (current - a.initialPrice) / a.initialPrice;
   }
 
-  // Check if character owns this asset
   int _owned(MarketAsset a) {
     final portfolio = widget.mode == 'crypto'
         ? widget.character.cryptoPortfolio
@@ -63,59 +58,27 @@ class _MarketPageState extends State<MarketPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(48),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.arrow_back, color: Color(0xFF006D37), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _title,
-                    style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFF181C1F), letterSpacing: 0.5),
-                  ),
-                  const Spacer(),
-                  Text(
-                    formatMoney(widget.character.bankBalance),
-                    style: GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF006D37)),
-                  ),
-                ],
-              ),
-            ),
+    return AppScaffold(
+      title: _title,
+      showBack: true,
+      trailing: Text(
+        formatMoney(widget.character.bankBalance),
+        style: AppTextStyles.labelBold.copyWith(fontSize: 12, color: AppColors.primary),
+      ),
+      children: [
+        if (_hasHoldings) _buildHoldingsHeader(),
+        const SizedBox(height: AppSpacing.xs),
+        SectionHeader(title: widget.mode == 'crypto' ? 'COINS' : 'EQUITIES'),
+        ..._assets.map((a) => _buildAssetRow(context, a)),
+        const SizedBox(height: AppSpacing.xl),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding, vertical: AppSpacing.sm),
+          child: Text(
+            'Prices fluctuate each year. Past performance does not guarantee future returns.',
+            style: AppTextStyles.caption.copyWith(height: 1.4),
           ),
         ),
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // Holdings bar
-          if (_hasHoldings) _buildHoldingsHeader(),
-          _buildSectionLabel(widget.mode == 'crypto' ? 'COINS' : 'EQUITIES'),
-          ..._assets.map((a) => _buildAssetRow(context, a)),
-          const SizedBox(height: 32),
-          // Disclaimer
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'Prices fluctuate each year. Past performance does not guarantee future returns.',
-              style: GoogleFonts.lexend(fontSize: 9, fontWeight: FontWeight.w500, color: const Color(0xFFA1A1AA), height: 1.4),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+      ],
     );
   }
 
@@ -142,10 +105,10 @@ class _MarketPageState extends State<MarketPage> {
     final gain = pnl >= 0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding, vertical: AppSpacing.sm),
       decoration: const BoxDecoration(
-        color: Color(0xFFF4F4F5),
-        border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
+        color: AppColors.iconBg,
+        border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,32 +116,23 @@ class _MarketPageState extends State<MarketPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('PORTFOLIO VALUE', style: GoogleFonts.lexend(fontSize: 9, fontWeight: FontWeight.w800, color: const Color(0xFF71717A), letterSpacing: 1.0)),
-              Text(formatMoney(totalValue), style: GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w900, color: const Color(0xFF161C28))),
+              Text('PORTFOLIO VALUE', style: AppTextStyles.sectionLabel),
+              Text(formatMoney(totalValue), style: AppTextStyles.financial),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('P&L', style: GoogleFonts.lexend(fontSize: 9, fontWeight: FontWeight.w800, color: const Color(0xFF71717A), letterSpacing: 1.0)),
+              Text('P&L', style: AppTextStyles.sectionLabel),
               Text(
                 '${gain ? '+' : ''}${pnlPct.toStringAsFixed(1)}%',
-                style: GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w900, color: gain ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                style: AppTextStyles.financial.copyWith(
+                  color: gain ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      color: const Color(0xFFF4F4F5),
-      child: Text(
-        label,
-        style: GoogleFonts.lexend(fontSize: 9, fontWeight: FontWeight.w800, color: const Color(0xFF71717A), letterSpacing: 1.5),
       ),
     );
   }
@@ -195,20 +149,20 @@ class _MarketPageState extends State<MarketPage> {
           onTap: () => _showTradeModal(context, asset, price),
           child: Container(
             height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
+            color: AppColors.surface,
             child: Row(
               children: [
                 Text(asset.emoji, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.cardGap),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(asset.name, style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF161C28))),
+                      Text(asset.name, style: AppTextStyles.rowTitle),
                       if (owned > 0)
-                        Text('$owned held', style: GoogleFonts.lexend(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF006D37))),
+                        Text('$owned held', style: AppTextStyles.rowSubtitle.copyWith(color: AppColors.primary)),
                     ],
                   ),
                 ),
@@ -218,28 +172,28 @@ class _MarketPageState extends State<MarketPage> {
                   children: [
                     Text(
                       shortMoney(price),
-                      style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF161C28)),
+                      style: AppTextStyles.rowTitle.copyWith(fontWeight: FontWeight.w800),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       color: isUp ? const Color(0xFFD1FAE5) : const Color(0xFFFFE4E6),
                       child: Text(
                         '${isUp ? '+' : ''}${(change * 100).toStringAsFixed(1)}%',
-                        style: GoogleFonts.lexend(
-                          fontSize: 9, fontWeight: FontWeight.w800,
+                        style: AppTextStyles.caption.copyWith(
+                          fontWeight: FontWeight.w800,
                           color: isUp ? const Color(0xFF059669) : const Color(0xFFDC2626),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16, color: Color(0xFFD4D4D8)),
+                const SizedBox(width: AppSpacing.sm),
+                const Icon(Icons.chevron_right, size: 16, color: AppColors.outline),
               ],
             ),
           ),
         ),
-        const Divider(height: 1, color: Color(0xFFE4E4E7), indent: 48),
+        const Divider(height: 1, color: AppColors.divider, indent: 48),
       ],
     );
   }
@@ -248,8 +202,7 @@ class _MarketPageState extends State<MarketPage> {
     final owned = _owned(asset);
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(),
+      backgroundColor: AppColors.surface,
       builder: (_) => _TradeSheet(
         asset: asset,
         price: price,
@@ -280,7 +233,6 @@ class _MarketPageState extends State<MarketPage> {
   }
 }
 
-// ── Trade Bottom Sheet ───────────────────────────────────────────────────────
 class _TradeSheet extends StatelessWidget {
   final MarketAsset asset;
   final double price;
@@ -304,48 +256,44 @@ class _TradeSheet extends StatelessWidget {
     final canSell = owned > 0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, AppSpacing.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
           Center(
             child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 8),
+              margin: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
               width: 32, height: 3,
-              color: const Color(0xFFD4D4D8),
+              color: AppColors.outline,
             ),
           ),
-          // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, AppSpacing.xs, AppSpacing.containerPadding, AppSpacing.cardGap),
             child: Row(
               children: [
                 Text(asset.emoji, style: const TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.cardGap),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(asset.name, style: GoogleFonts.lexend(fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF161C28))),
-                      Text(asset.description, style: GoogleFonts.lexend(fontSize: 10, fontWeight: FontWeight.w500, color: const Color(0xFF71717A))),
+                      Text(asset.name, style: AppTextStyles.headlineSm),
+                      Text(asset.description, style: AppTextStyles.labelSm),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          // Info rows
           _infoRow('PRICE', shortMoney(price)),
           _infoRow('VOLATILITY', '${(asset.volatility * 100).toInt()}% / yr'),
           _infoRow('YOU OWN', '$owned unit${owned == 1 ? '' : 's'}'),
           _infoRow('BALANCE', formatMoney(character.bankBalance)),
-          const Divider(height: 1, color: Color(0xFFE4E4E7)),
-          const SizedBox(height: 12),
-          // Action buttons
+          const Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: AppSpacing.cardGap),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
             child: Row(
               children: [
                 Expanded(
@@ -354,20 +302,26 @@ class _TradeSheet extends StatelessWidget {
                     child: Container(
                       height: 40,
                       alignment: Alignment.center,
-                      color: canBuy ? const Color(0xFF006D37) : const Color(0xFFE4E4E7),
-                      child: Text('BUY 1 UNIT', style: GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w900, color: canBuy ? Colors.white : const Color(0xFFA1A1AA))),
+                      color: canBuy ? AppColors.primary : AppColors.divider,
+                      child: Text('BUY 1 UNIT', style: AppTextStyles.labelBold.copyWith(
+                        fontSize: 12,
+                        color: canBuy ? AppColors.surface : AppColors.textMuted,
+                      )),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: GestureDetector(
                     onTap: canSell ? () { HapticFeedback.lightImpact(); onSell(); } : null,
                     child: Container(
                       height: 40,
                       alignment: Alignment.center,
-                      color: canSell ? const Color(0xFFDC2626) : const Color(0xFFE4E4E7),
-                      child: Text('SELL 1 UNIT', style: GoogleFonts.lexend(fontSize: 12, fontWeight: FontWeight.w900, color: canSell ? Colors.white : const Color(0xFFA1A1AA))),
+                      color: canSell ? const Color(0xFFDC2626) : AppColors.divider,
+                      child: Text('SELL 1 UNIT', style: AppTextStyles.labelBold.copyWith(
+                        fontSize: 12,
+                        color: canSell ? AppColors.surface : AppColors.textMuted,
+                      )),
                     ),
                   ),
                 ),
@@ -381,12 +335,12 @@ class _TradeSheet extends StatelessWidget {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding, vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.lexend(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF71717A), letterSpacing: 0.5)),
-          Text(value, style: GoogleFonts.lexend(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF161C28))),
+          Text(label, style: AppTextStyles.pageSubtitle),
+          Text(value, style: AppTextStyles.rowTitle.copyWith(fontWeight: FontWeight.w800)),
         ],
       ),
     );

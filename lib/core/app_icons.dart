@@ -1,0 +1,32 @@
+class AppIcons {
+  static const String career = '💼';
+  static const String military = '🎖️';
+  static const String politics = '🏛️';
+  static const String business = '🏢';
+  static const String education = '🎓';
+  static const String finance = '💰';
+  static const String health = '❤️';
+  static const String crime = '🚨';
+  static const String country = '🌍';
+  static const String city = '🏙️';
+  static const String work = '⏰';
+  static const String extraShift = '⚡';
+  static const String study = '📖';
+  static const String raise_ = '💬';
+  static const String promotion = '📈';
+  static const String quit = '🚪';
+  static const String family = '👨‍👩‍👧‍👦';
+  static const String friends = '🤝';
+  static const String romance = '💕';
+  static const String fame = '⭐';
+  static const String death = '🕊️';
+  static const String locked = '🔒';
+  static const String unlocked = '🔓';
+  static const String money = '₹';
+  static const String experience = '📊';
+  static const String stress = '😰';
+  static const String risk = '⚠️';
+  static const String check = '✅';
+  static const String cross = '❌';
+  static const String star = '🌟';
+}

@@ -1,12 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-
+import '../../../../core/design_system.dart';
 import '../../../../core/engine.dart';
 import '../../../../models/character.dart';
+import '../../../../widgets/core/app_scaffold.dart';
 import '../../../../widgets/events/event_card.dart';
 import '../../../../widgets/events/event_types.dart';
+import '../../../../widgets/game/section_header.dart';
 
 class InfluencerStudioScreen extends StatefulWidget {
   final Character character;
@@ -95,7 +95,6 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
         .toList();
     if (eligibleBrands.isEmpty) return;
 
-    // Shuffle and pick 2-3 brands
     eligibleBrands.shuffle(rng);
     final count = min(eligibleBrands.length, 2 + rng.nextInt(2));
 
@@ -180,177 +179,86 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F3FF),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56),
-        child: Container(
-          height: 56,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFDDE2F3), width: 1),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SafeArea(
-            bottom: false,
+    return AppScaffold(
+      title: 'Influencer Studio',
+      showBack: true,
+      children: [
+        const SectionHeader(title: 'ANALYTICS'),
+        Column(
+          children: [
+            _buildStatRow('Total Followers', '${_character.followers}'),
+            _buildStatRow('Total Posts', '${_character.totalPosts}'),
+            _buildStatRow('Fame', '${_character.fame}%'),
+            _buildStatRow('Engagement', '${_character.engagement}%'),
+            _buildStatRow('Most Successful Platform', _character.platform),
+            _buildStatRow('Current Niche', _character.contentType),
+          ],
+        ),
+
+        const SectionHeader(title: 'SPONSORSHIPS'),
+        if (_character.followers < 5000)
+          Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
+            color: AppColors.surface,
+            alignment: Alignment.centerLeft,
             child: Row(
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.of(context).pop();
-                  },
-                  child: const SizedBox(
-                    width: 24,
-                    height: 40,
-                    child: Icon(Icons.arrow_back,
-                        color: Color(0xFF10B981), size: 24),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'INFLUENCER STUDIO',
-                  style: GoogleFonts.lexend(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF10B981),
-                    letterSpacing: -0.02,
+                const Icon(Icons.lock, color: AppColors.error, size: 20),
+                const SizedBox(width: AppSpacing.cardGap),
+                Expanded(
+                  child: Text(
+                    'Locked: Reach 5,000 followers to unlock sponsorships.',
+                    style: AppTextStyles.rowSubtitle.copyWith(color: AppColors.error),
                   ),
                 ),
               ],
             ),
+          )
+        else if (_offers.isEmpty)
+          Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
+            color: AppColors.surface,
+            alignment: Alignment.center,
+            child: Text(
+              'No sponsorships available right now. Post more content!',
+              style: AppTextStyles.rowSubtitle,
+            ),
+          )
+        else
+          Column(
+            children: _offers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final offer = entry.value;
+              return _buildSponsorshipRow(
+                index: index,
+                company: offer['company'],
+                payout: offer['money'],
+                fame: offer['fame'],
+              );
+            }).toList(),
           ),
+
+        const SectionHeader(title: 'CAREER STATISTICS'),
+        Column(
+          children: [
+            _buildStatRow('Brand Deals Completed', '${_character.brandDealsCompleted}'),
+            _buildStatRow('Total Content Posts', '${_character.totalPosts}'),
+          ],
         ),
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // Section: ANALYTICS
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              'ANALYTICS',
-              style: GoogleFonts.lexend(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF606366),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              _buildStatRow('Total Followers', '${_character.followers}'),
-              _buildStatRow('Total Posts', '${_character.totalPosts}'),
-              _buildStatRow('Fame', '${_character.fame}%'),
-              _buildStatRow('Engagement', '${_character.engagement}%'),
-              _buildStatRow('Most Successful Platform', _character.platform),
-              _buildStatRow('Current Niche', _character.contentType),
-            ],
-          ),
-
-          // Section: SPONSORSHIPS
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              'SPONSORSHIPS',
-              style: GoogleFonts.lexend(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF606366),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          if (_character.followers < 5000)
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Colors.white,
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  const Icon(Icons.lock, color: Color(0xFFBA1A1A), size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Locked: Reach 5,000 followers to unlock sponsorships.',
-                      style: GoogleFonts.lexend(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFBA1A1A),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else if (_offers.isEmpty)
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Colors.white,
-              alignment: Alignment.center,
-              child: Text(
-                'No sponsorships available right now. Post more content!',
-                style: GoogleFonts.lexend(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5C5E62),
-                ),
-              ),
-            )
-          else
-            Column(
-              children: _offers.asMap().entries.map((entry) {
-                final index = entry.key;
-                final offer = entry.value;
-                return _buildSponsorshipRow(
-                  index: index,
-                  company: offer['company'],
-                  payout: offer['money'],
-                  fame: offer['fame'],
-                );
-              }).toList(),
-            ),
-
-          // Section: CAREER STATISTICS
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              'CAREER STATISTICS',
-              style: GoogleFonts.lexend(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF606366),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              _buildStatRow(
-                  'Brand Deals Completed', '${_character.brandDealsCompleted}'),
-              _buildStatRow('Total Content Posts', '${_character.totalPosts}'),
-            ],
-          ),
-          const SizedBox(height: 60),
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildStatRow(String label, String value) {
     return Container(
       height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFDDE2F3), width: 1),
+          bottom: BorderSide(color: AppColors.outline, width: 1),
         ),
       ),
       child: Row(
@@ -358,18 +266,13 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.lexend(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF161C28),
-            ),
+            style: AppTextStyles.rowSubtitle.copyWith(color: AppColors.textPrimary),
           ),
           Text(
             value,
-            style: GoogleFonts.lexend(
-              fontSize: 10,
+            style: AppTextStyles.rowSubtitle.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF006D37),
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -387,11 +290,11 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
       onTap: () => _showOfferDialog(index),
       child: Container(
         height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           border: Border(
-            bottom: BorderSide(color: Color(0xFFDDE2F3), width: 1),
+            bottom: BorderSide(color: AppColors.outline, width: 1),
           ),
         ),
         child: Row(
@@ -405,25 +308,17 @@ class _InfluencerStudioScreenState extends State<InfluencerStudioScreen> {
                 children: [
                   Text(
                     '$company Campaign Offer',
-                    style: GoogleFonts.lexend(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF161C28),
-                    ),
+                    style: AppTextStyles.rowTitle.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Payout: ₹${GameEngine.formatMoney(payout)} • Fame +$fame%',
-                    style: GoogleFonts.lexend(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF006D37),
-                    ),
+                    style: AppTextStyles.rowSubtitle.copyWith(color: AppColors.primary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFFBBCBBB), size: 20),
+            const Icon(Icons.chevron_right, color: AppColors.outline, size: 20),
           ],
         ),
       ),

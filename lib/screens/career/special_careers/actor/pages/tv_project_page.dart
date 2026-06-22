@@ -1,29 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../core/design_system.dart';
+import '../../../../../widgets/game/game_card.dart';
+import '../../../../../widgets/game/section_header.dart';
 import '../models/tv_project.dart';
 import '../widgets/tv_info_row.dart';
 import '../widgets/tv_cast_tile.dart';
 import '../widgets/tv_project_action_tile.dart';
-
-String _formatMoney(int amount) {
-  final str = amount.toString();
-  if (str.length <= 3) return str;
-  
-  String result = str.substring(str.length - 3);
-  String remaining = str.substring(0, str.length - 3);
-  
-  while (remaining.isNotEmpty) {
-    if (remaining.length > 2) {
-      result = '${remaining.substring(remaining.length - 2)},$result';
-      remaining = remaining.substring(0, remaining.length - 2);
-    } else {
-      result = '$remaining,$result';
-      remaining = '';
-    }
-  }
-  return result;
-}
 
 class TVProjectPage extends StatelessWidget {
   final TVProject project;
@@ -33,31 +16,31 @@ class TVProjectPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: AppColors.iconBg,
       appBar: const _Header(),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 96.0),
+          padding: const EdgeInsets.only(top: AppSpacing.md, left: AppSpacing.containerPadding, right: AppSpacing.containerPadding, bottom: 96),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 672),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _HeroSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _ProductionProgressSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _ProjectDetailsSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _ContractDetailsSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _CastSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _NetworkSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _CareerImpactSection(project: project),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
                 _ProjectActionsSection(project: project),
               ],
             ),
@@ -78,74 +61,47 @@ class _Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF9F9FF),
+      color: AppColors.iconBg,
       child: SafeArea(
         bottom: false,
         child: Container(
           height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding),
           decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
+            border: Border(bottom: BorderSide(color: AppColors.outline, width: 1)),
           ),
           child: Row(
             children: [
               InkWell(
                 onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppBorderRadius.full),
                 child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.arrow_back, color: Color(0xFF006D37), size: 24),
+                  padding: EdgeInsets.all(AppSpacing.sm),
+                  child: Icon(Icons.arrow_back, color: AppColors.primary, size: 24),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.md),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'TV PROJECT',
-                    style: GoogleFonts.lexend(
+                    style: AppTextStyles.labelBold.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF006D37),
+                      color: AppColors.primary,
                       letterSpacing: -0.5,
                     ),
                   ),
                   Text(
                     'Current Production',
-                    style: GoogleFonts.lexend(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF5C5E62),
-                      letterSpacing: 1.0,
-                    ),
+                    style: AppTextStyles.sectionLabel.copyWith(letterSpacing: 1.0),
                   ),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.lexend(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF5C5E62),
-          letterSpacing: 1.5,
         ),
       ),
     );
@@ -165,54 +121,43 @@ class _HeroSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              color: const Color(0xFF006D37),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+              color: AppColors.primary,
               child: Text(
                 project.genre.toUpperCase(),
-                style: GoogleFonts.lexend(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppTextStyles.labelBold.copyWith(fontSize: 13, color: AppColors.surface),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              color: const Color(0xFFDEDFE3),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+              color: AppColors.divider,
               child: Text(
                 project.network.toUpperCase(),
-                style: GoogleFonts.lexend(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF606366),
-                ),
+                style: AppTextStyles.labelBold.copyWith(fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           project.title.toUpperCase(),
-          style: GoogleFonts.lexend(
-            fontSize: 24,
+          style: AppTextStyles.displayMd.copyWith(
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF161C28),
             letterSpacing: -0.5,
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Row(
           children: [
-            const Icon(Icons.radio_button_checked, color: Color(0xFF006D37), size: 14),
+            const Icon(Icons.radio_button_checked, color: AppColors.primary, size: 14),
             const SizedBox(width: 6),
             Text(
               project.showStatus.toUpperCase(),
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF006D37),
+                color: AppColors.primary,
                 letterSpacing: 1.0,
               ),
             ),
@@ -233,33 +178,26 @@ class _ProductionProgressSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('PRODUCTION PROGRESS'),
+        const SectionHeader(title: 'PRODUCTION PROGRESS'),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Episodes Completed:',
-              style: GoogleFonts.lexend(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF5C5E62),
-              ),
+              style: AppTextStyles.bodyLg.copyWith(color: AppColors.textSecondary),
             ),
             Text(
               '${project.completedEpisodes} / ${project.totalEpisodes}',
-              style: GoogleFonts.lexend(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF161C28),
-              ),
+              style: AppTextStyles.bodyLg.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.cardGap),
         Container(
           height: 12,
           width: double.infinity,
-          color: const Color(0xFFDEDFE3),
+          color: AppColors.divider,
           child: Row(
             children: [
               Expanded(
@@ -273,14 +211,10 @@ class _ProductionProgressSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           '${(project.productionProgress * 100).toInt()}%',
-          style: GoogleFonts.lexend(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF006D37),
-          ),
+          style: AppTextStyles.labelBold.copyWith(fontSize: 13, color: AppColors.primary),
         ),
       ],
     );
@@ -297,15 +231,21 @@ class _ProjectDetailsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('PROJECT DETAILS'),
-        TVInfoRow(label: 'Network', value: project.network),
-        TVInfoRow(label: 'Season', value: project.seasonNumber.toString()),
-        TVInfoRow(label: 'Episodes', value: project.totalEpisodes.toString()),
-        TVInfoRow(label: 'Role', value: project.roleName),
-        TVInfoRow(label: 'Role Type', value: project.roleType),
-        TVInfoRow(label: 'Production Co.', value: project.productionCompany),
-        TVInfoRow(label: 'Director', value: project.director),
-        TVInfoRow(label: 'Producer', value: project.producer),
+        const SectionHeader(title: 'PROJECT DETAILS'),
+        GameCard(
+          child: Column(
+            children: [
+              TVInfoRow(label: 'Network', value: project.network),
+              TVInfoRow(label: 'Season', value: project.seasonNumber.toString()),
+              TVInfoRow(label: 'Episodes', value: project.totalEpisodes.toString()),
+              TVInfoRow(label: 'Role', value: project.roleName),
+              TVInfoRow(label: 'Role Type', value: project.roleType),
+              TVInfoRow(label: 'Production Co.', value: project.productionCompany),
+              TVInfoRow(label: 'Director', value: project.director),
+              TVInfoRow(label: 'Producer', value: project.producer),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -323,25 +263,25 @@ class _ContractDetailsSection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2ECC71).withValues(alpha: 0.1),
-        border: Border.all(color: const Color(0xFF006D37), width: 1),
+        border: Border.all(color: AppColors.primary, width: 1),
       ),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
+            padding: const EdgeInsets.only(bottom: AppSpacing.cardGap),
             child: Text(
               'CONTRACT DETAILS',
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF006D37),
+                color: AppColors.primary,
                 letterSpacing: 1.5,
               ),
             ),
           ),
-          TVInfoRow(label: 'Salary Per Ep.', value: '₹${_formatMoney(project.salaryPerEpisode)}', valueColor: const Color(0xFF006D37)),
+          TVInfoRow(label: 'Salary Per Ep.', value: '₹${_formatMoney(project.salaryPerEpisode)}', valueColor: AppColors.primary),
           TVInfoRow(label: 'Signing Bonus', value: '₹${_formatMoney(project.signingBonus)}'),
           TVInfoRow(label: 'Total Potential', value: '₹${_formatMoney(totalPotentialEarnings)}'),
           TVInfoRow(label: 'Length', value: '${project.contractLength} Days'),
@@ -361,11 +301,9 @@ class _CastSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('CAST'),
-        Container(
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
-          ),
+        const SectionHeader(title: 'CAST'),
+        GameCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: project.castMembers.map((member) => TVCastTile(
               member: member,
@@ -388,31 +326,26 @@ class _NetworkSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('NETWORK'),
+        const SectionHeader(title: 'NETWORK'),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F3FF),
-            border: Border.all(color: const Color(0xFFDEDFE3), width: 1),
+            color: AppColors.scaffoldBg,
+            border: Border.all(color: AppColors.divider, width: 1),
           ),
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(AppSpacing.cardGap),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 project.network,
-                style: GoogleFonts.lexend(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF161C28),
-                ),
+                style: AppTextStyles.headlineSm,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
-                'Top-rated entertainment channel known for high-budget science fiction dramas.', // Hardcoded as per prompt
-                style: GoogleFonts.lexend(
-                  fontSize: 16,
+                'Top-rated entertainment channel known for high-budget science fiction dramas.',
+                style: AppTextStyles.bodyMd.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF5C5E62),
+                  color: AppColors.textSecondary,
                   fontStyle: FontStyle.italic,
                   height: 1.4,
                 ),
@@ -435,11 +368,17 @@ class _CareerImpactSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('CAREER IMPACT'),
-        TVInfoRow(label: 'Fame Gain', value: '+${project.fameImpact}%', valueColor: const Color(0xFF006D37)),
-        TVInfoRow(label: 'Reputation Gain', value: '+${project.reputationImpact}%', valueColor: const Color(0xFF006D37)),
-        TVInfoRow(label: 'Fan Growth', value: '+${project.fanGrowth}%', valueColor: const Color(0xFF006D37)),
-        const TVInfoRow(label: 'Award Potential', value: 'High'),
+        const SectionHeader(title: 'CAREER IMPACT'),
+        GameCard(
+          child: Column(
+            children: [
+              TVInfoRow(label: 'Fame Gain', value: '+${project.fameImpact}%', valueColor: AppColors.primary),
+              TVInfoRow(label: 'Reputation Gain', value: '+${project.reputationImpact}%', valueColor: AppColors.primary),
+              TVInfoRow(label: 'Fan Growth', value: '+${project.fanGrowth}%', valueColor: AppColors.primary),
+              const TVInfoRow(label: 'Award Potential', value: 'High'),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -455,11 +394,9 @@ class _ProjectActionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle('PROJECT ACTIONS'),
-        Container(
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
-          ),
+        const SectionHeader(title: 'PROJECT ACTIONS'),
+        GameCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               TVProjectActionTile(
@@ -502,15 +439,15 @@ class _BottomActionArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF9F9FF),
+      color: AppColors.iconBg,
       padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 16.0,
-        bottom: MediaQuery.of(context).padding.bottom + 16.0,
+        left: AppSpacing.containerPadding,
+        right: AppSpacing.containerPadding,
+        top: AppSpacing.containerPadding,
+        bottom: MediaQuery.of(context).padding.bottom + AppSpacing.containerPadding,
       ),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
+        border: Border(top: BorderSide(color: AppColors.outline, width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -519,33 +456,33 @@ class _BottomActionArea extends StatelessWidget {
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006D37),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(
               'CONTINUE PRODUCTION',
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF006D37),
-              side: const BorderSide(color: Color(0xFF006D37), width: 2),
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary, width: 2),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.cardGap),
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(
               'PROJECT STATUS',
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -555,4 +492,23 @@ class _BottomActionArea extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatMoney(int amount) {
+  final str = amount.toString();
+  if (str.length <= 3) return str;
+  
+  String result = str.substring(str.length - 3);
+  String remaining = str.substring(0, str.length - 3);
+  
+  while (remaining.isNotEmpty) {
+    if (remaining.length > 2) {
+      result = '${remaining.substring(remaining.length - 2)},$result';
+      remaining = remaining.substring(0, remaining.length - 2);
+    } else {
+      result = '$remaining,$result';
+      remaining = '';
+    }
+  }
+  return result;
 }

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../core/design_system.dart';
 import '../core/engine.dart';
@@ -10,6 +9,8 @@ import '../core/enums.dart';
 import '../core/storage.dart';
 import '../models/character.dart';
 import '../models/life_event.dart';
+import '../widgets/game/game_card.dart';
+import '../widgets/game/progress_bar.dart';
 import 'create_character_screen.dart';
 import 'legacy_page.dart';
 import 'career_page.dart';
@@ -135,25 +136,21 @@ class _HomePageState extends State<HomePage> {
     final events = _normalizeAgeUpEvents(result);
     final currentEvents = List<LifeEvent>.from(_eventsNotifier.value);
 
-    // Process events in chronological order
     for (final event in events) {
       if (!mounted || executionId != _latestExecutionId) return;
 
-      // --- ELASTIC PACING CALCULATION ---
-      int delayMs = 60; // Default routine speed
+      int delayMs = 60;
       if (event.priority == EventPriority.important) delayMs = 150;
       if (event.type == LifeEventType.milestone) delayMs = 300;
       if (event.priority == EventPriority.critical ||
           event.priority == EventPriority.rare) delayMs = 500;
 
       if (event.choice != null) {
-        // --- DRAMATIC REVEAL ---
         HapticFeedback.mediumImpact();
         _showCriticalFlashNotifier.value = true;
         await Future.delayed(const Duration(milliseconds: 200));
         _showCriticalFlashNotifier.value = false;
-        await Future.delayed(
-            const Duration(milliseconds: 300)); // Suspense pause
+        await Future.delayed(const Duration(milliseconds: 300));
 
         final choiceResult = await _showDecisionPopup(event.choice!);
 
@@ -162,9 +159,6 @@ class _HomePageState extends State<HomePage> {
           _eventsNotifier.value = _sanitizeTimeline(currentEvents);
           _scrollToLatest();
           HapticFeedback.lightImpact();
-
-          // --- SUCCESSIVE CHOICE BUFFER ---
-          // Increase emotional processing gap (800ms) to allow timeline to settle
           await Future.delayed(const Duration(milliseconds: 800));
         }
       } else {
@@ -198,10 +192,9 @@ class _HomePageState extends State<HomePage> {
     _saveEvents();
 
     if (updatedCharacter.isDead && mounted) {
-      // --- FINAL DEATH FLOW ---
-      await Future.delayed(const Duration(milliseconds: 1000)); // Final pause
+      await Future.delayed(const Duration(milliseconds: 1000));
       _showCriticalFlashNotifier.value = true;
-      await Future.delayed(const Duration(milliseconds: 500)); // Fade out start
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
         Navigator.of(context).push(
@@ -317,13 +310,13 @@ class _HomePageState extends State<HomePage> {
           context: context,
           useRootNavigator: true,
           builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            title: Text(mainEvent.title, style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
-            content: Text(mainEvent.description, style: GoogleFonts.lexend()),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppBorderRadius.xl)),
+            title: Text(mainEvent.title, style: AppTextStyles.labelBold.copyWith(fontSize: 16)),
+            content: Text(mainEvent.description, style: AppTextStyles.bodyMd),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Continue', style: TextStyle(color: Color(0xFF006D37), fontWeight: FontWeight.bold)),
+                child: Text('Continue', style: AppTextStyles.labelBold.copyWith(color: AppColors.primary)),
               ),
             ],
           ),
@@ -378,7 +371,6 @@ class _HomePageState extends State<HomePage> {
           final traitShifts =
               isOptionA ? choice.traitShiftsA : choice.traitShiftsB;
 
-          // Apply effects to character
           final current = _characterNotifier.value;
           final updated = current.copyWith(
             happiness:
@@ -407,7 +399,6 @@ class _HomePageState extends State<HomePage> {
           _characterNotifier.value = updated;
           StorageService.saveCharacter(updated);
 
-          // Handle GameAction payload (e.g. Unexpected Career Offers)
           final actionToRun = isOptionA ? choice.gameActionA : choice.gameActionB;
           if (actionToRun != null && isSuccess) {
             final actionResult = GameEngine.processAction(
@@ -420,7 +411,6 @@ class _HomePageState extends State<HomePage> {
             }
           }
 
-          // Create result event
           String statHint = '';
           if (effect.happiness != 0)
             statHint +=
@@ -489,7 +479,7 @@ class _HomePageState extends State<HomePage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Scaffold(
-          backgroundColor: AppColors.scaffoldBg,
+          backgroundColor: AppColors.background,
           body: Stack(
             children: [
               Column(
@@ -523,7 +513,7 @@ class _HomePageState extends State<HomePage> {
                                   character: character,
                                 ),
                                 const SizedBox(
-                                    height: 200), // Space for bottom controls
+                                    height: 200),
                               ],
                             );
                           },
@@ -600,31 +590,17 @@ class _LifeStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, AppSpacing.xs, AppSpacing.containerPadding, AppSpacing.xs),
       child: Column(
         children: [
-          StatBar(
-              emoji: '😊',
-              label: 'Happiness',
-              value: character.happiness,
-              color: AppColors.happiness),
-          StatBar(
-              emoji: '❤️',
-              label: 'Health',
-              value: character.health,
-              color: AppColors.health),
-          StatBar(
-              emoji: '🧠',
-              label: 'Smarts',
-              value: character.smarts,
-              color: AppColors.smarts),
-          StatBar(
-              emoji: '✨',
-              label: 'Looks',
-              value: character.looks,
-              color: AppColors.looks,
-              isLast: true),
+          ProgressBarRow(label: '\u{1F60A}  Happiness', value: character.happiness.toDouble(), color: AppColors.happiness, barHeight: 5, showPercent: true),
+          const SizedBox(height: AppSpacing.xs),
+          ProgressBarRow(label: '\u{2764}\u{FE0F}  Health', value: character.health.toDouble(), color: AppColors.health, barHeight: 5, showPercent: true),
+          const SizedBox(height: AppSpacing.xs),
+          ProgressBarRow(label: '\u{1F9E0}  Smarts', value: character.smarts.toDouble(), color: AppColors.smarts, barHeight: 5, showPercent: true),
+          const SizedBox(height: AppSpacing.xs),
+          ProgressBarRow(label: '\u{2728}  Looks', value: character.looks.toDouble(), color: AppColors.looks, barHeight: 5, showPercent: true),
         ],
       ),
     );
@@ -639,7 +615,6 @@ class _TimelineList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure we always have events to show
     final displayEvents = events.isEmpty
         ? [
             LifeEvent(
@@ -651,7 +626,6 @@ class _TimelineList extends StatelessWidget {
           ]
         : events;
 
-    // Group events by age
     final Map<int, List<LifeEvent>> groupedEvents = {};
     final List<int> sortedAges = [];
 
@@ -664,18 +638,17 @@ class _TimelineList extends StatelessWidget {
       groupedEvents[age]!.add(event);
     }
 
-    // Sort ages descending to match chronological reversed order (newest first)
     sortedAges.sort((a, b) => b.compareTo(a));
 
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final age in sortedAges) ...[
             _AgeGroupHeader(age: age),
             for (final event in groupedEvents[age]!) _TimelineRow(event: event),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ],
       ),
@@ -691,7 +664,7 @@ class _AgeGroupHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, AppSpacing.cardGap, AppSpacing.containerPadding, AppSpacing.xs),
       child: Text(
         'Age $age',
         style: AppTextStyles.rowTitle.copyWith(
@@ -712,15 +685,15 @@ class _TimelineRow extends StatelessWidget {
   static Color _dotColor(LifeEvent e) {
     switch (e.type) {
       case LifeEventType.positive:
-        return AppColors.success; // Green
+        return AppColors.success;
       case LifeEventType.negative:
       case LifeEventType.critical:
-        return AppColors.danger; // Red
+        return AppColors.danger;
       case LifeEventType.milestone:
       case LifeEventType.rare:
-        return AppColors.smarts; // Blue (Special)
+        return AppColors.smarts;
       default:
-        return AppColors.textMuted; // Grey (Normal)
+        return AppColors.textMuted;
     }
   }
 
@@ -802,7 +775,7 @@ class _BottomLifeControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border:
             Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
       ),
@@ -810,18 +783,16 @@ class _BottomLifeControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _LifeStats(character: character),
-          // Age Up button
           ValueListenableBuilder<bool>(
             valueListenable: isAgingListenable,
             builder: (_, isAging, __) =>
                 _AgeUpButton(isAging: isAging, onTap: onAge),
           ),
-          // Nav bar
           SafeArea(
             top: false,
             child: Container(
               height: 50,
-              color: Colors.white,
+              color: AppColors.surface,
               child: Row(
                 children: [
                   _NavTab(
@@ -880,10 +851,10 @@ class _AgeUpButtonState extends State<_AgeUpButton> {
         duration: AppMotion.tap,
         child: Container(
           height: 36,
-          margin: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+          margin: const EdgeInsets.fromLTRB(AppSpacing.cardGap, 2, AppSpacing.cardGap, AppSpacing.xs),
           decoration: BoxDecoration(
             color: AppColors.success,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppBorderRadius.sm),
           ),
           alignment: Alignment.center,
           child: widget.isAging
@@ -970,10 +941,10 @@ class _ProfileSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppBorderRadius.md)),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, 20, AppSpacing.containerPadding, AppSpacing.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -982,28 +953,70 @@ class _ProfileSheet extends StatelessWidget {
             height: 4,
             decoration: BoxDecoration(
               color: AppColors.dividerLight,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(character.name, style: AppTextStyles.pageTitle),
+          const SizedBox(height: AppSpacing.lg),
+          Text(character.name, style: AppTextStyles.displayLg),
           Text('Born in ${character.city}', style: AppTextStyles.pageSubtitle),
-          const SizedBox(height: 24),
-          RowGroup(
-            rows: [
-              GameRow(
-                icon: Icons.history_edu_rounded,
-                title: 'Journal',
-                subtitle: 'View your life summary',
-                onTap: onLegacyTap,
-              ),
-              GameRow(
-                icon: Icons.restart_alt_rounded,
-                title: 'New Life',
-                subtitle: 'Start over from scratch',
-                onTap: onNewLife,
-              ),
-            ],
+          const SizedBox(height: AppSpacing.lg),
+          GameCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                InkWell(
+                  onTap: onLegacyTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.containerPadding,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.history_edu_rounded, color: AppColors.primary, size: 24),
+                        const SizedBox(width: AppSpacing.cardGap),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Journal', style: AppTextStyles.bodyMd.copyWith(fontWeight: FontWeight.w700)),
+                              Text('View your life summary', style: AppTextStyles.labelSm),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.outline),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 1, color: AppColors.divider, indent: AppSpacing.containerPadding + 24 + AppSpacing.cardGap),
+                InkWell(
+                  onTap: onNewLife,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.containerPadding,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.restart_alt_rounded, color: AppColors.error, size: 24),
+                        const SizedBox(width: AppSpacing.cardGap),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('New Life', style: AppTextStyles.bodyMd.copyWith(fontWeight: FontWeight.w700)),
+                              Text('Start over from scratch', style: AppTextStyles.labelSm),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.outline),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1020,9 +1033,9 @@ class _DecisionModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppBorderRadius.xl)),
       elevation: 0,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1031,20 +1044,20 @@ class _DecisionModal extends StatelessWidget {
             Text(
               choice.title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.pageTitle.copyWith(fontSize: 16),
+              style: AppTextStyles.displayMd.copyWith(fontSize: 16),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.cardGap),
             Text(
               choice.description,
               textAlign: TextAlign.center,
               style: AppTextStyles.rowSubtitle.copyWith(fontSize: 12),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
             _DecisionButton(
               label: choice.optionA,
               onTap: () => onChosen(true),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             _DecisionButton(
               label: choice.optionB,
               onTap: () => onChosen(false),
@@ -1072,14 +1085,14 @@ class _DecisionButton extends StatelessWidget {
           onTap();
         },
         style: TextButton.styleFrom(
-          backgroundColor: const Color(0xFFF2F2F7),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          backgroundColor: AppColors.iconBg,
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.cardGap),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppBorderRadius.sm)),
         ),
         child: Text(
           label,
           style: AppTextStyles.rowTitle.copyWith(
-            color: AppColors.info,
+            color: AppColors.primary,
             fontSize: 13,
           ),
         ),

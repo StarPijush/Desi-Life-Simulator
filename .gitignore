@@ -15,6 +15,7 @@ android/.gradle/
 android/captures/
 
 .agent/
+.opencode/
 analyze_results.txt
 analyzer_output.txt
 graphify-out/

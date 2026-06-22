@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/design_system.dart';
 import '../../../../../models/character.dart';
 import '../../../../../widgets/events/event_card.dart';
 import '../../../../../widgets/events/event_types.dart';
+import '../../../../../widgets/game/game_card.dart';
+import '../../../../../widgets/game/section_header.dart';
+import '../data/audition_engine.dart';
 import '../models/tv_show_audition.dart';
 import '../models/tv_project.dart';
-import '../data/audition_engine.dart';
 import '../widgets/movie_detail_info_row.dart';
 import '../widgets/movie_requirement_tile.dart';
 
@@ -29,25 +31,25 @@ class TVAuditionDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: AppColors.iconBg,
       appBar: const _Header(),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding, vertical: AppSpacing.cardGap),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 576),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _HeroSection(audition: audition),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.cardGap),
                 _ProjectDetailsCard(audition: audition),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.cardGap),
                 _ContractOfferCard(audition: audition, formatMoney: _formatMoney),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.cardGap),
                 _AuditionRequirementsCard(audition: audition),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
@@ -67,45 +69,40 @@ class _Header extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF9F9FF),
+      color: AppColors.iconBg,
       child: SafeArea(
         bottom: false,
         child: Container(
           decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
+            border: Border(bottom: BorderSide(color: AppColors.outline, width: 1)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.containerPadding, vertical: AppSpacing.sm),
           child: Row(
             children: [
               InkWell(
                 onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppBorderRadius.full),
                 child: const Padding(
-                  padding: EdgeInsets.all(4.0),
-                  child: Icon(Icons.arrow_back, color: Color(0xFF006D37), size: 24),
+                  padding: EdgeInsets.all(AppSpacing.xs),
+                  child: Icon(Icons.arrow_back, color: AppColors.primary, size: 24),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.md),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'TV AUDITION',
-                    style: GoogleFonts.lexend(
+                    style: AppTextStyles.labelBold.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFF006D37),
+                      color: AppColors.primary,
                     ),
                   ),
                   Text(
                     'Casting Opportunity',
-                    style: GoogleFonts.lexend(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF5C5E62),
-                      letterSpacing: 1.0,
-                    ),
+                    style: AppTextStyles.sectionLabel.copyWith(letterSpacing: 1.0),
                   ),
                 ],
               ),
@@ -129,96 +126,36 @@ class _HeroSection extends StatelessWidget {
       children: [
         Text(
           audition.showTitle,
-          style: GoogleFonts.lexend(
-            fontSize: 24,
+          style: AppTextStyles.displayMd.copyWith(
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF161C28),
             letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              color: const Color(0xFF006D37),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.cardGap, vertical: AppSpacing.xs),
+              color: AppColors.primary,
               child: Text(
                 audition.genre.toUpperCase(),
-                style: GoogleFonts.lexend(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                style: AppTextStyles.labelBold.copyWith(fontSize: 13, color: AppColors.surface),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              color: const Color(0xFFDDE2F3),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.cardGap, vertical: AppSpacing.xs),
+              color: AppColors.dividerLight,
               child: Text(
                 audition.network.toUpperCase(),
-                style: GoogleFonts.lexend(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF3D4A3E),
-                ),
+                style: AppTextStyles.labelBold.copyWith(fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _FlatCard extends StatelessWidget {
-  final Widget child;
-  final Color backgroundColor;
-  final Color borderColor;
-
-  const _FlatCard({
-    required this.child,
-    this.backgroundColor = Colors.white,
-    this.borderColor = const Color(0xFFBBCBBB),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: child,
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final Color color;
-
-  const _SectionHeader({
-    required this.title,
-    this.color = const Color(0xFF5C5E62),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.lexend(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 1.0,
-        ),
-      ),
     );
   }
 }
@@ -230,11 +167,11 @@ class _ProjectDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _FlatCard(
+    return GameCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'Project Details'),
+          const SectionHeader(title: 'Project Details'),
           MovieDetailInfoRow(label: 'Network', value: audition.network),
           MovieDetailInfoRow(label: 'Season', value: '${audition.seasonNumber}'),
           MovieDetailInfoRow(label: 'Episodes', value: '${audition.episodes}'),
@@ -253,15 +190,22 @@ class _ContractOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _FlatCard(
-      backgroundColor: const Color(0xFF2ECC71).withValues(alpha: 0.1),
-      borderColor: const Color(0xFF006D37),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF2ECC71).withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.primary, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'Contract Offer', color: Color(0xFF006D37)),
-          MovieDetailInfoRow(label: 'Per Episode', value: formatMoney(audition.salaryPerEpisode), valueColor: const Color(0xFF006D37)),
-          MovieDetailInfoRow(label: 'Total Potential', value: formatMoney(audition.salaryPerEpisode * audition.episodes), valueColor: const Color(0xFF006D37)),
+          SectionHeader(title: 'Contract Offer', style: AppTextStyles.labelBold.copyWith(
+            fontSize: 13,
+            color: AppColors.primary,
+            letterSpacing: 1.0,
+          )),
+          MovieDetailInfoRow(label: 'Per Episode', value: formatMoney(audition.salaryPerEpisode), valueColor: AppColors.primary),
+          MovieDetailInfoRow(label: 'Total Potential', value: formatMoney(audition.salaryPerEpisode * audition.episodes), valueColor: AppColors.primary),
         ],
       ),
     );
@@ -275,17 +219,17 @@ class _AuditionRequirementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _FlatCard(
+    return GameCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'Audition Requirements'),
+          const SectionHeader(title: 'Audition Requirements'),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            mainAxisSpacing: AppSpacing.cardGap,
+            crossAxisSpacing: AppSpacing.cardGap,
             childAspectRatio: 2.5,
             children: [
               MovieRequirementTile(label: 'Fame', value: '${audition.requiredFame}+'),
@@ -307,15 +251,15 @@ class _BottomActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF9F9FF),
+      color: AppColors.iconBg,
       padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 16.0,
-        bottom: MediaQuery.of(context).padding.bottom + 16.0,
+        left: AppSpacing.containerPadding,
+        right: AppSpacing.containerPadding,
+        top: AppSpacing.containerPadding,
+        bottom: MediaQuery.of(context).padding.bottom + AppSpacing.containerPadding,
       ),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFBBCBBB), width: 1)),
+        border: Border(top: BorderSide(color: AppColors.outline, width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -408,7 +352,7 @@ class _BottomActions extends StatelessWidget {
                   category: EventCategory.career,
                   mode: EventCardMode.info,
                   title: 'AUDITION REJECTED',
-                  description: 'Another actor was selected.\\n\\nImprovement Hint: $hint',
+                  description: 'Another actor was selected.\n\nImprovement Hint: $hint',
                   infoRows: [
                     EventInfoRow(label: 'Required Score', value: '$reqScore'),
                     EventInfoRow(label: 'Your Score', value: '$myScore'),
@@ -422,33 +366,33 @@ class _BottomActions extends StatelessWidget {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF006D37),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(
               'APPLY FOR AUDITION',
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF006D37),
-              side: const BorderSide(color: Color(0xFF006D37), width: 2),
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary, width: 2),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.cardGap),
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: Text(
               'DECLINE',
-              style: GoogleFonts.lexend(
+              style: AppTextStyles.labelBold.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),

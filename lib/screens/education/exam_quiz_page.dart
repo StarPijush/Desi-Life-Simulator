@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/design_system.dart';
 import '../../core/engine.dart';
 import '../../core/exam_data.dart';
 import '../../models/character.dart';
@@ -61,7 +62,6 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
   }
 
   void _submitResult() {
-    // multiplier: 1 correct = 0.7, 5 correct = 1.5
     final multiplier = 0.7 + (_correct / _totalQuestions) * 0.8;
     widget.onGameAction(
       GameAction('career.perform', {
@@ -74,38 +74,40 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(48),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
-          ),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(
+                bottom: BorderSide(color: AppColors.divider, width: 1),
+              ),
+            ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.close, color: Color(0xFF71717A), size: 20),
+                    child: const Icon(Icons.close, color: AppColors.textSecondary, size: 20),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.cardGap),
                   Text(
                     _examLabel,
-                    style: GoogleFonts.lexend(
+                    style: AppTextStyles.labelBold.copyWith(
                       fontSize: 13, fontWeight: FontWeight.w900,
-                      color: const Color(0xFF181C1F), letterSpacing: 0.5,
+                      color: AppColors.textPrimary, letterSpacing: 0.5,
                     ),
                   ),
                   const Spacer(),
                   if (!_done)
                     Text(
                       '${_current + 1}/$_totalQuestions',
-                      style: GoogleFonts.lexend(
-                        fontSize: 11, fontWeight: FontWeight.w700,
-                        color: const Color(0xFF71717A),
+                      style: AppTextStyles.labelBold.copyWith(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                 ],
@@ -133,73 +135,69 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Progress bar
         Container(
           height: 3,
-          color: const Color(0xFFE4E4E7),
+          color: AppColors.divider,
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
             widthFactor: progress,
-            child: Container(color: const Color(0xFF006D37)),
+            child: Container(color: AppColors.primary),
           ),
         ),
 
-        // Category tag + question
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, 20, AppSpacing.md, AppSpacing.sm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
                 color: const Color(0xFFF1F5FF),
                 child: Text(
                   q.category.toUpperCase(),
-                  style: GoogleFonts.lexend(
+                  style: AppTextStyles.caption.copyWith(
                     fontSize: 9, fontWeight: FontWeight.w800,
                     color: const Color(0xFF5C5E62), letterSpacing: 1.0,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.cardGap),
               Text(
                 q.question,
                 style: GoogleFonts.lexend(
                   fontSize: 14, fontWeight: FontWeight.w700,
-                  color: const Color(0xFF161C28), height: 1.4,
+                  color: AppColors.textPrimary, height: 1.4,
                 ),
               ),
             ],
           ),
         ),
 
-        const Divider(height: 1, color: Color(0xFFE4E4E7)),
+        const Divider(height: 1, color: AppColors.divider),
 
-        // Options
         Expanded(
           child: ListView.separated(
             physics: const NeverScrollableScrollPhysics(),
             itemCount: q.options.length,
             separatorBuilder: (_, __) =>
-                const Divider(height: 1, color: Color(0xFFE4E4E7), indent: 0),
+                const Divider(height: 1, color: AppColors.divider, indent: 0),
             itemBuilder: (_, idx) => _buildOption(idx, q),
           ),
         ),
 
-        // Next / submit
         if (_answered)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.lg),
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFE4E4E7), width: 1)),
+              border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
             ),
             child: GestureDetector(
               onTap: _next,
               child: Container(
                 height: 44,
                 alignment: Alignment.center,
-                color: const Color(0xFF006D37),
+                color: AppColors.primary,
                 child: Text(
                   _current + 1 >= _totalQuestions ? 'SEE RESULTS' : 'NEXT QUESTION',
                   style: GoogleFonts.lexend(
@@ -215,8 +213,8 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
   }
 
   Widget _buildOption(int idx, ExamQuestion q) {
-    Color bg = Colors.white;
-    Color textColor = const Color(0xFF161C28);
+    Color bg = AppColors.surface;
+    Color textColor = AppColors.textPrimary;
     Widget? trailing;
 
     if (_answered) {
@@ -237,7 +235,7 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
       onTap: () => _select(idx),
       child: Container(
         height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         color: bg,
         child: Row(
           children: [
@@ -245,17 +243,17 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
               width: 22, height: 22,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFD4D4D8), width: 1),
+                border: Border.all(color: AppColors.outline, width: 1),
                 color: Colors.transparent,
               ),
               child: Text(
-                String.fromCharCode(65 + idx), // A, B, C, D
+                String.fromCharCode(65 + idx),
                 style: GoogleFonts.lexend(
-                  fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF71717A),
+                  fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textSecondary,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.cardGap),
             Expanded(
               child: Text(
                 q.options[idx],
@@ -291,22 +289,22 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
       children: [
         const Spacer(),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Column(
             children: [
               Text(label, style: GoogleFonts.lexend(fontSize: 11, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.5)),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 '$_correct / $_totalQuestions',
                 style: GoogleFonts.lexend(fontSize: 48, fontWeight: FontWeight.w900, color: color),
               ),
               Text(
                 '$pct% accuracy',
-                style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF71717A)),
+                style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.lg),
               Container(
-                height: 8, color: const Color(0xFFE4E4E7),
+                height: 8, color: AppColors.divider,
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor: _correct / _totalQuestions,
@@ -317,10 +315,9 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
           ),
         ),
         const Spacer(),
-        // What happens next
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.all(AppSpacing.cardGap),
           color: const Color(0xFFF4F4F5),
           child: Text(
             _correct >= 4
@@ -331,15 +328,15 @@ class _ExamQuizPageState extends State<ExamQuizPage> {
             style: GoogleFonts.lexend(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF5C5E62), height: 1.4),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xl),
           child: GestureDetector(
             onTap: _submitResult,
             child: Container(
               height: 44,
               alignment: Alignment.center,
-              color: const Color(0xFF006D37),
+              color: AppColors.primary,
               child: Text(
                 'SUBMIT & SEE RESULT',
                 style: GoogleFonts.lexend(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5),
