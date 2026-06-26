@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 
 import '../core/design_system.dart';
@@ -10,7 +11,7 @@ import '../core/storage.dart';
 import '../models/character.dart';
 import '../models/life_event.dart';
 import '../widgets/game/game_card.dart';
-import '../widgets/game/progress_bar.dart';
+
 import 'create_character_screen.dart';
 import 'legacy_page.dart';
 import 'career_page.dart';
@@ -479,11 +480,23 @@ class _HomePageState extends State<HomePage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.slate50,
           body: Stack(
             children: [
               Column(
                 children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _openProfileSheet,
+                    child: SafeArea(
+                      bottom: false,
+                      child: ValueListenableBuilder<Character>(
+                        valueListenable: _characterNotifier,
+                        builder: (_, character, __) =>
+                            _HtmlHeader(character: character),
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: ValueListenableBuilder<Character>(
                       valueListenable: _characterNotifier,
@@ -491,35 +504,49 @@ class _HomePageState extends State<HomePage> {
                         return ValueListenableBuilder<List<LifeEvent>>(
                           valueListenable: _eventsNotifier,
                           builder: (_, events, __) {
-                            return ListView(
-                              controller: _scrollController,
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              children: [
-                                SafeArea(
-                                  bottom: false,
-                                  child: GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: _openProfileSheet,
-                                    child: IdentityHeader(
-                                      name: character.name,
-                                      occupation: character.jobTitle,
-                                      balance: character.bankBalance,
-                                    ),
-                                  ),
-                                ),
-                                _TimelineList(
-                                  events: events,
-                                  character: character,
-                                ),
-                                const SizedBox(
-                                    height: 200),
-                              ],
+                            return _HtmlTimeline(
+                              events: events,
+                              character: character,
                             );
                           },
                         );
                       },
                     ),
+                  ),
+                  ValueListenableBuilder<Character>(
+                    valueListenable: _characterNotifier,
+                    builder: (_, character, __) =>
+                        _HtmlStats(character: character),
+                  ),
+                  ValueListenableBuilder<Character>(
+                    valueListenable: _characterNotifier,
+                    builder: (_, character, __) {
+                      return _HtmlBottomNav(
+                        onCareer: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => CareerPage(
+                                    character: character,
+                                    onGameAction: _runGameAction,
+                                    onLifeAction: _runLifeAction))),
+                        onFinance: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => FinancePage(
+                                    character: character,
+                                    onGameAction: _runGameAction))),
+                        onPeople: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => PeoplePage(
+                                    character: character,
+                                    onGameAction: _runGameAction))),
+                        onActivities: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => ActivitiesPage(
+                                    character: character,
+                                    onGameAction: _runGameAction))),
+                        onAge: _handleAgeUp,
+                        isAgingListenable: _isAgingNotifier,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -537,43 +564,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: ValueListenableBuilder<Character>(
-                  valueListenable: _characterNotifier,
-                  builder: (_, character, __) {
-                    return _BottomLifeControls(
-                      character: character,
-                      onLife: _scrollToLatest,
-                      onActivities: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => ActivitiesPage(
-                                  character: character,
-                                  onGameAction: _runGameAction))),
-                      onCareer: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => CareerPage(
-                                  character: character,
-                                  onGameAction: _runGameAction,
-                                  onLifeAction: _runLifeAction))),
-                      onFinance: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => FinancePage(
-                                  character: character,
-                                  onGameAction: _runGameAction))),
-                      onPeople: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => PeoplePage(
-                                  character: character,
-                                  onGameAction: _runGameAction))),
-                      onAge: _handleAgeUp,
-                      isAgingListenable: _isAgingNotifier,
-                    );
-                  },
-                ),
-              ),
             ],
           ),
         ),
@@ -582,36 +572,104 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _LifeStats extends StatelessWidget {
+class _HtmlHeader extends StatelessWidget {
   final Character character;
-
-  const _LifeStats({required this.character});
+  const _HtmlHeader({required this.character});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, AppSpacing.xs, AppSpacing.containerPadding, AppSpacing.xs),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: AppColors.slate200, width: 1),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ProgressBarRow(label: '\u{1F60A}  Happiness', value: character.happiness.toDouble(), color: AppColors.happiness, barHeight: 5, showPercent: true),
-          const SizedBox(height: AppSpacing.xs),
-          ProgressBarRow(label: '\u{2764}\u{FE0F}  Health', value: character.health.toDouble(), color: AppColors.health, barHeight: 5, showPercent: true),
-          const SizedBox(height: AppSpacing.xs),
-          ProgressBarRow(label: '\u{1F9E0}  Smarts', value: character.smarts.toDouble(), color: AppColors.smarts, barHeight: 5, showPercent: true),
-          const SizedBox(height: AppSpacing.xs),
-          ProgressBarRow(label: '\u{2728}  Looks', value: character.looks.toDouble(), color: AppColors.looks, barHeight: 5, showPercent: true),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  character.name,
+                  style: GoogleFonts.lexend(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Age ${character.age} \u2022 Student',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.slate500,
+                    letterSpacing: -0.3,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.sky50,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Current Milestone: High School',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.sky700,
+                      letterSpacing: 0.5,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                formatMoney(character.bankBalance),
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.green600,
+                  height: 1.2,
+                ),
+              ),
+              Text(
+                'Bank Balance',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.slate400,
+                  letterSpacing: 0.5,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _TimelineList extends StatelessWidget {
+class _HtmlTimeline extends StatelessWidget {
   final List<LifeEvent> events;
   final Character character;
 
-  const _TimelineList({required this.events, required this.character});
+  const _HtmlTimeline({required this.events, required this.character});
 
   @override
   Widget build(BuildContext context) {
@@ -619,12 +677,13 @@ class _TimelineList extends StatelessWidget {
         ? [
             LifeEvent(
               title: 'Born',
-              description: '${character.name} was born in ${character.city}.',
+              description:
+                  '${character.name} was born in ${character.city}.',
               type: LifeEventType.milestone,
               metadata: {'age': 0},
             )
           ]
-        : events;
+        : events.reversed.toList();
 
     final Map<int, List<LifeEvent>> groupedEvents = {};
     final List<int> sortedAges = [];
@@ -641,132 +700,163 @@ class _TimelineList extends StatelessWidget {
     sortedAges.sort((a, b) => b.compareTo(a));
 
     return Container(
-      color: AppColors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      color: Colors.white,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         children: [
           for (final age in sortedAges) ...[
-            _AgeGroupHeader(age: age),
-            for (final event in groupedEvents[age]!) _TimelineRow(event: event),
-            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Age: $age years',
+              style: GoogleFonts.lexend(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkNavy,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 2),
+            for (final event in groupedEvents[age]!) ...[
+              Text(
+                event.description.isNotEmpty
+                    ? event.description
+                    : event.title,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.journalText,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
+          const SizedBox(height: 80),
         ],
       ),
     );
   }
 }
 
-class _AgeGroupHeader extends StatelessWidget {
-  final int age;
-  const _AgeGroupHeader({required this.age});
+class _HtmlStats extends StatelessWidget {
+  final Character character;
+  const _HtmlStats({required this.character});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.containerPadding, AppSpacing.cardGap, AppSpacing.containerPadding, AppSpacing.xs),
-      child: Text(
-        'Age $age',
-        style: AppTextStyles.rowTitle.copyWith(
-          fontSize: 13,
-          fontWeight: FontWeight.w900,
-          color: AppColors.textPrimary,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: const BoxDecoration(
+        color: AppColors.slate50,
+        border: Border(
+          top: BorderSide(color: AppColors.slate200, width: 1),
         ),
       ),
-    );
-  }
-}
-
-class _TimelineRow extends StatelessWidget {
-  final LifeEvent event;
-
-  const _TimelineRow({required this.event});
-
-  static Color _dotColor(LifeEvent e) {
-    switch (e.type) {
-      case LifeEventType.positive:
-        return AppColors.success;
-      case LifeEventType.negative:
-      case LifeEventType.critical:
-        return AppColors.danger;
-      case LifeEventType.milestone:
-      case LifeEventType.rare:
-        return AppColors.smarts;
-      default:
-        return AppColors.textMuted;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final desc = cleanText(event.description);
-    final title = cleanText(event.title);
-    final bool isImportant = event.priority == EventPriority.important ||
-        event.priority == EventPriority.critical ||
-        event.priority == EventPriority.rare ||
-        event.type == LifeEventType.milestone;
-
-    return Padding(
-      padding:
-          EdgeInsets.fromLTRB(28, isImportant ? 6 : 2, 16, isImportant ? 6 : 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Container(
-            margin: EdgeInsets.only(top: isImportant ? 7 : 5),
-            width: isImportant ? 6 : 4,
-            height: isImportant ? 6 : 4,
-            decoration: BoxDecoration(
-              color: _dotColor(event),
-              shape: BoxShape.circle,
-              boxShadow: isImportant
-                  ? [
-                      BoxShadow(
-                        color: _dotColor(event).withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              desc.isNotEmpty ? desc : title,
-              style: AppTextStyles.rowSubtitle.copyWith(
-                fontSize: isImportant ? 11.5 : 10,
-                color:
-                    isImportant ? AppColors.textPrimary : AppColors.textPrimary,
-                height: 1.3,
-                fontWeight: isImportant ? FontWeight.w800 : FontWeight.w500,
-                letterSpacing: isImportant ? 0.1 : 0,
-              ),
-            ),
-          ),
+          _StatRow(
+              label: 'Happiness',
+              value: character.happiness.toDouble(),
+              color: AppColors.green500),
+          const SizedBox(height: 8),
+          _StatRow(
+              label: 'Health',
+              value: character.health.toDouble(),
+              color: AppColors.emerald500),
+          const SizedBox(height: 8),
+          _StatRow(
+              label: 'Smarts',
+              value: character.smarts.toDouble(),
+              color: AppColors.amber500),
+          const SizedBox(height: 8),
+          _StatRow(
+              label: 'Looks',
+              value: character.looks.toDouble(),
+              color: AppColors.slate400),
         ],
       ),
     );
   }
 }
 
-class _BottomLifeControls extends StatelessWidget {
-  final Character character;
-  final VoidCallback onLife;
-  final VoidCallback onActivities;
+class _StatRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+
+  const _StatRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.sky900,
+              height: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.slate200,
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: (value.clamp(0, 100)) / 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 32,
+          child: Text(
+            '${value.round()}%',
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.sky900,
+              height: 1.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HtmlBottomNav extends StatelessWidget {
   final VoidCallback onCareer;
   final VoidCallback onFinance;
   final VoidCallback onPeople;
+  final VoidCallback onActivities;
   final VoidCallback onAge;
   final ValueListenable<bool> isAgingListenable;
 
-  const _BottomLifeControls({
-    required this.character,
-    required this.onLife,
-    required this.onActivities,
+  const _HtmlBottomNav({
     required this.onCareer,
     required this.onFinance,
     required this.onPeople,
+    required this.onActivities,
     required this.onAge,
     required this.isAgingListenable,
   });
@@ -774,104 +864,122 @@ class _BottomLifeControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border:
-            Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _LifeStats(character: character),
-          ValueListenableBuilder<bool>(
-            valueListenable: isAgingListenable,
-            builder: (_, isAging, __) =>
-                _AgeUpButton(isAging: isAging, onTap: onAge),
-          ),
-          SafeArea(
-            top: false,
-            child: Container(
-              height: 50,
-              color: AppColors.surface,
-              child: Row(
-                children: [
-                  _NavTab(
-                      icon: Icons.work_outline_rounded,
-                      label: 'Career',
-                      onTap: onCareer),
-                  _NavTab(
-                      icon: Icons.account_balance_wallet_outlined,
-                      label: 'Finance',
-                      onTap: onFinance),
-                  _NavTab(
-                      icon: Icons.touch_app_outlined,
-                      label: 'Activities',
-                      onTap: onActivities),
-                  _NavTab(
-                      icon: Icons.people_outline_rounded,
-                      label: 'People',
-                      onTap: onPeople),
-                ],
+      color: AppColors.green500,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: _NavItem(
+                          icon: Icons.work_outline,
+                          label: 'Career',
+                          onTap: onCareer)),
+                    Expanded(
+                      child: _NavItem(
+                          icon: Icons.payments_outlined,
+                          label: 'Finance',
+                          onTap: onFinance)),
+                    const SizedBox(width: 84),
+                    Expanded(
+                      child: _NavItem(
+                          icon: Icons.favorite_outline,
+                          label: 'People',
+                          onTap: onPeople)),
+                    Expanded(
+                      child: _NavItem(
+                          icon: Icons.grid_view_outlined,
+                          label: 'Activities',
+                          onTap: onActivities)),
+                  ],
+                ),
               ),
-            ),
+              Positioned(
+                top: -42,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: isAgingListenable,
+                    builder: (_, isAging, __) =>
+                        _AgeButton(isAging: isAging, onTap: onAge),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _AgeUpButton extends StatefulWidget {
+class _AgeButton extends StatefulWidget {
   final bool isAging;
   final VoidCallback onTap;
-  const _AgeUpButton({required this.isAging, required this.onTap});
+  const _AgeButton({required this.isAging, required this.onTap});
 
   @override
-  State<_AgeUpButton> createState() => _AgeUpButtonState();
+  State<_AgeButton> createState() => _AgeButtonState();
 }
 
-class _AgeUpButtonState extends State<_AgeUpButton> {
+class _AgeButtonState extends State<_AgeButton> {
   bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) {
-        setState(() => _pressed = true);
-        HapticFeedback.lightImpact();
-      },
+      onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
       onTapUp: (_) {
         setState(() => _pressed = false);
         widget.onTap();
       },
       child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1,
-        duration: AppMotion.tap,
+        scale: _pressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 80),
         child: Container(
-          height: 36,
-          margin: const EdgeInsets.fromLTRB(AppSpacing.cardGap, 2, AppSpacing.cardGap, AppSpacing.xs),
+          width: 84,
+          height: 84,
           decoration: BoxDecoration(
-            color: AppColors.success,
-            borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+            color: AppColors.green500,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: AppShadows.ageButton,
           ),
-          alignment: Alignment.center,
           child: widget.isAging
               ? const SizedBox(
-                  width: 14,
-                  height: 14,
+                  width: 24,
+                  height: 24,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2.0, color: Colors.white),
-                )
-              : Text(
-                  'AGE +',
-                  style: AppTextStyles.rowTitle.copyWith(
+                    strokeWidth: 3,
                     color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.2,
                   ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.add,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                    Text(
+                      'AGE',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
@@ -879,12 +987,12 @@ class _AgeUpButtonState extends State<_AgeUpButton> {
   }
 }
 
-class _NavTab extends StatelessWidget {
+class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
-  const _NavTab({
+  const _NavItem({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -892,34 +1000,28 @@ class _NavTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        child: Container(
-          color: Colors.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: AppColors.textSecondary,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 24, color: Colors.white),
+            const SizedBox(height: 2),
+            Text(
+              label.toUpperCase(),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 1.2,
               ),
-              const SizedBox(height: 2),
-              Text(
-                label.toUpperCase(),
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 9,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

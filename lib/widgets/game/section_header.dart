@@ -37,9 +37,11 @@ class SectionHeader extends StatelessWidget {
             child: Text(
               title.toUpperCase(),
               style: style ?? AppTextStyles.labelBold.copyWith(
-                fontSize: 11,
+                fontSize: 12,
                 color: AppColors.textSecondary,
-                letterSpacing: 0.1,
+                letterSpacing: 0.6,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

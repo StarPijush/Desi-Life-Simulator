@@ -7,11 +7,12 @@ import '../core/career_data.dart';
 import '../core/institute_data.dart';
 import '../widgets/core/app_scaffold.dart';
 import '../widgets/core/app_status_banner.dart';
-import '../widgets/game/action_tile.dart';
 import '../widgets/game/game_card.dart';
+import '../widgets/game/section_header.dart';
+import '../widgets/game/career_path_card.dart';
+import '../widgets/game/action_tile.dart';
 import '../widgets/game/job_card.dart';
 import '../widgets/game/progress_bar.dart';
-import '../widgets/game/section_header.dart';
 import '../widgets/events/event_card.dart';
 import '../widgets/events/event_types.dart';
 import 'career/freelance_page.dart';
@@ -43,175 +44,155 @@ class CareerPage extends StatelessWidget {
     required this.onLifeAction,
   });
 
+  bool get _isStudent => character.annualIncome <= 0 && character.age < 18;
+
   @override
   Widget build(BuildContext context) {
-    final hasJob = character.annualIncome > 0;
-    final isPrestige = hasJob &&
-        (character.fame > 70 ||
-            character.bankBalance > 5000000 ||
-            character.jobTitle.contains('CEO') ||
-            character.jobTitle.contains('Director') ||
-            character.jobTitle.contains('Cricketer') ||
-            character.jobTitle.contains('Actor') ||
-            character.jobTitle.contains('Politician') ||
-            character.jobTitle.contains('Special'));
+    const g = 12.0;
 
     return AppScaffold(
-      title: 'Career',
+      title: 'career',
+      padding: const EdgeInsets.only(left: 16, right: 16),
       children: [
-        AppStatusBanner(
-          label: 'CURRENT STATUS',
-          title: character.name,
-          trailing: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Career', style: AppTextStyles.headlineSm),
               Text(
-                formatMoney(character.bankBalance),
-                style: AppTextStyles.labelBold.copyWith(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                'Age: ${character.age}',
+                'Work, education and future opportunities',
                 style: AppTextStyles.labelSm,
               ),
             ],
           ),
         ),
-        _StatsRow(character: character),
-        const SizedBox(height: 8),
-        const SectionHeader(title: 'Occupation'),
-        GameCard(
-          leftAccentColor: isPrestige ? AppColors.warning : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(hasJob ? '💼' : '🏫',
-                      style: const TextStyle(fontSize: 24)),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          hasJob ? character.jobTitle : 'Student',
-                          style: AppTextStyles.bodyLg.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: isPrestige
-                                ? AppColors.warning
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          hasJob ? character.careerGroup : 'Studying at School',
-                          style: AppTextStyles.labelSm,
-                        ),
-                      ],
+        const SizedBox(height: g),
+        _CurrentStatusCard(
+          name: character.name,
+          age: character.age,
+          isStudent: _isStudent,
+          annualIncome: character.annualIncome.toDouble(),
+        ),
+        const SizedBox(height: g),
+        _StatsGrid(
+          smarts: character.smarts.toDouble(),
+          looks: character.looks.toDouble(),
+        ),
+        const SizedBox(height: g),
+        const SectionHeader(
+          title: 'Active Pursuit',
+          padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
+        ),
+        _ActivePursuitCard(
+          emoji: _isStudent ? '🏫' : '💼',
+          title: _isStudent ? 'Student' : character.jobTitle,
+          subtitle: _isStudent
+              ? 'Studying at Public High School'
+              : character.careerGroup,
+          onTap: _isStudent
+              ? () => _push(
+                    context,
+                    _EducationListScreen(
+                      character: character,
+                      onGameAction: onGameAction,
+                    ),
+                  )
+              : () => _push(
+                    context,
+                    JobsListScreen(
+                      title: 'JOBS',
+                      character: character,
+                      onGameAction: onGameAction,
+                      tier: CareerTier.fullTime,
                     ),
                   ),
-                  if (isPrestige)
-                    const Text('⭐', style: TextStyle(fontSize: 16)),
-                ],
-              ),
-            ],
+        ),
+        const SizedBox(height: g),
+        const SectionHeader(
+          title: 'Explore Careers',
+          padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
+        ),
+        CareerPathCard(
+          emoji: '💼',
+          title: 'Jobs',
+          subtitle: 'Full-Time Careers',
+          onTap: () => _push(
+            context,
+            JobsListScreen(
+              title: 'JOBS',
+              character: character,
+              onGameAction: onGameAction,
+              tier: CareerTier.fullTime,
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.cardGap),
-        _OccupationActions(character: character, onGameAction: onGameAction),
-        const SizedBox(height: 8),
-        const SectionHeader(title: 'Options'),
-        _buildOptionsGrid(context),
+        const SizedBox(height: g),
+        CareerPathCard(
+          emoji: '⏰',
+          title: 'Part-Time',
+          subtitle: 'Student Work',
+          onTap: () => _push(
+            context,
+            PartTimeJobsScreen(
+              character: character,
+              onGameAction: onGameAction,
+            ),
+          ),
+        ),
+        const SizedBox(height: g),
+        CareerPathCard(
+          emoji: '💻',
+          title: 'Freelance',
+          subtitle: 'Gig Work',
+          onTap: () => _push(
+            context,
+            FreelanceClientsScreen(
+              character: character,
+              onGameAction: onGameAction,
+            ),
+          ),
+        ),
+        const SizedBox(height: g),
+        CareerPathCard(
+          emoji: '🎖',
+          title: 'Military',
+          subtitle: 'Serve Your Country',
+          onTap: () => _push(
+            context,
+            MilitaryPage(
+              character: character,
+              onGameAction: onGameAction,
+            ),
+          ),
+        ),
+        const SizedBox(height: g),
+        CareerPathCard(
+          emoji: '⭐',
+          title: 'Special',
+          subtitle: 'Fame & Glory',
+          onTap: () => _push(
+            context,
+            _SpecialListScreen(
+              character: character,
+              onGameAction: onGameAction,
+            ),
+          ),
+        ),
+        const SizedBox(height: g),
+        CareerPathCard(
+          emoji: '🎓',
+          title: 'Education',
+          subtitle: 'University & More',
+          onTap: () => _push(
+            context,
+            _EducationListScreen(
+              character: character,
+              onGameAction: onGameAction,
+            ),
+          ),
+        ),
       ],
-    );
-  }
-
-  Widget _buildOptionsGrid(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.containerPadding,
-      ),
-      child: GridView.count(
-        crossAxisCount: 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1,
-        children: [
-          ActionTile(
-            emoji: '💼',
-            label: 'Jobs',
-            onTap: () => _push(
-              context,
-              JobsListScreen(
-                title: 'JOBS',
-                character: character,
-                onGameAction: onGameAction,
-                tier: CareerTier.fullTime,
-              ),
-            ),
-          ),
-          ActionTile(
-            emoji: '🕐',
-            label: 'Part-Time',
-            onTap: () => _push(
-              context,
-              PartTimeJobsScreen(
-                character: character,
-                onGameAction: onGameAction,
-              ),
-            ),
-          ),
-          ActionTile(
-            emoji: '💻',
-            label: 'Freelance',
-            onTap: () => _push(
-              context,
-              FreelanceClientsScreen(
-                character: character,
-                onGameAction: onGameAction,
-              ),
-            ),
-          ),
-          ActionTile(
-            emoji: '🛡️',
-            label: 'Military',
-            onTap: () => _push(
-              context,
-              MilitaryPage(
-                character: character,
-                onGameAction: onGameAction,
-              ),
-            ),
-          ),
-          ActionTile(
-            emoji: '⭐',
-            label: 'Special',
-            rewards: const [ActionReward('Fame', AppColors.warning)],
-            onTap: () => _push(
-              context,
-              _SpecialListScreen(
-                character: character,
-                onGameAction: onGameAction,
-              ),
-            ),
-          ),
-          ActionTile(
-            emoji: '📚',
-            label: 'Education',
-            onTap: () => _push(
-              context,
-              _EducationListScreen(
-                character: character,
-                onGameAction: onGameAction,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -220,40 +201,118 @@ class CareerPage extends StatelessWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
-  final Character character;
+// ─── Current Status Card ──────────────────────────────────────────────────────
 
-  const _StatsRow({required this.character});
+class _CurrentStatusCard extends StatelessWidget {
+  final String name;
+  final int age;
+  final bool isStudent;
+  final double annualIncome;
+
+  const _CurrentStatusCard({
+    required this.name,
+    required this.age,
+    required this.isStudent,
+    required this.annualIncome,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.containerPadding,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
+    return GameCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 64,
-            child: Text(
-              'SMARTS',
-              style: AppTextStyles.labelSm.copyWith(fontSize: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: AppTextStyles.headlineSm),
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      children: [
+                        _StatusBadge(
+                          label: 'Age $age',
+                          bgColor: AppColors.primary.withValues(alpha: 0.1),
+                          textColor: AppColors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        _StatusBadge(
+                          label: isStudent ? 'Student' : 'Worker',
+                          bgColor: AppColors.secondaryContainer,
+                          textColor: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      text: formatMoney(annualIncome),
+                      style: AppTextStyles.headlineSm.copyWith(
+                        color: AppColors.primary,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '/year',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'INCOME',
+                    style: AppTextStyles.labelSm.copyWith(
+                      letterSpacing: -0.05,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+              border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
             ),
-          ),
-          Expanded(
-            child: ProgressBar.xs(value: character.smarts.toDouble()),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          SizedBox(
-            width: 56,
-            child: Text(
-              'LOOKS',
-              style: AppTextStyles.labelSm.copyWith(fontSize: 10),
+            child: Row(
+              children: [
+                Icon(Icons.school, color: AppColors.primary, size: 28),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isStudent ? 'Studying' : 'Working',
+                        style: AppTextStyles.bodyMd.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        isStudent ? 'Class of ${2025 + (18 - age)}' : 'High School',
+                        style: AppTextStyles.labelSm,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          Expanded(
-            child: ProgressBar.xs(value: character.looks.toDouble()),
           ),
         ],
       ),
@@ -261,72 +320,210 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _OccupationActions extends StatelessWidget {
-  final Character character;
-  final void Function(GameAction) onGameAction;
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 
-  const _OccupationActions({
-    required this.character,
-    required this.onGameAction,
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color bgColor;
+  final Color textColor;
+
+  const _StatusBadge({
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasJob = character.annualIncome > 0;
-    final showStudy = hasJob || character.age >= 5;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.containerPadding,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppBorderRadius.full),
       ),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.5,
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+          letterSpacing: 0.05,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stats Grid ───────────────────────────────────────────────────────────────
+
+class _StatsGrid extends StatelessWidget {
+  final double smarts;
+  final double looks;
+
+  const _StatsGrid({required this.smarts, required this.looks});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: _StatCard(
+          label: 'Smarts',
+          value: smarts,
+          color: AppColors.primary,
+        )),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: _StatCard(
+          label: 'Looks',
+          value: looks,
+          color: AppColors.tertiary,
+        )),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = value.clamp(0, 100);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showStudy)
-            ActionTile(
-              emoji: '📖',
-              label: 'Study Harder',
-              rewards: const [ActionReward('+Exp', AppColors.primary)],
-              onTap: () => onGameAction(const GameAction(
-                'career.perform', {'actionId': 'career.study_hard'},
-              )),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: AppTextStyles.labelBold.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '${value.round()}%',
+                style: AppTextStyles.labelBold.copyWith(color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppBorderRadius.full),
+              border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
             ),
-          if (hasJob)
-            ActionTile(
-              emoji: '🚪',
-              label: 'Resign',
-              rewards: const [ActionReward('Risk', AppColors.error)],
-              onTap: () {
-                showEventCard(
-                  context: context,
-                  category: EventCategory.career,
-                  mode: EventCardMode.choice,
-                  title: 'Resign?',
-                  description:
-                      'Are you sure you want to quit your current career? You will lose your salary and position, but you can explore new opportunities.',
-                  illustration: const EventIllustration.emoji('🚪'),
-                  primaryAction: EventCardAction(
-                    label: 'Cancel',
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  secondaryAction: EventCardAction(
-                    label: 'Resign',
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onGameAction(const GameAction(
-                        'career.perform', {'actionId': 'career.resign'},
-                      ));
-                    },
-                  ),
-                );
-              },
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: clamped / 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                ),
+              ),
             ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Active Pursuit Card ──────────────────────────────────────────────────────
+
+class _ActivePursuitCard extends StatefulWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActivePursuitCard({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  State<_ActivePursuitCard> createState() => _ActivePursuitCardState();
+}
+
+class _ActivePursuitCardState extends State<_ActivePursuitCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            children: [
+              Text(
+                widget.emoji,
+                style: const TextStyle(
+                  fontSize: 48,
+                  leadingDistribution: TextLeadingDistribution.proportional,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: AppTextStyles.headlineSm,
+                    ),
+                    Text(
+                      widget.subtitle,
+                      style: AppTextStyles.bodyMd.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1092,3 +1289,4 @@ class _UniversityScreen extends StatelessWidget {
     );
   }
 }
+

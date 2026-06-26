@@ -30,7 +30,7 @@ String shortMoney(num value) {
 
 String cleanText(String value) {
   return value
-      .replaceAll(RegExp(r'[^\x00-\x7F]+'), '')
+      .replaceAll(RegExp(r'[\x00-\x1F\x7F]+'), '')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
 }
@@ -71,20 +71,46 @@ class AppColors {
   static const Color smarts = Color(0xFF007AFF);
   static const Color looks = Color(0xFFFF2D55);
 
+  // HTML-specific tokens
+  static const Color tertiary = Color(0xFFFFBA61);
+  static const Color secondaryContainer = Color(0xFFE8F5E9);
+
   // Graduated primary opacities
   static Color primary10(double opacity) => primary.withValues(alpha: opacity);
+
+  // HTML-specific matching (Tailwind equivalents for pixel-perfect copy)
+  static const Color slate50    = Color(0xFFF8FAFC);
+  static const Color slate100   = Color(0xFFF1F5F9);
+  static const Color slate200   = Color(0xFFE2E8F0);
+  static const Color slate400   = Color(0xFF94A3B8);
+  static const Color slate500   = Color(0xFF64748B);
+  static const Color sky50      = Color(0xFFF0F9FF);
+  static const Color sky700     = Color(0xFF0369A1);
+  static const Color sky900     = Color(0xFF0C4A6E);
+  static const Color green500   = Color(0xFF22C55E);
+  static const Color green600   = Color(0xFF16A34A);
+  static const Color emerald500 = Color(0xFF10B981);
+  static const Color amber500   = Color(0xFFF59E0B);
+  static const Color darkNavy   = Color(0xFF004D7A);
+  static const Color journalText = Color(0xFF475569);
 }
 
 // ─── Typography ──────────────────────────────────────────────────────────────
 class AppTextStyles {
   // Display
+  static const List<String> emojiFallback = [
+    'Segoe UI Emoji',
+    'Apple Color Emoji',
+    'Noto Color Emoji',
+  ];
+
   static TextStyle get displayLg => GoogleFonts.lexend(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         letterSpacing: -0.02,
         height: 40 / 32,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   static TextStyle get displayMd => GoogleFonts.lexend(
         fontSize: 24,
@@ -92,7 +118,7 @@ class AppTextStyles {
         color: AppColors.textPrimary,
         letterSpacing: -0.01,
         height: 32 / 24,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   // Headline
   static TextStyle get headlineSm => GoogleFonts.lexend(
@@ -100,7 +126,7 @@ class AppTextStyles {
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         height: 28 / 20,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   // Body
   static TextStyle get bodyLg => GoogleFonts.inter(
@@ -108,14 +134,14 @@ class AppTextStyles {
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
         height: 24 / 16,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   static TextStyle get bodyMd => GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
         height: 20 / 14,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   // Labels
   static TextStyle get labelBold => GoogleFonts.inter(
@@ -124,14 +150,14 @@ class AppTextStyles {
         color: AppColors.textPrimary,
         letterSpacing: 0.05,
         height: 16 / 12,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   static TextStyle get labelSm => GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
         height: 14 / 11,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 
   // Legacy aliases
   static TextStyle get pageTitle => displayLg;
@@ -140,32 +166,32 @@ class AppTextStyles {
         fontWeight: FontWeight.w700,
         color: AppColors.textSecondary,
         height: 1.1,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get sectionLabel => GoogleFonts.lexend(
         fontSize: 10,
         fontWeight: FontWeight.w800,
         color: AppColors.textSecondary,
         letterSpacing: 0.5,
         height: 1.1,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get rowTitle => GoogleFonts.lexend(
         fontSize: 12,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         height: 1.1,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get rowSubtitle => GoogleFonts.lexend(
         fontSize: 10,
         fontWeight: FontWeight.w600,
         color: AppColors.textSecondary,
         height: 1.1,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get caption => GoogleFonts.lexend(
         fontSize: 9,
         fontWeight: FontWeight.w600,
         color: AppColors.textMuted,
         height: 1.1,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get h1 => pageTitle;
   static TextStyle get h2 => pageTitle.copyWith(fontSize: 18);
   static TextStyle get h3 => rowTitle.copyWith(fontSize: 16);
@@ -177,19 +203,19 @@ class AppTextStyles {
         fontSize: 24,
         fontWeight: FontWeight.w900,
         color: AppColors.textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get financialSmall => GoogleFonts.lexend(
         fontSize: 16,
         fontWeight: FontWeight.w800,
         color: AppColors.primary,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
   static TextStyle get metadata => caption;
   static TextStyle get ageSeparator => GoogleFonts.lexend(
         fontSize: 11,
         fontWeight: FontWeight.w800,
         color: AppColors.textMuted,
         letterSpacing: 1.0,
-      );
+      ).copyWith(fontFamilyFallback: emojiFallback);
 }
 
 // ─── Spacing ─────────────────────────────────────────────────────────────────
@@ -221,6 +247,14 @@ class AppShadows {
           blurRadius: 2,
         ),
       ];
+
+  static const List<BoxShadow> ageButton = [
+    BoxShadow(
+      color: Color(0x33000000),
+      offset: Offset(0, 4),
+      blurRadius: 10,
+    ),
+  ];
 }
 
 // ─── Motion ──────────────────────────────────────────────────────────────────

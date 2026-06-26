@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/design_system.dart';
 import 'event_theme.dart';
 import 'event_types.dart';
 
@@ -390,7 +391,7 @@ Widget _buildTitle(String text) {
       fontSize: 24,
       height: 1.2,
       fontWeight: FontWeight.bold,
-    ),
+    ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
   );
 }
 
@@ -405,7 +406,7 @@ Widget _buildDescription(String text) {
       fontSize: 16,
       height: 1.5,
       fontWeight: FontWeight.w500,
-    ),
+    ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
   );
 }
 

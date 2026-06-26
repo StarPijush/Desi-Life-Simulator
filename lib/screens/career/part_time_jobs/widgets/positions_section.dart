@@ -122,23 +122,40 @@ class _PositionRowState extends State<_PositionRow> {
                         color: locked
                             ? const Color(0xFF5C5E62)
                             : const Color(0xFF161C28),
-                      ),
+                      ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
                     ),
-                    Text(
-                      locked
-                          ? '🔒 ${widget.lockReason}'
-                          : '${formatMoney(widget.job.salary)}/mo • ${widget.job.hoursPerWeek} hrs/week',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
-                        fontSize: 10,
-                        height: 1.1,
-                        fontWeight: locked ? FontWeight.w600 : FontWeight.w500,
-                        color: locked
-                            ? const Color(0xFFBA1A1A)
-                            : const Color(0xFF5C5E62),
-                      ),
-                    ),
+                    locked
+                        ? Row(
+                            children: [
+                              const Text('🔒',
+                                  style: TextStyle(fontSize: 10, height: 1.1)),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.lockReason!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lexend(
+                                    fontSize: 10,
+                                    height: 1.1,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFBA1A1A),
+                                  ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            '${formatMoney(widget.job.salary)}/mo • ${widget.job.hoursPerWeek} hrs/week',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lexend(
+                              fontSize: 10,
+                              height: 1.1,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF5C5E62),
+                            ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
+                          ),
                   ],
                 ),
               ),
@@ -156,7 +173,7 @@ class _PositionRowState extends State<_PositionRow> {
                         height: 1.0,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF5C5E62),
-                      ),
+                      ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
                     ),
                     const SizedBox(width: 4),
                     const Icon(Icons.chevron_right,
@@ -180,15 +197,15 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.lexend(
-          fontSize: 13,
-          height: 1,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF5C5E62),
+        child: Text(
+          title.toUpperCase(),
+          style: GoogleFonts.lexend(
+            fontSize: 13,
+            height: 1,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF5C5E62),
+          ).copyWith(fontFamilyFallback: AppTextStyles.emojiFallback),
         ),
-      ),
     );
   }
 }

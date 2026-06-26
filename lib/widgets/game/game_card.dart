@@ -30,8 +30,7 @@ class GameCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-        border: Border.all(color: AppColors.outline),
-        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
       ),
       child: leftAccentColor != null
           ? ClipRRect(

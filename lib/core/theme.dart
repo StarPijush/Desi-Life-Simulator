@@ -76,7 +76,9 @@ class AppTheme {
       ),
 
       // ─── Text ────────────────────────────────────────────
-      textTheme: GoogleFonts.interTextTheme(ThemeData(brightness: brightness).textTheme).copyWith(
+      textTheme: _withEmojiFallback(
+        GoogleFonts.interTextTheme(ThemeData(brightness: brightness).textTheme),
+      ).copyWith(
         displayLarge: AppTextStyles.displayLg,
         displayMedium: AppTextStyles.displayMd,
         headlineSmall: AppTextStyles.headlineSm,
@@ -135,4 +137,30 @@ class AppTheme {
       ),
     );
   }
+}
+
+const _emojiFallback = [
+  'Segoe UI Emoji',
+  'Apple Color Emoji',
+  'Noto Color Emoji',
+];
+
+TextTheme _withEmojiFallback(TextTheme t) {
+  return TextTheme(
+    displayLarge: t.displayLarge?.copyWith(fontFamilyFallback: _emojiFallback),
+    displayMedium: t.displayMedium?.copyWith(fontFamilyFallback: _emojiFallback),
+    displaySmall: t.displaySmall?.copyWith(fontFamilyFallback: _emojiFallback),
+    headlineLarge: t.headlineLarge?.copyWith(fontFamilyFallback: _emojiFallback),
+    headlineMedium: t.headlineMedium?.copyWith(fontFamilyFallback: _emojiFallback),
+    headlineSmall: t.headlineSmall?.copyWith(fontFamilyFallback: _emojiFallback),
+    titleLarge: t.titleLarge?.copyWith(fontFamilyFallback: _emojiFallback),
+    titleMedium: t.titleMedium?.copyWith(fontFamilyFallback: _emojiFallback),
+    titleSmall: t.titleSmall?.copyWith(fontFamilyFallback: _emojiFallback),
+    bodyLarge: t.bodyLarge?.copyWith(fontFamilyFallback: _emojiFallback),
+    bodyMedium: t.bodyMedium?.copyWith(fontFamilyFallback: _emojiFallback),
+    bodySmall: t.bodySmall?.copyWith(fontFamilyFallback: _emojiFallback),
+    labelLarge: t.labelLarge?.copyWith(fontFamilyFallback: _emojiFallback),
+    labelMedium: t.labelMedium?.copyWith(fontFamilyFallback: _emojiFallback),
+    labelSmall: t.labelSmall?.copyWith(fontFamilyFallback: _emojiFallback),
+  );
 }
