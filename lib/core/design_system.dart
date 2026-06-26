@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'app_animations.dart';
+
 // ─── Utility ────────────────────────────────────────────────────────────────
 String formatMoney(num amount) {
   final formatter = NumberFormat.currency(
@@ -225,7 +227,7 @@ class AppSpacing {
   static const double md = 16;
   static const double lg = 24;
   static const double xl = 32;
-  static const double cardGap = 12;
+  static const double cardGap = 16;
   static const double containerPadding = 16;
 }
 
@@ -259,7 +261,7 @@ class AppShadows {
 
 // ─── Motion ──────────────────────────────────────────────────────────────────
 class AppMotion {
-  static const Duration tap = Duration(milliseconds: 80);
+  static Duration get tap => kFastDuration;
   static const Duration appearance = Duration(milliseconds: 150);
   static const Duration modal = Duration(milliseconds: 250);
   static const Curve tapCurve = Curves.easeOut;

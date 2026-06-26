@@ -13,7 +13,7 @@ class ProgressBar extends StatelessWidget {
     super.key,
     required this.value,
     this.color = AppColors.primary,
-    this.height = 10,
+    this.height = 8,
     this.trackColor,
     this.trackBorderColor,
   });
@@ -42,16 +42,22 @@ class ProgressBar extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: trackColor ?? const Color(0xFFE0E0E0),
+        color: trackColor ?? AppColors.slate200,
+        borderRadius: BorderRadius.circular(AppBorderRadius.full),
         border: Border.all(
-          color: trackBorderColor ?? const Color(0xFFD1D1D1),
+          color: trackBorderColor ?? Colors.transparent,
           width: 1,
         ),
       ),
       child: FractionallySizedBox(
         alignment: Alignment.centerLeft,
         widthFactor: clamped / 100,
-        child: Container(color: color),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(AppBorderRadius.full),
+          ),
+        ),
       ),
     );
   }

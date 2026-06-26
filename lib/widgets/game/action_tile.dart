@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_animations.dart';
 import '../../core/design_system.dart';
 import 'package:flutter/services.dart';
 
@@ -78,8 +79,8 @@ class _ActionTileState extends State<ActionTile> {
           : null,
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 80),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: Opacity(
           opacity: widget.locked ? 0.4 : 1.0,
           child: Container(

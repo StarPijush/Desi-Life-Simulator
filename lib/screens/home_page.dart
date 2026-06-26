@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 
+import '../core/app_animations.dart';
 import '../core/design_system.dart';
 import '../core/engine.dart';
 import '../core/enums.dart';
@@ -480,7 +480,7 @@ class _HomePageState extends State<HomePage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Scaffold(
-          backgroundColor: AppColors.slate50,
+          backgroundColor: AppColors.background,
           body: Stack(
             children: [
               Column(
@@ -580,10 +580,10 @@ class _HtmlHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.slate200, width: 1),
+          bottom: BorderSide(color: AppColors.outline.withValues(alpha: 0.85), width: 1),
         ),
       ),
       child: Row(
@@ -595,22 +595,13 @@ class _HtmlHeader extends StatelessWidget {
               children: [
                 Text(
                   character.name,
-                  style: GoogleFonts.lexend(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                    height: 1.2,
-                  ),
+                  style: AppTextStyles.headlineSm,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Age ${character.age} \u2022 Student',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.slate500,
-                    letterSpacing: -0.3,
-                    height: 1.2,
+                  style: AppTextStyles.bodyMd.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -623,12 +614,8 @@ class _HtmlHeader extends StatelessWidget {
                   ),
                   child: Text(
                     'Current Milestone: High School',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                    style: AppTextStyles.labelBold.copyWith(
                       color: AppColors.sky700,
-                      letterSpacing: 0.5,
-                      height: 1.2,
                     ),
                   ),
                 ),
@@ -640,21 +627,14 @@ class _HtmlHeader extends StatelessWidget {
             children: [
               Text(
                 formatMoney(character.bankBalance),
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.green600,
-                  height: 1.2,
+                style: AppTextStyles.headlineSm.copyWith(
+                  color: AppColors.primary,
                 ),
               ),
               Text(
                 'Bank Balance',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.slate400,
-                  letterSpacing: 0.5,
-                  height: 1.2,
+                style: AppTextStyles.labelBold.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -700,18 +680,15 @@ class _HtmlTimeline extends StatelessWidget {
     sortedAges.sort((a, b) => b.compareTo(a));
 
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         children: [
           for (final age in sortedAges) ...[
             Text(
               'Age: $age years',
-              style: GoogleFonts.lexend(
-                fontSize: 14,
+              style: AppTextStyles.bodyMd.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkNavy,
-                height: 1.2,
               ),
             ),
             const SizedBox(height: 2),
@@ -720,12 +697,7 @@ class _HtmlTimeline extends StatelessWidget {
                 event.description.isNotEmpty
                     ? event.description
                     : event.title,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.journalText,
-                  height: 1.4,
-                ),
+                style: AppTextStyles.bodyMd,
               ),
               const SizedBox(height: 12),
             ],
@@ -745,10 +717,10 @@ class _HtmlStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: const BoxDecoration(
-        color: AppColors.slate50,
+      decoration: BoxDecoration(
+        color: AppColors.background,
         border: Border(
-          top: BorderSide(color: AppColors.slate200, width: 1),
+          top: BorderSide(color: AppColors.outline.withValues(alpha: 0.85), width: 1),
         ),
       ),
       child: Column(
@@ -797,21 +769,18 @@ class _StatRow extends StatelessWidget {
           width: 80,
           child: Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.sky900,
-              height: 1.2,
+            style: AppTextStyles.labelBold.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Container(
-            height: 12,
+            height: 8,
             decoration: BoxDecoration(
               color: AppColors.slate200,
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppBorderRadius.full),
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -819,7 +788,7 @@ class _StatRow extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.full),
                 ),
               ),
             ),
@@ -831,11 +800,8 @@ class _StatRow extends StatelessWidget {
           child: Text(
             '${value.round()}%',
             textAlign: TextAlign.right,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.sky900,
-              height: 1.2,
+            style: AppTextStyles.labelBold.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -942,8 +908,8 @@ class _AgeButtonState extends State<_AgeButton> {
         widget.onTap();
       },
       child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 80),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: Container(
           width: 84,
           height: 84,
@@ -972,11 +938,8 @@ class _AgeButtonState extends State<_AgeButton> {
                     ),
                     Text(
                       'AGE',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
+                      style: AppTextStyles.labelBold.copyWith(
                         color: Colors.white,
-                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -1014,11 +977,8 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+              style: AppTextStyles.labelSm.copyWith(
                 color: Colors.white,
-                height: 1.2,
               ),
             ),
           ],

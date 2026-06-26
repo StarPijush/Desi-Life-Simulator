@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_animations.dart';
 import '../../core/design_system.dart';
 
 class CareerPathCard extends StatefulWidget {
@@ -33,8 +34,8 @@ class _CareerPathCardState extends State<CareerPathCard> {
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 150),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           constraints: const BoxConstraints(minHeight: 64),
@@ -42,33 +43,30 @@ class _CareerPathCardState extends State<CareerPathCard> {
             color: _pressed ? AppColors.background : AppColors.surface,
             borderRadius: BorderRadius.circular(AppBorderRadius.xl),
             border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
+            boxShadow: AppShadows.card,
           ),
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Text(
                 widget.emoji,
-                style: const TextStyle(fontSize: 32, leadingDistribution: TextLeadingDistribution.proportional),
+                style: const TextStyle(fontSize: 20),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.title,
-                      style: AppTextStyles.labelBold.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       widget.subtitle,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTextStyles.labelSm,
                     ),
                   ],
                 ),

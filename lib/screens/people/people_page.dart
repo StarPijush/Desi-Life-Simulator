@@ -6,6 +6,7 @@ import '../../models/character.dart';
 import '../../models/relationship.dart';
 import '../../widgets/core/app_scaffold.dart';
 import '../../widgets/game/game_card.dart';
+import '../../widgets/game/progress_bar.dart';
 import '../../widgets/game/section_header.dart';
 
 class PeoplePage extends StatelessWidget {
@@ -180,16 +181,13 @@ class PeoplePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
+        color: AppColors.slate200,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF475569),
+        style: AppTextStyles.labelBold.copyWith(
+          color: AppColors.journalText,
         ),
       ),
     );
@@ -201,16 +199,13 @@ class PeoplePage extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.labelBold.copyWith(
-            fontSize: 10,
             color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
+          style: AppTextStyles.bodyMd.copyWith(
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.textPrimary,
           ),
@@ -271,8 +266,8 @@ class PeoplePage extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
+                decoration: BoxDecoration(
+                  color: AppColors.slate100,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -310,22 +305,9 @@ class PeoplePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 6,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: relationship.bond.clamp(0, 100) / 100,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: barColor,
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-              ),
-            ),
+          ProgressBar.xs(
+            value: relationship.bond.toDouble(),
+            color: barColor,
           ),
         ],
       ),

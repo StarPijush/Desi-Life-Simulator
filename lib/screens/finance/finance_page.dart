@@ -217,16 +217,13 @@ class FinancePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
+        color: AppColors.slate200,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF475569),
+        style: AppTextStyles.labelBold.copyWith(
+          color: AppColors.journalText,
         ),
       ),
     );
@@ -238,16 +235,13 @@ class FinancePage extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.labelBold.copyWith(
-            fontSize: 10,
             color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
+          style: AppTextStyles.bodyMd.copyWith(
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.textPrimary,
           ),
@@ -563,15 +557,12 @@ class FinancePage extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.bodyMd.copyWith(
-            fontSize: 14,
             color: AppColors.textSecondary,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
+          style: AppTextStyles.bodyMd.copyWith(
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.textPrimary,
           ),
@@ -587,16 +578,13 @@ class FinancePage extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.bodyMd.copyWith(
-            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 18,
+          style: AppTextStyles.bodyLg.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),

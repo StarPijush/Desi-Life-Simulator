@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_animations.dart';
 import '../../core/design_system.dart';
 
 class JobCard extends StatefulWidget {
@@ -45,13 +46,13 @@ class _JobCardState extends State<JobCard> {
           : null,
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 80),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
             boxShadow: AppShadows.card,
           ),
           child: IntrinsicHeight(

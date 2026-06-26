@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/character.dart';
 import '../core/engine.dart';
+import '../core/app_animations.dart';
 import '../core/design_system.dart';
 import '../core/career_data.dart';
 import '../core/institute_data.dart';
@@ -48,8 +49,6 @@ class CareerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const g = 12.0;
-
     return AppScaffold(
       title: 'career',
       padding: const EdgeInsets.only(left: 16, right: 16),
@@ -67,19 +66,19 @@ class CareerPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         _CurrentStatusCard(
           name: character.name,
           age: character.age,
           isStudent: _isStudent,
           annualIncome: character.annualIncome.toDouble(),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         _StatsGrid(
           smarts: character.smarts.toDouble(),
           looks: character.looks.toDouble(),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         const SectionHeader(
           title: 'Active Pursuit',
           padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
@@ -108,7 +107,7 @@ class CareerPage extends StatelessWidget {
                     ),
                   ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         const SectionHeader(
           title: 'Explore Careers',
           padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
@@ -127,7 +126,7 @@ class CareerPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         CareerPathCard(
           emoji: '⏰',
           title: 'Part-Time',
@@ -140,7 +139,7 @@ class CareerPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         CareerPathCard(
           emoji: '💻',
           title: 'Freelance',
@@ -153,7 +152,7 @@ class CareerPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         CareerPathCard(
           emoji: '🎖',
           title: 'Military',
@@ -166,7 +165,7 @@ class CareerPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         CareerPathCard(
           emoji: '⭐',
           title: 'Special',
@@ -179,7 +178,7 @@ class CareerPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: g),
+        const SizedBox(height: AppSpacing.md),
         CareerPathCard(
           emoji: '🎓',
           title: 'Education',
@@ -343,11 +342,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
+        style: AppTextStyles.labelBold.copyWith(
           color: textColor,
-          letterSpacing: 0.05,
         ),
       ),
     );
@@ -402,6 +398,7 @@ class _StatCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
         border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,16 +475,17 @@ class _ActivePursuitCardState extends State<_ActivePursuitCard> {
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 150),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppBorderRadius.xl),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.4),
+              color: AppColors.primary.withValues(alpha: 0.2),
             ),
+            boxShadow: AppShadows.card,
           ),
           child: Row(
             children: [
@@ -498,7 +496,7 @@ class _ActivePursuitCardState extends State<_ActivePursuitCard> {
                   leadingDistribution: TextLeadingDistribution.proportional,
                 ),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,9 +825,9 @@ class _EducationListScreen extends StatelessWidget {
           child: Column(
             children: [
               const _EduInfoRow(emoji: '🏫', title: 'Public High School', subtitle: 'Grade 10'),
-              const Divider(height: 1, color: Color(0xFFF4F4F5)),
+              const Divider(height: 1, color: AppColors.divider),
               const _EduInfoRow(emoji: '📈', title: 'GPA / Performance', subtitle: 'Excellent'),
-              const Divider(height: 1, color: Color(0xFFF4F4F5)),
+              const Divider(height: 1, color: AppColors.divider),
               _EduInfoRow(
                 emoji: '📚',
                 title: 'Study Harder',
@@ -952,7 +950,7 @@ class _EducationListScreen extends StatelessWidget {
                 ),
               )),
             ),
-            const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                    const Divider(height: 1, color: AppColors.divider),
             _EduInfoRow(
               emoji: '🏢',
               title: 'Post-Graduate',
@@ -996,7 +994,7 @@ class _EducationListScreen extends StatelessWidget {
                           {'actionId': 'career.prepare_upsc'})),
                 ),
                 if (!passedUPSC) ...[
-                  const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                  const Divider(height: 1, color: AppColors.divider),
                   _EduInfoRow(
                     emoji: '\ud83d\udcdd',
                     title: 'Attempt UPSC',
@@ -1024,7 +1022,7 @@ class _EducationListScreen extends StatelessWidget {
                     ),
                   ),
                 ],
-                const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                const Divider(height: 1, color: AppColors.divider),
                 _EduInfoRow(
                   emoji: '\ud83d\udccb',
                   title: passedSSC ? '\u2705 SSC Cleared' : 'Prepare SSC',
@@ -1038,7 +1036,7 @@ class _EducationListScreen extends StatelessWidget {
                           {'actionId': 'career.prepare_ssc'})),
                 ),
                 if (!passedSSC) ...[
-                  const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                  const Divider(height: 1, color: AppColors.divider),
                   _EduInfoRow(
                     emoji: '\u270f\ufe0f',
                     title: 'Attempt SSC',
@@ -1066,7 +1064,7 @@ class _EducationListScreen extends StatelessWidget {
                     ),
                   ),
                 ],
-                const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                const Divider(height: 1, color: AppColors.divider),
                 _EduInfoRow(
                   emoji: '\ud83c\udfe6',
                   title: passedBankPO ? '\u2705 Bank PO Cleared' : 'Attempt Bank PO',
@@ -1251,7 +1249,7 @@ class _UniversityScreen extends StatelessWidget {
                   subtitle: 'Choose your major',
                   onTap: () {},
                 ),
-                const Divider(height: 1, color: Color(0xFFF4F4F5)),
+                const Divider(height: 1, color: AppColors.divider),
                 _EduInfoRow(
                   emoji: '💰',
                   title: 'Financial Aid',

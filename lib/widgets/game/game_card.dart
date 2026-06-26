@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_animations.dart';
 import '../../core/design_system.dart';
 
 class GameCard extends StatelessWidget {
@@ -31,6 +32,7 @@ class GameCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
         border: Border.all(color: AppColors.outline.withValues(alpha: 0.85)),
+        boxShadow: AppShadows.card,
       ),
       child: leftAccentColor != null
           ? ClipRRect(
@@ -77,8 +79,8 @@ class _PressableState extends State<_Pressable> {
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 80),
+        scale: _pressed ? kPressScale : 1.0,
+        duration: AppMotion.tap,
         child: widget.child,
       ),
     );
